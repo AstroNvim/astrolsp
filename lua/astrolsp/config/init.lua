@@ -58,25 +58,5 @@ return {
 
   formatting = { format_on_save = { enabled = true }, disable = {} },
 
-  mappings = {
-    n = {
-      -- no cond will always be set
-      ["<leader>ld"] = { function() vim.diagnostic.open_float() end, desc = "Hover diagnostics" },
-      ["[d"] = { function() vim.diagnostic.goto_prev() end, desc = "Previous diagnostic" },
-      ["]d"] = { function() vim.diagnostic.goto_next() end, desc = "Next diagnostic" },
-      ["gl"] = { function() vim.diagnostic.open_float() end, desc = "Hover diagnostics" },
-
-      ["<leader>lD"] = {
-        function() require("telescope.builtin").diagnostics() end,
-        desc = "Search diagnostics",
-        cond = function(_, _) return true end, -- client, bufnr parameters
-      },
-
-      ["<leader>la"] = {
-        function() vim.lsp.buf.code_action() end,
-        desc = "LSP code action",
-        cond = "testDocument/codeAction", -- LSP client capability string
-      },
-    },
-  },
+  mappings = require "astrolsp.config.mappings",
 }

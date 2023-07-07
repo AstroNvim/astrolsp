@@ -1,2 +1,3 @@
 # astrolsp
-LSP Configuration Engine built for AstroNvim
+
+LSP tooling built for AstroNvim
