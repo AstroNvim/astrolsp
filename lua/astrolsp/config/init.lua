@@ -1,6 +1,15 @@
 local schemastore_avail, schemastore = pcall(require, "schemastore")
 
 return {
+  features = {
+    autoformat_enabled = true,
+    codelens = true,
+    diagnostics_mode = 3,
+    inlay_hints = false,
+    lsp_handlers = true,
+    semantic_tokens = true,
+  },
+
   diagnostics = {
     virtual_text = true,
     signs = {

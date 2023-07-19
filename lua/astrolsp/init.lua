@@ -1,10 +1,13 @@
 local M = {}
 
-local utils = require "astrolsp.utils"
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
 
 M.lsp_progress = {}
+
+local function event(name)
+  vim.schedule(function() vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end)
+end
 
 function M.setup(opts)
   opts = opts or {}
@@ -44,11 +47,17 @@ function M.setup(opts)
     if progress[id].kind == "end" then
       vim.defer_fn(function()
         progress[id] = nil
-        utils.event "Progress"
+        event "Progress"
       end, 100)
     end
-    utils.event "Progress"
+    event "Progress"
     orig_handler(_, msg, info)
+  end
+
+  if M.options.features.lsp_handlers then
+    vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded", silent = true })
+    vim.lsp.handlers["textDocument/signatureHelp"] =
+      vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded", silent = true })
   end
 end
 
@@ -73,7 +82,7 @@ function M.setup_diagnostics()
     M.options.diagnostics,
   }
 
-  vim.diagnostic.config(M.diagnostics[vim.g.diagnostics_mode])
+  vim.diagnostic.config(M.diagnostics[M.options.features.diagnostics_mode])
 end
 
 --- Helper function to set up a given server with the Neovim LSP client
@@ -109,6 +118,18 @@ local function add_buffer_autocmd(augroup, bufnr, autocmds)
   end
 end
 
+local function del_buffer_autocmd(augroup, bufnr)
+  local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
+  if cmds_found then vim.tbl_map(function(cmd) vim.api.nvim_del_autocmd(cmd.id) end, cmds) end
+end
+
+local function has_capability(capability, filter)
+  for _, client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients)(filter)) do
+    if client.supports_method(capability) then return true end
+  end
+  return false
+end
+
 --- The `on_attach` function used by AstroNvim
 ---@param client table The LSP client details when attaching
 ---@param bufnr number The buffer that the LSP client is attaching to
@@ -118,14 +139,14 @@ M.on_attach = function(client, bufnr)
       events = { "InsertLeave", "BufEnter" },
       desc = "Refresh codelens",
       callback = function()
-        if not utils.has_capability("textDocument/codeLens", { bufnr = bufnr }) then
-          utils.del_buffer_autocmd("lsp_codelens_refresh", bufnr)
+        if not has_capability("textDocument/codeLens", { bufnr = bufnr }) then
+          del_buffer_autocmd("lsp_codelens_refresh", bufnr)
           return
         end
-        if vim.g.codelens_enabled then vim.lsp.codelens.refresh() end
+        if M.options.features.codelens then vim.lsp.codelens.refresh() end
       end,
     })
-    if vim.g.codelens_enabled then vim.lsp.codelens.refresh() end
+    if M.options.features.codelens then vim.lsp.codelens.refresh() end
   end
 
   if
@@ -148,8 +169,8 @@ M.on_attach = function(client, bufnr)
       events = "BufWritePre",
       desc = "autoformat on save",
       callback = function()
-        if not utils.has_capability("textDocument/formatting", { bufnr = bufnr }) then
-          utils.del_buffer_autocmd("lsp_auto_format", bufnr)
+        if not has_capability("textDocument/formatting", { bufnr = bufnr }) then
+          del_buffer_autocmd("lsp_auto_format", bufnr)
           return
         end
         local autoformat_enabled = vim.b[bufnr].autoformat_enabled
@@ -167,8 +188,8 @@ M.on_attach = function(client, bufnr)
         events = { "CursorHold", "CursorHoldI" },
         desc = "highlight references when cursor holds",
         callback = function()
-          if not utils.has_capability("textDocument/documentHighlight", { bufnr = bufnr }) then
-            utils.del_buffer_autocmd("lsp_document_highlight", bufnr)
+          if not has_capability("textDocument/documentHighlight", { bufnr = bufnr }) then
+            del_buffer_autocmd("lsp_document_highlight", bufnr)
             return
           end
           vim.lsp.buf.document_highlight()
@@ -183,16 +204,14 @@ M.on_attach = function(client, bufnr)
   end
 
   if client.supports_method "textDocument/inlayHint" then
-    if vim.b[bufnr].inlay_hints_enabled == nil then vim.b[bufnr].inlay_hints_enabled = vim.g.inlay_hints_enabled end
+    if vim.b[bufnr].inlay_hints == nil then vim.b[bufnr].inlay_hints = M.options.features.inlay_hints end
     -- TODO: remove check after dropping support for Neovim v0.9
-    if vim.lsp.inlay_hint and vim.b[bufnr].inlay_hints_enabled then vim.lsp.inlay_hint(bufnr, true) end
+    if vim.lsp.inlay_hint and vim.b[bufnr].inlay_hints then vim.lsp.inlay_hint(bufnr, true) end
   end
 
   if client.supports_method and vim.lsp.semantic_tokens then
-    if vim.b[bufnr].semantic_tokens_enabled == nil then
-      vim.b[bufnr].semantic_tokens_enabled = vim.g.semantic_tokens_enabled
-    end
-    if not vim.g.semantic_tokens_enabled then vim.lsp.semantic_tokens["stop"](bufnr, client.id) end
+    if vim.b[bufnr].semantic_tokens == nil then vim.b[bufnr].semantic_tokens = M.options.features.semantic_tokens end
+    if not vim.b[bufnr].semantic_tokens then vim.lsp.semantic_tokens["stop"](bufnr, client.id) end
   end
 
   for mode, maps in pairs(M.options.mappings) do
@@ -229,15 +248,15 @@ function M.config(server_name)
   local opts = vim.tbl_deep_extend(
     "force",
     vim.tbl_deep_extend("force", server.document_config.default_config, server),
-    { capabilities = M.capabilities, flags = M.flags }
+    { capabilities = M.options.capabilities, flags = M.options.flags }
   )
   -- HACK: add astronvim interoperability, remove after AstroNvim v4
   if type(astronvim) == "table" and type(astronvim.user_opts) == "function" then
     opts = astronvim.user_opts("lsp.config." .. server_name, opts)
   end
-  if M.options.config[server_name] then
-    opts = assert(vim.tbl_deep_extend("force", opts, M.options.config[server_name]))
-  end
+  if M.options.config[server_name] then opts = vim.tbl_deep_extend("force", opts, M.options.config[server_name]) end
+  assert(opts)
+
   local old_on_attach = require("lspconfig")[server_name].on_attach
   local user_on_attach = opts.on_attach
   opts.on_attach = function(client, bufnr)

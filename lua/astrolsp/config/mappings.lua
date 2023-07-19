@@ -46,12 +46,12 @@ M.n["<leader>lf"] =
   { function() vim.lsp.buf.format(M.format_opts) end, desc = "Format buffer", cond = "textDocument/formatting" }
 M.v["<leader>lf"] = M.n["<leader>lf"]
 M.n["<leader>uf"] = {
-  function() require("astrolsp.utils").toggle_buffer_autoformat() end,
+  function() require("astrolsp.toggles").buffer_autoformat() end,
   desc = "Toggle autoformatting (buffer)",
   cond = "textDocument/formatting",
 }
 M.n["<leader>uF"] = {
-  function() require("astrolsp.utils").toggle_autoformat() end,
+  function() require("astrolsp.toggles").autoformat() end,
   desc = "Toggle autoformatting (global)",
   cond = "textDocument/formatting",
 }
@@ -65,14 +65,7 @@ M.n["gI"] = {
 }
 
 M.n["<leader>uH"] = {
-  function()
-    vim.b.inlay_hints_enabled = not vim.b.inlay_hints_enabled
-    -- TODO: remove check after dropping support for Neovim v0.9
-    if vim.lsp.inlay_hint then
-      vim.lsp.inlay_hint(0, vim.b.inlay_hints_enabled)
-      vim.notify(("Inlay hints %s"):format(vim.b.inlay_hints_enabled and "on" or "off"))
-    end
-  end,
+  function() require("astrolsp.toggles").buffer_inlay_hints() end,
   desc = "Toggle LSP inlay hints (buffer)",
   cond = vim.lsp.inlay_hint and "textDocument/inlayHint" or false,
 }
@@ -98,15 +91,7 @@ M.n["<leader>lG"] =
   { function() vim.lsp.buf.workspace_symbol() end, desc = "Search workspace symbols", cond = "workspace/symbol" }
 
 M.n["<leader>uY"] = {
-  function()
-    vim.b.semantic_tokens_enabled = not vim.b.semantic_tokens_enabled
-    for _, client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients)()) do
-      if client.server_capabilities.semanticTokensProvider then
-        vim.lsp.semantic_tokens[vim.b.semantic_tokens_enabled and "start" or "stop"](0, client.id)
-        vim.notify(("Buffer lsp semantic highlighting %s"):format(vim.b.semantic_tokens_enabled and "on" or "off"))
-      end
-    end
-  end,
+  function() require("astrolsp.toggles").buffer_semantic_tokens() end,
   desc = "Toggle LSP semantic highlight (buffer)",
   cond = "textDocument/semanticTokens/full",
 }
