@@ -1,3 +1,5 @@
+local schemastore_avail, schemastore = pcall(require, "schemastore")
+
 return {
   diagnostics = {
     virtual_text = true,
@@ -48,15 +50,38 @@ return {
 
   flags = {},
 
-  config = {},
+  config = {
+    jsonls = {
+      settings = {
+        json = {
+          schemas = schemastore_avail and schemastore.json.schemas() or nil,
+          validate = { enable = schemastore_avail },
+        },
+      },
+    },
+    yamlls = { settings = { yaml = { schemas = schemastore_avail and schemastore.json.schemas() or nil } } },
+    lua_ls = {
+      before_init = function(param, config)
+        if vim.b.neodev_enabled and type(astronvim) == "table" and type(astronvim.supported_configs) == "table" then
+          for _, astronvim_config in ipairs(astronvim.supported_configs) do
+            if param.rootPath:match(astronvim_config) then
+              table.insert(config.settings.Lua.workspace.library, astronvim.install.home .. "/lua")
+              break
+            end
+          end
+        end
+      end,
+      settings = { Lua = { workspace = { checkThirdParty = false } } },
+    },
+  },
+
+  servers = {},
 
   -- on_attach = function(client, bufnr) ... end, -- user can pass in an extension of the on_attach
 
-  setup_handlers = {
-    function(server, opts) require("lspconfig")[server].setup(opts) end,
-  },
+  setup_handlers = { function(server, opts) require("lspconfig")[server].setup(opts) end },
 
-  formatting = { format_on_save = { enabled = true }, disable = {} },
+  formatting = { format_on_save = { enabled = true }, disabled = {} },
 
   mappings = require "astrolsp.config.mappings",
 }

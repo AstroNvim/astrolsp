@@ -42,13 +42,19 @@ M.n["gd"] = {
   cond = "textDocument/definition",
 }
 
--- TODO: Add proper conditions
-M.n["<leader>lf"] = { function() vim.lsp.buf.format(M.format_opts) end, desc = "Format buffer" }
+M.n["<leader>lf"] =
+  { function() vim.lsp.buf.format(M.format_opts) end, desc = "Format buffer", cond = "textDocument/formatting" }
 M.v["<leader>lf"] = M.n["<leader>lf"]
-M.n["<leader>uf"] =
-  { function() require("astronvim.utils.ui").toggle_buffer_autoformat() end, desc = "Toggle autoformatting (buffer)" }
-M.n["<leader>uF"] =
-  { function() require("astronvim.utils.ui").toggle_autoformat() end, desc = "Toggle autoformatting (global)" }
+M.n["<leader>uf"] = {
+  function() require("astrolsp.utils").toggle_buffer_autoformat() end,
+  desc = "Toggle autoformatting (buffer)",
+  cond = "textDocument/formatting",
+}
+M.n["<leader>uF"] = {
+  function() require("astrolsp.utils").toggle_autoformat() end,
+  desc = "Toggle autoformatting (global)",
+  cond = "textDocument/formatting",
+}
 
 M.n["K"] = { function() vim.lsp.buf.hover() end, desc = "Hover symbol details", cond = "textDocument/hover" }
 
@@ -58,7 +64,6 @@ M.n["gI"] = {
   cond = "textDocument/implementation",
 }
 
--- TODO: add proper conditions
 M.n["<leader>uH"] = {
   function()
     vim.b.inlay_hints_enabled = not vim.b.inlay_hints_enabled
@@ -69,6 +74,7 @@ M.n["<leader>uH"] = {
     end
   end,
   desc = "Toggle LSP inlay hints (buffer)",
+  cond = vim.lsp.inlay_hint and "textDocument/inlayHint" or false,
 }
 
 M.n["gr"] =
@@ -94,7 +100,7 @@ M.n["<leader>lG"] =
 M.n["<leader>uY"] = {
   function()
     vim.b.semantic_tokens_enabled = not vim.b.semantic_tokens_enabled
-    for _, client in ipairs(vim.lsp.get_active_clients()) do
+    for _, client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients)()) do
       if client.server_capabilities.semanticTokensProvider then
         vim.lsp.semantic_tokens[vim.b.semantic_tokens_enabled and "start" or "stop"](0, client.id)
         vim.notify(("Buffer lsp semantic highlighting %s"):format(vim.b.semantic_tokens_enabled and "on" or "off"))
@@ -105,40 +111,27 @@ M.n["<leader>uY"] = {
   cond = "textDocument/semanticTokens/full",
 }
 
-if not vim.tbl_isempty(M.v) then M.v["<leader>l"] = { desc = " LSP" } end
+-- TODO: FIX this
+-- if not vim.tbl_isempty(M.v) then M.v["<leader>l"] = { desc = " LSP" } end
 
--- if is_available "telescope.nvim" then
---   lsp_mappings.n["<leader>lD"] =
---     { function() require("telescope.builtin").diagnostics() end, desc = "Search diagnostics" }
--- end
+if vim.fn.exists ":LspInfo" > 0 then M.n["<leader>li"] = { "<cmd>LspInfo<cr>", desc = "LSP information" } end
 --
--- if is_available "mason-lspconfig.nvim" then
---   lsp_mappings.n["<leader>li"] = { "<cmd>LspInfo<cr>", desc = "LSP information" }
--- end
---
--- if is_available "null-ls.nvim" then
---   lsp_mappings.n["<leader>lI"] = { "<cmd>NullLsInfo<cr>", desc = "Null-ls information" }
--- end
+if vim.fn.exists ":NullLsInfo" > 0 then M.n["<leader>lI"] = { "<cmd>NullLsInfo<cr>", desc = "Null-ls information" } end
 
--- if is_available "telescope.nvim" then -- setup telescope mappings if available
---   if lsp_mappings.n.gd then lsp_mappings.n.gd[1] = function() require("telescope.builtin").lsp_definitions() end end
---   if lsp_mappings.n.gI then
---     lsp_mappings.n.gI[1] = function() require("telescope.builtin").lsp_implementations() end
---   end
---   if lsp_mappings.n.gr then lsp_mappings.n.gr[1] = function() require("telescope.builtin").lsp_references() end end
---   if lsp_mappings.n["<leader>lR"] then
---     lsp_mappings.n["<leader>lR"][1] = function() require("telescope.builtin").lsp_references() end
---   end
---   if lsp_mappings.n.gT then
---     lsp_mappings.n.gT[1] = function() require("telescope.builtin").lsp_type_definitions() end
---   end
---   if lsp_mappings.n["<leader>lG"] then
---     lsp_mappings.n["<leader>lG"][1] = function()
---       vim.ui.input({ prompt = "Symbol Query: " }, function(query)
---         if query then require("telescope.builtin").lsp_workspace_symbols { query = query } end
---       end)
---     end
---   end
--- end
+if vim.fn.exists ":Telescope" > 0 or pcall(require, "telescope") then -- setup telescope mappings if available
+  M.n["<leader>lD"] = { function() require("telescope.builtin").diagnostics() end, desc = "Search diagnostics" }
+  if M.n.gd then M.n.gd[1] = function() require("telescope.builtin").lsp_definitions() end end
+  if M.n.gI then M.n.gI[1] = function() require("telescope.builtin").lsp_implementations() end end
+  if M.n.gr then M.n.gr[1] = function() require("telescope.builtin").lsp_references() end end
+  if M.n["<leader>lR"] then M.n["<leader>lR"][1] = function() require("telescope.builtin").lsp_references() end end
+  if M.n.gT then M.n.gT[1] = function() require("telescope.builtin").lsp_type_definitions() end end
+  if M.n["<leader>lG"] then
+    M.n["<leader>lG"][1] = function()
+      vim.ui.input({ prompt = "Symbol Query: " }, function(query)
+        if query then require("telescope.builtin").lsp_workspace_symbols { query = query } end
+      end)
+    end
+  end
+end
 
 return M

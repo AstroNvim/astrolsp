@@ -1,5 +1,5 @@
 -- Global objects
-globals = { "vim" }
+globals = { "vim", "astronvim" }
 
 -- Rerun tests only if their modification time changed
 cache = true
