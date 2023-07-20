@@ -1,7 +1,7 @@
 local M = {}
 
-local options = require("astrolsp").options
-local features = options.features
+local config = require("astrolsp").config
+local features = config.features
 
 local notify = vim.notify
 local function bool2str(bool) return bool and "on" or "off" end
