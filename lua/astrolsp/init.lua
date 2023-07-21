@@ -202,18 +202,30 @@ M.on_attach = function(client, bufnr)
     end
   end
 
+  local wk_avail, wk = pcall(require, "which-key")
   for mode, maps in pairs(M.config.mappings) do
     for lhs, map_opts in pairs(maps) do
       if
-        map_opts.cond == nil
+        type(map_opts) ~= "table"
+        or map_opts.cond == nil
         or type(map_opts.cond) == "boolean" and map_opts.cond
         or type(map_opts.cond) == "function" and map_opts.cond(client, bufnr)
         or type(map_opts.cond) == "string" and client.supports_method(map_opts.cond)
       then
-        local rhs = map_opts[1]
-        map_opts = vim.tbl_deep_extend("force", map_opts, { buffer = bufnr })
-        map_opts[1], map_opts.cond = nil, nil
-        vim.keymap.set(mode, lhs, rhs, map_opts)
+        local rhs = map_opts
+        if type(map_opts) == "table" then
+          rhs = map_opts[1]
+          map_opts = assert(vim.tbl_deep_extend("force", map_opts, { buffer = bufnr }))
+          map_opts[1], map_opts.cond = nil, nil
+        else
+          map_opts = { buffer = bufnr }
+        end
+        if not rhs or map_opts.name then
+          if not map_opts.name then map_opts.name = map_opts.desc end
+          if wk_avail then wk.register({ [lhs] = map_opts }, { mode = mode }) end
+        else
+          vim.keymap.set(mode, lhs, rhs, map_opts)
+        end
       end
     end
   end
