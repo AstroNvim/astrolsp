@@ -194,9 +194,12 @@ M.on_attach = function(client, bufnr)
     if vim.lsp.inlay_hint and vim.b[bufnr].inlay_hints then vim.lsp.inlay_hint(bufnr, true) end
   end
 
-  if client.supports_method and vim.lsp.semantic_tokens then
-    if vim.b[bufnr].semantic_tokens == nil then vim.b[bufnr].semantic_tokens = M.config.features.semantic_tokens end
-    if not vim.b[bufnr].semantic_tokens then vim.lsp.semantic_tokens["stop"](bufnr, client.id) end
+  if client.supports_method "textDocument/semanticTokens/full" and vim.lsp.semantic_tokens then
+    if M.config.features.semantic_tokens then
+      vim.b[bufnr].semantic_tokens = true
+    else
+      client.server_capabilities.semanticTokensProvider = nil
+    end
   end
 
   for mode, maps in pairs(M.config.mappings) do
