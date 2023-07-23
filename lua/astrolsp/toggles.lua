@@ -41,12 +41,17 @@ end
 function M.buffer_semantic_tokens(bufnr, silent)
   bufnr = bufnr or 0
   vim.b[bufnr].semantic_tokens = not vim.b[bufnr].semantic_tokens
-  for _, client in ipairs(vim.lsp.get_clients()) do
+  local toggled = false
+  for _, client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
     if client.server_capabilities.semanticTokensProvider then
       vim.lsp.semantic_tokens[vim.b[bufnr].semantic_tokens and "start" or "stop"](bufnr, client.id)
-      ui_notify(silent, string.format("Buffer lsp semantic highlighting %s", bool2str(vim.b[bufnr].semantic_tokens)))
+      toggled = true
     end
   end
+  ui_notify(
+    not toggled or silent,
+    string.format("Buffer lsp semantic highlighting %s", bool2str(vim.b[bufnr].semantic_tokens))
+  )
 end
 
 --- Toggle codelens
