@@ -84,7 +84,8 @@ function M.lsp_setup(server)
     if server_definition.cmd then require("lspconfig.configs")[server] = { default_config = server_definition } end
   end
   local opts = M.lsp_opts(server)
-  local setup_handler = M.config.setup_handlers[server] or M.config.setup_handlers[1]
+  local setup_handler = M.config.setup_handlers[server]
+  if setup_handler == nil then setup_handler = M.config.setup_handlers[1] end
   if setup_handler then setup_handler(server, opts) end
 end
 
