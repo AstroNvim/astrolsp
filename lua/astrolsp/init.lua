@@ -86,9 +86,13 @@ function M.lsp_setup(server)
     end
   end
   local opts = M.lsp_opts(server)
-  local setup_handler = M.config.setup_handlers[server]
-  if setup_handler == nil then setup_handler = M.config.setup_handlers[1] end
-  if setup_handler then setup_handler(server, opts) end
+  local handler = M.config.handlers[server]
+  if handler == nil then handler = M.config.handlers[1] end
+  if handler then
+    handler(server, opts)
+  elseif handler == nil then
+    require("lspconfig")[server].setup(opts)
+  end
 end
 
 local function add_buffer_autocmd(augroup, bufnr, autocmds)

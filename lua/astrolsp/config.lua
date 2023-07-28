@@ -12,8 +12,8 @@ return {
   diagnostics = {},
   flags = {},
   formatting = { format_on_save = { enabled = true }, disabled = {} },
+  handlers = {},
   mappings = {},
   servers = {},
-  setup_handlers = { function(server, opts) require("lspconfig")[server].setup(opts) end },
   on_attach = nil,
 }
