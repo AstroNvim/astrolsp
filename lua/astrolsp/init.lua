@@ -81,7 +81,9 @@ function M.lsp_setup(server)
   local config_avail, config = pcall(require, "lspconfig.server_configurations." .. server)
   if not config_avail or not config.default_config then
     local server_definition = M.config.config[server]
-    if server_definition.cmd then require("lspconfig.configs")[server] = { default_config = server_definition } end
+    if server_definition and server_definition.cmd then
+      require("lspconfig.configs")[server] = { default_config = server_definition }
+    end
   end
   local opts = M.lsp_opts(server)
   local setup_handler = M.config.setup_handlers[server]
