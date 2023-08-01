@@ -5,7 +5,7 @@
 -- This module can be loaded with `local astro = require "astrolsp"`
 --
 -- @module astrolsp
--- @copyright 2022
+-- @copyright 2023
 -- @license GNU General Public License v3.0
 
 local M = {}
