@@ -1,3 +1,13 @@
+--- ### AstroNvim LSP Utilities
+--
+-- Various utility functions to use within AstroNvim for the LSP engine
+--
+-- This module can be loaded with `local astro = require "astrolsp"`
+--
+-- @module astrolsp
+-- @copyright 2022
+-- @license GNU General Public License v3.0
+
 local M = {}
 
 local tbl_contains = vim.tbl_contains

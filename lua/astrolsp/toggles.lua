@@ -1,3 +1,14 @@
+--- ### AstroNvim LSP Toggles
+--
+--  Utility functions for easy LSP toggles.
+--
+-- This module can be loaded with `local ui = require("astrolsp.toggles")`
+--
+-- @module astrolsp.toggles
+-- @see astrolsp
+-- @copyright 2023
+-- @license GNU General Public License v3.0
+
 local M = {}
 
 local features = require("astrolsp").config.features
