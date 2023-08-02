@@ -8,6 +8,7 @@
 -- @copyright 2023
 -- @license GNU General Public License v3.0
 
+---@type AstroLSPConfig
 return {
   --- Configuration table of features provided by AstroLSP
   -- @usage features = {

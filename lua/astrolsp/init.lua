@@ -243,7 +243,7 @@ function M.lsp_opts(server_name)
 end
 
 --- Setup and configure AstroLSP
----@param opts table options passed by the user to configure AstroLSP
+---@param opts AstroLSPConfig options passed by the user to configure AstroLSP
 -- @see astrolsp.config
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts)
