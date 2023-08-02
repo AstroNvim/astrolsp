@@ -1,0 +1,99 @@
+name: CI/CD
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  style:
+    name: Stylua Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: JohnnyMorganz/stylua-action@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check .
+  lint:
+    name: Luacheck Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: lunarmodules/luacheck@v1
+  vimdoc:
+    name: Generate Vimdoc
+    runs-on: ubuntu-latest
+    needs:
+      - style
+      - lint
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: panvimdoc
+        uses: kdheepak/panvimdoc@main
+        with:
+          vimdoc: astrolsp
+          version: "Neovim >= 0.9.0"
+          demojify: true
+          treesitter: true
+      - name: Push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore(build): auto-generate vimdoc"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+          commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+  docs:
+    name: Generate Lua API
+    runs-on: ubuntu-latest
+    needs:
+      - style
+      - lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: 5.4
+      - name: Install LDoc
+        uses: leafo/gh-actions-luarocks@v4
+      - name: Setup dependencies
+        run: luarocks install ldoc
+      - name: Build Docs
+        run: |
+          ldoc .
+      - name: Deploy
+        uses: nwtgck/actions-netlify@v2.0
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          publish-dir: docs
+          production-deploy: ${{ github.ref == 'refs/heads/main' }}
+  release:
+    name: Release Please
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs:
+      - docs
+      - vimdoc
+      - style
+      - lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          release-type: simple
+          package-name: astrolsp
+      - uses: actions/checkout@v3
+      - uses: rickstaa/action-create-tag@v1
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          tag: stable
+          message: "Current stable release: ${{ steps.release.outputs.tag_name }}"
+          tag_exists_error: false
+          force_push_tag: true
