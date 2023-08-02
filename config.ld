@@ -1,7 +1,11 @@
 project='AstroLSP'
 title='AstroLSP API'
 description='Documentation of AstroNvim\'s LSP API'
+favicon = "https://astronvim.com/img/logo/favicon-16x16.png"
+backtick_references = false
 format = 'markdown'
 file='lua'
 dir='docs'
+readme = "README.md"
+style = "!new"
 no_space_before_args=true
