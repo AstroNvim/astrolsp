@@ -17,9 +17,10 @@ local function ui_notify(silent, ...) return not silent and vim.notify(...) end
 local function bool2str(bool) return bool and "on" or "off" end
 
 --- Toggle auto format
-function M.autoformat()
+---@param silent? boolean if true then don't sent a notification
+function M.autoformat(silent)
   features.autoformat = not features.autoformat
-  vim.notify(string.format("Global autoformatting %s", bool2str(features.autoformat)))
+  ui_notify(silent, string.format("Global autoformatting %s", bool2str(features.autoformat)))
 end
 
 --- Toggle buffer local auto format
