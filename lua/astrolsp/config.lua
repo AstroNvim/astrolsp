@@ -11,7 +11,7 @@
 return {
   --- Configuration table of features provided by AstroLSP
   -- @usage features = {
-  --   autoformat_enabled = true,
+  --   autoformat = true,
   --   codelens = true,
   --   diagnostics_mode = 3,
   --   inlay_hints = false,
@@ -19,7 +19,7 @@ return {
   --   semantic_tokens = true,
   -- }
   features = {
-    autoformat_enabled = true, -- enable or disable auto formatting on start (boolean' default = true)
+    autoformat = true, -- enable or disable auto formatting on start (boolean' default = true)
     codelens = true, -- enable/disable codelens refresh on start (boolean; default = true)
     diagnostics_mode = 3, -- diagnostic mode on start (0 = off, 1 = no signs/virtual text, 2 = no virtual text, 3 = off; default = 3)
     inlay_hints = false, -- enable/disable inlay hints on start (boolean; default = false)
