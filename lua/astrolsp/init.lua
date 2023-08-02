@@ -20,45 +20,9 @@ local function event(name)
   vim.schedule(function() vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end)
 end
 
-function M.setup(opts)
-  M.config = vim.tbl_deep_extend("force", M.config, opts)
-
-  M.setup_diagnostics()
-
-  M.format_opts = vim.deepcopy(M.config.formatting)
-  M.format_opts.disabled = nil
-  M.format_opts.format_on_save = nil
-  M.format_opts.filter = function(client)
-    local filter = M.config.formatting.filter
-    local disabled = M.config.formatting.disabled or {}
-    -- check if client is fully disabled or filtered by function
-    return not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
-  end
-
-  local orig_handler = vim.lsp.handlers["$/progress"]
-  vim.lsp.handlers["$/progress"] = function(_, msg, info)
-    local progress, id = M.lsp_progress, ("%s.%s"):format(info.client_id, msg.token)
-    progress[id] = progress[id] and vim.tbl_deep_extend("force", progress[id], msg.value) or msg.value
-    if progress[id].kind == "end" then
-      vim.defer_fn(function()
-        progress[id] = nil
-        event "Progress"
-      end, 100)
-    end
-    event "Progress"
-    orig_handler(_, msg, info)
-  end
-
-  if M.config.features.lsp_handlers then
-    vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded", silent = true })
-    vim.lsp.handlers["textDocument/signatureHelp"] =
-      vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded", silent = true })
-  end
-end
-
 M.diagnostics = { [0] = {}, {}, {}, {} }
 
-function M.setup_diagnostics()
+local function setup_diagnostics()
   for _, sign in ipairs(M.config.diagnostics.signs.active) do
     vim.fn.sign_define(sign.name, sign)
   end
@@ -83,10 +47,6 @@ end
 --- Helper function to set up a given server with the Neovim LSP client
 ---@param server string The name of the server to be setup
 function M.lsp_setup(server)
-  -- HACK: add astronvim interoperability, remove after AstroNvim v4
-  if type(astronvim) == "table" and type(astronvim.lsp) == "table" and type(astronvim.lsp.skip_setup) == "table" then
-    if vim.tbl_contains(astronvim.lsp.skip_setup, server) then return end
-  end
   -- if server doesn't exist, set it up from user server definition
   local config_avail, config = pcall(require, "lspconfig.server_configurations." .. server)
   if not config_avail or not config.default_config then
@@ -126,6 +86,7 @@ local function del_buffer_autocmd(augroup, bufnr)
 end
 
 local function has_capability(capability, filter)
+  -- TODO: remove check after dropping support for Neovim v0.9
   for _, client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients)(filter)) do
     if client.supports_method(capability) then return true end
   end
@@ -248,6 +209,7 @@ M.on_attach = function(client, bufnr)
   end
 
   for id, _ in pairs(M.lsp_progress) do -- clear lingering progress messages
+    -- TODO: remove check after dropping support for Neovim v0.9
     if not next((vim.lsp.get_clients or vim.lsp.get_active_clients) { id = tonumber(id:match "^%d+") }) then
       M.lsp_progress[id] = nil
     end
@@ -267,10 +229,6 @@ function M.lsp_opts(server_name)
     vim.tbl_deep_extend("force", server.document_config.default_config, server),
     { capabilities = M.config.capabilities, flags = M.config.flags }
   )
-  -- HACK: add astronvim interoperability, remove after AstroNvim v4
-  if type(astronvim) == "table" and type(astronvim.user_opts) == "function" then
-    opts = astronvim.user_opts("lsp.config." .. server_name, opts)
-  end
   if M.config.config[server_name] then opts = vim.tbl_deep_extend("force", opts, M.config.config[server_name]) end
   assert(opts)
 
@@ -282,6 +240,45 @@ function M.lsp_opts(server_name)
     if type(user_on_attach) == "function" then user_on_attach(client, bufnr) end
   end
   return opts
+end
+
+--- Setup and configure AstroLSP
+---@param opts table options passed by the user to configure AstroLSP
+-- @see astrolsp.config
+function M.setup(opts)
+  M.config = vim.tbl_deep_extend("force", M.config, opts)
+
+  setup_diagnostics()
+
+  M.format_opts = vim.deepcopy(M.config.formatting)
+  M.format_opts.disabled = nil
+  M.format_opts.format_on_save = nil
+  M.format_opts.filter = function(client)
+    local filter = M.config.formatting.filter
+    local disabled = M.config.formatting.disabled or {}
+    -- check if client is fully disabled or filtered by function
+    return not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
+  end
+
+  local orig_handler = vim.lsp.handlers["$/progress"]
+  vim.lsp.handlers["$/progress"] = function(_, msg, info)
+    local progress, id = M.lsp_progress, ("%s.%s"):format(info.client_id, msg.token)
+    progress[id] = progress[id] and vim.tbl_deep_extend("force", progress[id], msg.value) or msg.value
+    if progress[id].kind == "end" then
+      vim.defer_fn(function()
+        progress[id] = nil
+        event "Progress"
+      end, 100)
+    end
+    event "Progress"
+    orig_handler(_, msg, info)
+  end
+
+  if M.config.features.lsp_handlers then
+    vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded", silent = true })
+    vim.lsp.handlers["textDocument/signatureHelp"] =
+      vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded", silent = true })
+  end
 end
 
 return M
