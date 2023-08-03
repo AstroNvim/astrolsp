@@ -2,7 +2,7 @@
   "neodev": {
     "library": {
       "enabled": true,
-      "plugins": true
+      "plugins": ["nvim-lspconfig", "lsp"]
     }
   },
   "neoconf": {
@@ -15,9 +15,7 @@
   "lspconfig": {
     "lua_ls": {
       "Lua.format.enable": false,
-      "Lua.diagnostics.globals": [
-        "astronvim"
-      ]
+      "Lua.diagnostics.globals": ["astronvim"]
     }
   }
 }
