@@ -224,11 +224,7 @@ end
 function M.lsp_opts(server_name)
   if server_name == "lua_ls" then pcall(require, "neodev") end
   local server = require("lspconfig")[server_name]
-  local opts = vim.tbl_deep_extend(
-    "force",
-    vim.tbl_deep_extend("force", server.document_config.default_config, server),
-    { capabilities = M.config.capabilities, flags = M.config.flags }
-  )
+  local opts = vim.tbl_deep_extend("force", server, { capabilities = M.config.capabilities, flags = M.config.flags })
   if M.config.config[server_name] then opts = vim.tbl_deep_extend("force", opts, M.config.config[server_name]) end
   assert(opts)
 
