@@ -1,25 +1,27 @@
---- ### AstroNvim LSP Utilities
---
--- Various utility functions to use within AstroNvim for the LSP engine
---
--- This module can be loaded with `local astro = require "astrolsp"`
---
--- @module astrolsp
--- @copyright 2023
--- @license GNU General Public License v3.0
-
+---AstroNvim LSP Utilities
+---
+---Various utility functions to use within AstroNvim for the LSP engine
+---
+---This module can be loaded with `local astro = require "astrolsp"`
+---
+---copyright 2023
+---license GNU General Public License v3.0
+---@class astrolsp
 local M = {}
 
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
 
+--- The configuration as set by the user through the `setup()` function
 M.config = require "astrolsp.config"
+--- A table of lsp progress messages that can be used to display LSP progress in a statusline
 M.lsp_progress = {}
 
 local function event(name)
   vim.schedule(function() vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end)
 end
 
+--- A table of settings for different levels of diagnostics
 M.diagnostics = { [0] = {}, {}, {}, {} }
 
 local function setup_diagnostics()
@@ -239,13 +241,14 @@ function M.lsp_opts(server_name)
 end
 
 --- Setup and configure AstroLSP
----@param opts AstroLSPConfig options passed by the user to configure AstroLSP
--- @see astrolsp.config
+---@param opts AstroLSPOpts options passed by the user to configure AstroLSP
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts)
 
   setup_diagnostics()
 
+  --- Format options that are passed into the `vim.lsp.buf.format` (`:h vim.lsp.buf.format()`)
+  ---@type AstroLSPFormatOpts
   M.format_opts = vim.deepcopy(M.config.formatting)
   M.format_opts.disabled = nil
   M.format_opts.format_on_save = nil
