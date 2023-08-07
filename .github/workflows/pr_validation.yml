@@ -1,0 +1,17 @@
+name: PR Checks
+
+on: pull_request
+
+jobs:
+  commit_msg:
+    name: Conventional Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: webiny/action-conventional-commits@v1.1.0
+  typos:
+    name: Spell Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: crate-ci/typos@master
