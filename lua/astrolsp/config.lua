@@ -121,7 +121,7 @@
 ---  -- default handler
 ---  function(server, opts)
 ---    require("lspconfig")[server].setup(opts)
----  end
+---  end,
 ---  -- custom function handler for pyright
 ---  pyright = function(_, opts)
 ---    require("lspconfig").pyright.setup(opts)
