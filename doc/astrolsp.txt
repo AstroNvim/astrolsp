@@ -1,17 +1,263 @@
-*astrolsp.txt*         For Neovim >= 0.9.0         Last change: 2023 August 04
+*astrolsp.txt*         For Neovim >= 0.9.0         Last change: 2023 August 07
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
 
-1. astrolsp                                                |astrolsp-astrolsp|
+1. AstroLSP                                                |astrolsp-astrolsp|
+  - Features                                      |astrolsp-astrolsp-features|
+  - Requirements                              |astrolsp-astrolsp-requirements|
+  - Installation                              |astrolsp-astrolsp-installation|
+  - Configuration                            |astrolsp-astrolsp-configuration|
+  - Integrations                              |astrolsp-astrolsp-integrations|
+  - API                                                |astrolsp-astrolsp-api|
 2. Lua API                                                  |astrolsp-lua-api|
   - astrolsp                                       |astrolsp-lua-api-astrolsp|
   - astrolsp.toggles                       |astrolsp-lua-api-astrolsp.toggles|
 
 ==============================================================================
-1. astrolsp                                                *astrolsp-astrolsp*
+1. AstroLSP                                                *astrolsp-astrolsp*
 
-LSP tooling built for AstroNvim
+AstroLSP provides a simple API for configuring and setting up language servers
+in Neovim. This is the LSP configuration engine that AstroNvim
+<https://github.com/AstroNvim/AstroNvim> uses, but can be used by itself as
+well.
+
+
+FEATURES                                          *astrolsp-astrolsp-features*
+
+- Unified interface for configuring language servers:
+    - Key mappings when attaching
+    - Capabilities and language server settings
+- Format on save
+- Easily toggle features such as inlay hints, codelens, and semantic tokens
+
+
+REQUIREMENTS                                  *astrolsp-astrolsp-requirements*
+
+- Neovim >= 0.9
+
+
+INSTALLATION                                  *astrolsp-astrolsp-installation*
+
+Install the plugin with your plugin manager of choice:
+
+**lazy.nvim** <https://github.com/folke/lazy.nvim>
+
+>lua
+    {
+      "AstroNvim/astrolsp",
+      opts = {
+        -- set configuration options  as described below
+      }
+    }
+<
+
+**packer.nvim** <https://github.com/wbthomason/packer.nvim>
+
+>lua
+    use({
+      "AstroNvim/astrolsp",
+    })
+    
+    require("astrolsp").setup({
+      -- set configuration options  as described below
+    })
+<
+
+
+CONFIGURATION                                *astrolsp-astrolsp-configuration*
+
+**AstroLSP** comes with the no defaults, but can be configured fully through
+the `opts` table in lazy or through calling `require("astrolsp").setup({})`.
+Here are descriptions of the options and some example usages:
+
+>lua
+    ---@type AstroLSPConfig
+    {
+      -- Configuration table of features provided by AstroLSP
+      features = {
+        autoformat = true, -- enable or disable auto formatting on start
+        codelens = true, -- enable/disable codelens refresh on start
+        diagnostics_mode = 3, -- diagnostic mode on start (0 = off, 1 = no signs/virtual text, 2 = no virtual text, 3 = off)
+        inlay_hints = false, -- enable/disable inlay hints on start
+        lsp_handlers = true, -- enable/disable setting of lsp_handlers
+        semantic_tokens = true, -- enable/disable semantic token highlighting
+      },
+      -- Configure default capabilities for language servers (`:h vim.lsp.protocol.make_client.capabilities()`)
+      capabilities = {
+        textDocument = {
+          foldingRange = { dynamicRegistration = false },
+        },
+      },
+      -- Configure language servers for `lspconfig` (`:h lspconfig-setup`)
+      config = {
+        lua_ls = {
+          settings = {
+            Lua = {
+              hint = { enable = true, arrayIndex = "Disable" },
+            },
+          },
+        },
+        clangd = {
+          capabilities = {
+            offsetEncoding = "utf-8",
+          },
+        },
+      },
+      -- Configure diagnostics options (`:h vim.diagnostic.config()`)
+      diagnostics = {
+        update_in_insert = false,
+      },
+      -- A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
+      flags = {
+        exit_timeout = 5000,
+      },
+      -- Configuration options for controlling formatting with language servers
+      formatting = {
+        -- control auto formatting on save
+        format_on_save = {
+          -- enable or disable format on save globally
+          enabled = true,
+          -- enable format on save for specified filetypes only
+          allow_filetypes = {
+            "go",
+          },
+          -- disable format on save for specified filetypes
+          ignore_filetypes = {
+            "python",
+          },
+        },
+        -- disable formatting capabilities for specific language servers
+        disabled = {
+          "lua_ls",
+        },
+        -- default format timeout
+        timeout_ms = 1000,
+        -- fully override the default formatting function
+        filter = function(client)
+          return true
+        end,
+      },
+      -- Configure how language servers get set up
+      handlers = {
+        -- default handler, first entry with no key
+        function(server, opts)
+          require("lspconfig")[server].setup(opts)
+        end,
+        -- custom function handler for pyright
+        pyright = function(_, opts)
+          require("lspconfig").pyright.setup(opts)
+        end,
+        -- set to false to disable the setup of a language server
+        rust_analyzer = false,
+      },
+      -- Configuration of mappings added when attaching a language server during the core `on_attach` function
+      -- The first key into the table is the vim map mode (`:h map-modes`), and the value is a table of entries to be passed to `vim.keymap.set` (`:h vim.keymap.set`):
+      --   - The key is the first parameter or the vim mode (only a single mode supported) and the value is a table of keymaps within that mode:
+      --     - The first element with no key in the table is the action (the 2nd parameter) and the rest of the keys/value pairs are options for the third parameter.
+      --       There is also a special `cond` key which can either be a string of a language server capability or a function with `client` and `bufnr` parameters that returns a boolean of whether or not the mapping is added.
+      mappings = {
+        -- map mode (:h map-modes)
+        n = {
+          -- a binding with no condition and therefore is always added
+          gl = {
+            function() vim.diagnostic.open_float() end,
+            desc = "Hover diagnostics",
+          },
+          -- condition for only server with declaration capabilities
+          gD = {
+            function() vim.lsp.buf.declaration() end,
+            desc = "Declaration of current symbol",
+            cond = "textDocument/declaration",
+          },
+          -- condition with a full function with `client` and `bufnr`
+          ["<leader>uY"] = {
+            function() require("astrolsp.toggles").buffer_semantic_tokens() end,
+            desc = "Toggle LSP semantic highlight (buffer)",
+            cond = function(client, bufnr)
+              return client.server_capabilities.semanticTokensProvider and vim.lsp.semantic_tokens
+            end,
+          },
+        },
+      },
+      -- A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
+      servers = { "dartls" },
+      -- A custom `on_attach` function to be run after the default `on_attach` function, takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
+      on_attach = function(client, bufnr)
+        client.server_capabilities.semanticTokensProvider = nil
+      end,
+    }
+<
+
+
+INTEGRATIONS                                  *astrolsp-astrolsp-integrations*
+
+**AstroLSP** can be used as the basis for configuring plugins such as
+`nvim-lspconfig` <https://github.com/neovim/nvim-lspconfig> and
+`mason-lspconfig` <https://github.com/williamboman/mason-lspconfig.nvim>. Here
+are a few examples (using `lazy.nvim` <https://github.com/folke/lazy.nvim>
+plugin manager):
+
+
+NVIM-LSPCONFIG ~
+
+>lua
+    {
+      "neovim/nvim-lspconfig",
+      dependencies = {
+        { "AstroNvim/astrolsp", opts = {} },
+      },
+      config = function()
+        -- set up servers configured with AstroLSP
+        vim.tbl_map(require("astrolsp").lsp_setup, require("astrolsp").config.servers)
+      end,
+    }
+<
+
+
+NVIM-LSPCONFIG + MASON.NVIM + MASON-LSPCONFIG.NVIM ~
+
+>lua
+    {
+      "neovim/nvim-lspconfig",
+      dependencies = {
+        { "AstroNvim/astrolsp", opts = {} },
+        {
+          "williamboman/mason-lspconfig.nvim", -- MUST be set up before `nvim-lspconfig`
+          dependencies = { "williamboman/mason.nvim" },
+          opts = function()
+            return {
+              -- use AstroLSP setup for mason-lspconfig
+              handlers = { function(server) require("astrolsp").lsp_setup(server) end },
+            }
+          end,
+        },
+      },
+      config = function()
+        -- set up servers configured with AstroLSP
+        vim.tbl_map(require("astrolsp").lsp_setup, require("astrolsp").config.servers)
+      end,
+    }
+<
+
+
+NULL-LS.NVIM ~
+
+>lua
+    {
+      "jose-elias-alvarez/null-ls.nvim",
+      dependencies = {
+        { "AstroNvim/astrolsp", opts = {} },
+      },
+      opts = function() return { on_attach = require("astrolsp").on_attach } end,
+    }
+<
+
+
+API                                                    *astrolsp-astrolsp-api*
+
+**AstroLSP** provides a Lua API with utility functions. This can be viewed with
+`:h astrolsp` or in the repository at doc/api.md <doc/api.md>
 
 
 ==============================================================================
