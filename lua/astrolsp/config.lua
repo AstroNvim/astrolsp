@@ -51,7 +51,7 @@
 ---  }
 ---}
 ---```
----@field capabilities table?
+---@field capabilities lsp.ClientCapabilities?
 ---Configure language servers for `lspconfig` (`:h lspconfig-setup`)
 ---Example:
 --
@@ -182,7 +182,7 @@
 ---  client.server_capabilities.semanticTokensProvider = nil
 ---end
 ---```
----@field on_attach fun(client:table,bufnr:integer)?
+---@field on_attach fun(client:lsp.Client,bufnr:integer)?
 
 ---@type AstroLSPOpts
 local M = {
