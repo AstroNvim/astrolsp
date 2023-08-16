@@ -125,8 +125,8 @@ M.on_attach = function(client, bufnr)
     )
     local autoformat = M.config.formatting.format_on_save
     local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
-    if vim.b[bufnr].autoformat_enabled == nil then
-      vim.b[bufnr].autoformat_enabled = autoformat.enabled
+    if vim.b[bufnr].autoformat == nil then
+      vim.b[bufnr].autoformat = autoformat.enabled
         and (tbl_isempty(autoformat.allow_filetypes or {}) or tbl_contains(autoformat.allow_filetypes, filetype))
         and (tbl_isempty(autoformat.ignore_filetypes or {}) or not tbl_contains(autoformat.ignore_filetypes, filetype))
     end
@@ -138,9 +138,9 @@ M.on_attach = function(client, bufnr)
           del_buffer_autocmd("lsp_auto_format", bufnr)
           return
         end
-        local autoformat_enabled = vim.b[bufnr].autoformat_enabled
-        if autoformat_enabled == nil then autoformat_enabled = autoformat.enabled end
-        if autoformat_enabled and ((not autoformat.filter) or autoformat.filter(bufnr)) then
+        local buffer_autoformat = vim.b[bufnr].autoformat
+        if buffer_autoformat == nil then buffer_autoformat = autoformat.enabled end
+        if buffer_autoformat and ((not autoformat.filter) or autoformat.filter(bufnr)) then
           vim.lsp.buf.format(vim.tbl_deep_extend("force", M.format_opts, { bufnr = bufnr }))
         end
       end,
