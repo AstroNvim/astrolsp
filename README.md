@@ -207,11 +207,11 @@ require("astrolsp").setup({
 }
 ```
 
-### [null-ls.nvim][null-ls]
+### [none-ls.nvim][none-ls]
 
 ```lua
 {
-  "jose-elias-alvarez/null-ls.nvim",
+  "nvimtools/none-ls.nvim",
   dependencies = {
     { "AstroNvim/astrolsp", opts = {} },
   },
@@ -231,4 +231,4 @@ If you plan to contribute, please check the [contribution guidelines](https://gi
 [lspconfig]: https://github.com/neovim/nvim-lspconfig
 [mason]: https://github.com/williamboman/mason.nvim
 [mason-lspconfig]: https://github.com/williamboman/mason-lspconfig.nvim
-[null-ls]: https://github.com/jose-elias-alvarez/null-ls.nvim
+[none-ls]: https://github.com/nvimtools/none-ls.nvim
