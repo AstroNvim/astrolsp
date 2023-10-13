@@ -115,7 +115,9 @@ M.on_attach = function(client, bufnr)
   end
 
   if
-    client.supports_method "textDocument/formatting" and not tbl_contains(M.config.formatting.disabled, client.name)
+    client.supports_method "textDocument/formatting"
+    and M.config.formatting.disabled ~= true
+    and not tbl_contains(M.config.formatting.disabled, client.name)
   then
     vim.api.nvim_buf_create_user_command(
       bufnr,

@@ -22,7 +22,7 @@
 
 ---@class AstroLSPFormatOpts
 ---@field format_on_save boolean|AstroLSPFormatOnSaveOpts? control formatting on save options
----@field disabled string[]? a list like table of language server names to disable formatting
+---@field disabled true|string[]? true to disable all or a list like table of language server names to disable formatting
 ---@field timeout_ms integer? configure the timeout length for formatting
 ---@field filter (fun(client):boolean)? fully override the default formatting filter function
 
