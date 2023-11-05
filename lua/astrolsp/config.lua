@@ -112,7 +112,7 @@
 ---  end
 ---}
 ---```
----@field formatting AstroLSPFormatOpts
+---@field formatting AstroLSPFormatOpts?
 ---Configure how language servers get set up
 ---Example:
 --
