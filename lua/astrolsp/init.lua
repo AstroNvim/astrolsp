@@ -173,7 +173,7 @@ M.on_attach = function(client, bufnr)
   if client.supports_method "textDocument/inlayHint" then
     if vim.b[bufnr].inlay_hints == nil then vim.b[bufnr].inlay_hints = M.config.features.inlay_hints end
     -- TODO: remove check after dropping support for Neovim v0.9
-    if vim.lsp.inlay_hint and vim.b[bufnr].inlay_hints then vim.lsp.inlay_hint(bufnr, true) end
+    if vim.lsp.inlay_hint and vim.b[bufnr].inlay_hints then vim.lsp.inlay_hint.enable(bufnr, true) end
   end
 
   if client.supports_method "textDocument/semanticTokens/full" and vim.lsp.semantic_tokens then
