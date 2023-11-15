@@ -126,7 +126,7 @@ M.on_attach = function(client, bufnr)
       { desc = "Format file with LSP" }
     )
     local autoformat = M.config.formatting.format_on_save
-    local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+    local filetype = vim.bo[bufnr].filetype
     if vim.b[bufnr].autoformat == nil then
       vim.b[bufnr].autoformat = autoformat.enabled
         and (tbl_isempty(autoformat.allow_filetypes or {}) or tbl_contains(autoformat.allow_filetypes, filetype))
