@@ -227,12 +227,11 @@ end
 ---@return table # The table of LSP options used when setting up the given language server
 function M.lsp_opts(server_name)
   if server_name == "lua_ls" then pcall(require, "neodev") end
-  local server = require("lspconfig")[server_name]
-  local opts = vim.tbl_deep_extend("force", server, { capabilities = M.config.capabilities, flags = M.config.flags })
+  local opts = { capabilities = M.config.capabilities, flags = M.config.flags }
   if M.config.config[server_name] then opts = vim.tbl_deep_extend("force", opts, M.config.config[server_name]) end
   assert(opts)
 
-  local old_on_attach = require("lspconfig")[server_name].on_attach
+  local old_on_attach = require("lspconfig.configs")[server_name] and require("lspconfig")[server_name].on_attach
   local user_on_attach = opts.on_attach
   opts.on_attach = function(client, bufnr)
     if type(old_on_attach) == "function" then old_on_attach(client, bufnr) end
