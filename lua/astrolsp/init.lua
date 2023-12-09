@@ -125,7 +125,10 @@ M.on_attach = function(client, bufnr)
       function() vim.lsp.buf.format(M.format_opts) end,
       { desc = "Format file with LSP" }
     )
-    local autoformat = M.config.formatting.format_on_save
+
+    local formatting = M.config.formatting
+    local autoformat = formatting.format_on_save
+    
     local filetype = vim.bo[bufnr].filetype
     if vim.b[bufnr].autoformat == nil then
       vim.b[bufnr].autoformat = autoformat.enabled
@@ -142,7 +145,7 @@ M.on_attach = function(client, bufnr)
         end
         local buffer_autoformat = vim.b[bufnr].autoformat
         if buffer_autoformat == nil then buffer_autoformat = autoformat.enabled end
-        if buffer_autoformat and ((not autoformat.filter) or autoformat.filter(bufnr)) then
+        if buffer_autoformat and ((not formatting.filter) or formatting.filter(bufnr)) then
           vim.lsp.buf.format(vim.tbl_deep_extend("force", M.format_opts, { bufnr = bufnr }))
         end
       end,
