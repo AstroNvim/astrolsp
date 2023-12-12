@@ -22,7 +22,7 @@ function M.autoformat(silent)
 end
 
 --- Toggle buffer local auto format
----@param bufnr? number The buffer to toggle the autoformatting of, default the current buffer
+---@param bufnr? integer The buffer to toggle the autoformatting of, default the current buffer
 ---@param silent? boolean if true then don't sent a notification
 function M.buffer_autoformat(bufnr, silent)
   bufnr = bufnr or 0
@@ -33,7 +33,7 @@ function M.buffer_autoformat(bufnr, silent)
 end
 
 --- Toggle buffer LSP inlay hints
----@param bufnr? number the buffer to toggle the clients on
+---@param bufnr? integer the buffer to toggle the clients on
 ---@param silent? boolean if true then don't sent a notification
 function M.buffer_inlay_hints(bufnr, silent)
   bufnr = bufnr or 0
@@ -46,7 +46,7 @@ function M.buffer_inlay_hints(bufnr, silent)
 end
 
 --- Toggle buffer semantic token highlighting for all language servers that support it
----@param bufnr? number the buffer to toggle the clients on
+---@param bufnr? integer the buffer to toggle the clients on
 ---@param silent? boolean if true then don't sent a notification
 function M.buffer_semantic_tokens(bufnr, silent)
   bufnr = bufnr or 0
