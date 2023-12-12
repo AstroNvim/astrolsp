@@ -78,7 +78,7 @@ function astrolsp.lsp_setup(server: string)
 
 
 ```lua
-function astrolsp.on_attach(client: table, bufnr: number)
+function astrolsp.on_attach(client: table, bufnr: integer)
 ```
 
 *param* `client` — The LSP client details when attaching
@@ -125,7 +125,7 @@ function astrolsp.toggles.autoformat(silent?: boolean)
 
 
 ```lua
-function astrolsp.toggles.buffer_autoformat(bufnr?: number, silent?: boolean)
+function astrolsp.toggles.buffer_autoformat(bufnr?: integer, silent?: boolean)
 ```
 
  Toggle buffer local auto format
@@ -138,7 +138,7 @@ function astrolsp.toggles.buffer_autoformat(bufnr?: number, silent?: boolean)
 
 
 ```lua
-function astrolsp.toggles.buffer_inlay_hints(bufnr?: number, silent?: boolean)
+function astrolsp.toggles.buffer_inlay_hints(bufnr?: integer, silent?: boolean)
 ```
 
  Toggle buffer LSP inlay hints
@@ -151,7 +151,7 @@ function astrolsp.toggles.buffer_inlay_hints(bufnr?: number, silent?: boolean)
 
 
 ```lua
-function astrolsp.toggles.buffer_semantic_tokens(bufnr?: number, silent?: boolean)
+function astrolsp.toggles.buffer_semantic_tokens(bufnr?: integer, silent?: boolean)
 ```
 
  Toggle buffer semantic token highlighting for all language servers that support it
