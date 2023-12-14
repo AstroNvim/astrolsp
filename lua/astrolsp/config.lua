@@ -174,6 +174,15 @@
 ---servers = { "dartls" }
 ---```
 ---@field servers string[]?
+---Configure signs (`:h sign_define()`)
+---Example:
+--
+---```lua
+---signs = {
+---  { name = "DapBreakPoint", text = "", texthl = "DiagnosticInfo" },
+---},
+---```
+---@field signs table[]?
 ---A custom `on_attach` function to be run after the default `on_attach` function, takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
 ---Example:
 --
@@ -202,6 +211,7 @@ local M = {
   handlers = {},
   mappings = {},
   servers = {},
+  signs = {},
   on_attach = nil,
 }
 

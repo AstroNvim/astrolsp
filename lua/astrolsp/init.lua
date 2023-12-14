@@ -25,9 +25,7 @@ end
 M.diagnostics = { [0] = {}, {}, {}, {} }
 
 local function setup_diagnostics()
-  for _, sign in ipairs(M.config.diagnostics.signs.active) do
-    vim.fn.sign_define(sign.name, sign)
-  end
+  if M.config.signs then vim.fn.sign_define(M.config.signs) end
   M.diagnostics = {
     -- diagnostics off
     [0] = vim.tbl_deep_extend(
@@ -245,6 +243,22 @@ end
 ---@param opts AstroLSPOpts options passed by the user to configure AstroLSP
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts)
+
+  -- TODO: Remove when dropping support for Neovim v0.9
+  -- Backwards compatibility of new diagnostic sign API to Neovim v0.9
+  if vim.fn.has "nvim-0.10" ~= 1 then
+    local diagnostic_text = (M.config.diagnostics and M.config.diagnostics.signs and M.config.diagnostics.signs.text)
+      or {}
+    if not M.config.signs then M.config.signs = {} end
+    for _, type in ipairs { "Error", "Hint", "Info", "Warn" } do
+      local name = "DiagnosticSign" .. type
+      table.insert(M.config.signs, {
+        name = name,
+        text = diagnostic_text[vim.diagnostic.severity[type:upper()]],
+        texthl = name,
+      })
+    end
+  end
 
   setup_diagnostics()
 
