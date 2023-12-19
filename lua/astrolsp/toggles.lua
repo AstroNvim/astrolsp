@@ -18,7 +18,7 @@ local function bool2str(bool) return bool and "on" or "off" end
 ---@param silent? boolean if true then don't sent a notification
 function M.autoformat(silent)
   features.autoformat = not features.autoformat
-  ui_notify(silent, string.format("Global autoformatting %s", bool2str(features.autoformat)))
+  ui_notify(silent, ("Global autoformatting %s"):format(bool2str(features.autoformat)))
 end
 
 --- Toggle buffer local auto format
@@ -29,7 +29,7 @@ function M.buffer_autoformat(bufnr, silent)
   local old_val = vim.b[bufnr].autoformat
   if old_val == nil then old_val = features.autoformat end
   vim.b[bufnr].autoformat = not old_val
-  ui_notify(silent, string.format("Buffer autoformatting %s", bool2str(vim.b[bufnr].autoformat)))
+  ui_notify(silent, ("Buffer autoformatting %s"):format(bool2str(vim.b[bufnr].autoformat)))
 end
 
 --- Toggle buffer LSP inlay hints
@@ -41,7 +41,7 @@ function M.buffer_inlay_hints(bufnr, silent)
   -- TODO: remove check after dropping support for Neovim v0.9
   if vim.lsp.inlay_hint then
     vim.lsp.inlay_hint.enable(bufnr, vim.b[bufnr].inlay_hints)
-    ui_notify(silent, string.format("Inlay hints %s", bool2str(vim.b[bufnr].inlay_hints)))
+    ui_notify(silent, ("Inlay hints %s"):format(bool2str(vim.b[bufnr].inlay_hints)))
   end
 end
 
@@ -61,7 +61,7 @@ function M.buffer_semantic_tokens(bufnr, silent)
   end
   ui_notify(
     not toggled or silent,
-    string.format("Buffer lsp semantic highlighting %s", bool2str(vim.b[bufnr].semantic_tokens))
+    ("Buffer lsp semantic highlighting %s"):format(bool2str(vim.b[bufnr].semantic_tokens))
   )
 end
 
@@ -70,7 +70,7 @@ end
 function M.codelens(silent)
   features.codelens = not features.codelens
   if not features.codelens then vim.lsp.codelens.clear() end
-  ui_notify(silent, string.format("CodeLens %s", bool2str(features.codelens)))
+  ui_notify(silent, ("CodeLens %s"):format(bool2str(features.codelens)))
 end
 
 --- Toggle diagnostics
