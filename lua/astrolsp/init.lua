@@ -247,8 +247,7 @@ function M.setup(opts)
   -- TODO: Remove when dropping support for Neovim v0.9
   -- Backwards compatibility of new diagnostic sign API to Neovim v0.9
   if vim.fn.has "nvim-0.10" ~= 1 then
-    local diagnostic_text = (M.config.diagnostics and M.config.diagnostics.signs and M.config.diagnostics.signs.text)
-      or {}
+    local diagnostic_text = vim.tbl_get(M.config, "diagnostics", "signs", "text") or {}
     if not M.config.signs then M.config.signs = {} end
     for _, type in ipairs { "Error", "Hint", "Info", "Warn" } do
       local name = "DiagnosticSign" .. type
