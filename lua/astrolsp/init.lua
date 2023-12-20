@@ -87,6 +87,7 @@ end
 
 local function has_capability(capability, filter)
   -- TODO: remove check after dropping support for Neovim v0.9
+  ---@diagnostic disable-next-line: deprecated
   for _, client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients)(filter)) do
     if client.supports_method(capability) then return true end
   end
@@ -115,7 +116,7 @@ M.on_attach = function(client, bufnr)
   if
     client.supports_method "textDocument/formatting"
     and M.config.formatting.disabled ~= true
-    and not tbl_contains(M.config.formatting.disabled, client.name)
+    and not tbl_contains(vim.tbl_get(M.config, "formatting", "disabled"), client.name)
   then
     vim.api.nvim_buf_create_user_command(
       bufnr,
@@ -123,7 +124,7 @@ M.on_attach = function(client, bufnr)
       function() vim.lsp.buf.format(M.format_opts) end,
       { desc = "Format file with LSP" }
     )
-    local autoformat = M.config.formatting.format_on_save
+    local autoformat = assert(M.config.formatting.format_on_save)
     local filetype = vim.bo[bufnr].filetype
     if vim.b[bufnr].autoformat == nil then
       vim.b[bufnr].autoformat = autoformat.enabled
@@ -192,12 +193,14 @@ M.on_attach = function(client, bufnr)
         or type(map_opts.cond) == "function" and map_opts.cond(client, bufnr)
         or type(map_opts.cond) == "string" and client.supports_method(map_opts.cond)
       then
-        local rhs = map_opts
+        local rhs
         if type(map_opts) == "table" then
           rhs = map_opts[1]
           map_opts = assert(vim.tbl_deep_extend("force", map_opts, { buffer = bufnr }))
           map_opts[1], map_opts.cond = nil, nil
         else
+          ---@cast map_opts -AstroLSPMapping
+          rhs = map_opts
           map_opts = { buffer = bufnr }
         end
         if not rhs or map_opts.name then
@@ -212,6 +215,7 @@ M.on_attach = function(client, bufnr)
 
   for id, _ in pairs(M.lsp_progress) do -- clear lingering progress messages
     -- TODO: remove check after dropping support for Neovim v0.9
+    ---@diagnostic disable-next-line: deprecated
     if not next((vim.lsp.get_clients or vim.lsp.get_active_clients) { id = tonumber(id:match "^%d+") }) then
       M.lsp_progress[id] = nil
     end
@@ -263,14 +267,15 @@ function M.setup(opts)
 
   --- Format options that are passed into the `vim.lsp.buf.format` (`:h vim.lsp.buf.format()`)
   ---@type AstroLSPFormatOpts
-  M.format_opts = vim.deepcopy(M.config.formatting)
+  M.format_opts = vim.deepcopy(assert(M.config.formatting))
   M.format_opts.disabled = nil
   M.format_opts.format_on_save = nil
   M.format_opts.filter = function(client)
     local filter = M.config.formatting.filter
     local disabled = M.config.formatting.disabled or {}
     -- check if client is fully disabled or filtered by function
-    return not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
+    return disabled ~= true
+      and not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
   end
 
   local orig_handler = vim.lsp.handlers["$/progress"]

@@ -53,6 +53,7 @@ function M.buffer_semantic_tokens(bufnr, silent)
   vim.b[bufnr].semantic_tokens = not vim.b[bufnr].semantic_tokens
   local toggled = false
   -- TODO: remove check after dropping support for Neovim v0.9
+  ---@diagnostic disable-next-line: deprecated
   for _, client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = bufnr }) do
     if client.server_capabilities.semanticTokensProvider then
       vim.lsp.semantic_tokens[vim.b[bufnr].semantic_tokens and "start" or "stop"](bufnr, client.id)

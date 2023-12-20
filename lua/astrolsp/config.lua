@@ -7,6 +7,11 @@
 -- copyright 2023
 -- license GNU General Public License v3.0
 
+---@class AstroLSPMapping: vim.api.keyset.keymap
+---@field [1] string|function rhs of keymap
+---@field name string? optional which-key mapping name
+---@field cond boolean|function|string? condition for the mapping
+
 ---@class AstroLSPFeatureOpts
 ---@field autoformat boolean? enable or disable auto formatting on start (boolean' default = true)
 ---@field codelens boolean? enable/disable codelens refresh on start (boolean; default = true)
@@ -19,6 +24,7 @@
 ---@field enabled boolean? enable or disable format on save globally
 ---@field allow_filetypes string[]? a list like table of filetypes to whitelist formatting on save
 ---@field ignore_filetypes string[]? a list like table of filetypes to blacklist formatting on save
+---@field filter (fun(bufnr):boolean)? a function for doing a custom format on save filter based on buffer number
 
 ---@class AstroLSPFormatOpts
 ---@field format_on_save boolean|AstroLSPFormatOnSaveOpts? control formatting on save options
@@ -166,7 +172,7 @@
 ---  }
 ---}
 ---```
----@field mappings table<string,table<string,(table|boolean|string)?>?>?
+---@field mappings table<string,table<string,(AstroLSPMapping|string|false)?>?>?
 ---A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
 ---Example:
 --
@@ -204,6 +210,7 @@ local M = {
     semantic_tokens = true,
   },
   capabilities = {},
+  ---@diagnostic disable-next-line: missing-fields
   config = {},
   diagnostics = {},
   flags = {},
