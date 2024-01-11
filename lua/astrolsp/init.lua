@@ -265,6 +265,11 @@ function M.setup(opts)
 
   setup_diagnostics()
 
+  -- normalize format_on_save to table format
+  if vim.tbl_get(M.config, "formatting", "format_on_save") == false then
+    M.config.formatting.format_on_save = { enabled = false }
+  end
+
   --- Format options that are passed into the `vim.lsp.buf.format` (`:h vim.lsp.buf.format()`)
   ---@type AstroLSPFormatOpts
   M.format_opts = vim.deepcopy(assert(M.config.formatting))

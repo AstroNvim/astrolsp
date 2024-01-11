@@ -13,7 +13,6 @@
 ---@field cond boolean|function|string? condition for the mapping
 
 ---@class AstroLSPFeatureOpts
----@field autoformat boolean? enable or disable auto formatting on start (boolean' default = true)
 ---@field codelens boolean? enable/disable codelens refresh on start (boolean; default = true)
 ---@field diagnostics_mode integer? diagnostic mode on start (0 = off, 1 = no signs/virtual text, 2 = no virtual text, 3 = off; default = 3)
 ---@field inlay_hints boolean? enable/disable inlay hints on start (boolean; default = false)
@@ -38,7 +37,6 @@
 --
 ---```lua
 ---features = {
----  autoformat = true,
 ---  codelens = true,
 ---  diagnostics_mode = 3,
 ---  inlay_hints = false,
@@ -202,7 +200,6 @@
 ---@type AstroLSPOpts
 local M = {
   features = {
-    autoformat = true,
     codelens = true,
     diagnostics_mode = 3,
     inlay_hints = false,

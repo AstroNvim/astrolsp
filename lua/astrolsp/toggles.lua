@@ -9,7 +9,9 @@
 ---@class astrolsp.toggles
 local M = {}
 
-local features = require("astrolsp").config.features --[[@as AstroLSPFeatureOpts]]
+local config = require("astrolsp").config
+local features = config.features --[[@as AstroLSPFeatureOpts]]
+local format_on_save = config.formatting.format_on_save --[[@as AstroLSPFormatOnSaveOpts]]
 
 local function ui_notify(silent, ...) return not silent and vim.notify(...) end
 local function bool2str(bool) return bool and "on" or "off" end
@@ -17,8 +19,8 @@ local function bool2str(bool) return bool and "on" or "off" end
 --- Toggle auto format
 ---@param silent? boolean if true then don't sent a notification
 function M.autoformat(silent)
-  features.autoformat = not features.autoformat
-  ui_notify(silent, ("Global autoformatting %s"):format(bool2str(features.autoformat)))
+  format_on_save.enabled = not format_on_save.enabled
+  ui_notify(silent, ("Global autoformatting %s"):format(bool2str(format_on_save.enabled)))
 end
 
 --- Toggle buffer local auto format
@@ -27,7 +29,10 @@ end
 function M.buffer_autoformat(bufnr, silent)
   bufnr = bufnr or 0
   local old_val = vim.b[bufnr].autoformat
-  if old_val == nil then old_val = features.autoformat end
+  if old_val == nil then
+    ui_notify(silent, "No LSP attached with auto formatting")
+    return
+  end
   vim.b[bufnr].autoformat = not old_val
   ui_notify(silent, ("Buffer autoformatting %s"):format(bool2str(vim.b[bufnr].autoformat)))
 end
