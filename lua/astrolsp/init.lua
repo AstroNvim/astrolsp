@@ -65,53 +65,11 @@ function M.lsp_setup(server)
   end
 end
 
-local function add_buffer_autocmd(augroup, bufnr, autocmds)
-  if not vim.tbl_islist(autocmds) then autocmds = { autocmds } end
-  local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
-  if not cmds_found or vim.tbl_isempty(cmds) then
-    vim.api.nvim_create_augroup(augroup, { clear = false })
-    for _, autocmd in ipairs(autocmds) do
-      local events = autocmd.events
-      autocmd.events = nil
-      autocmd.group = augroup
-      autocmd.buffer = bufnr
-      vim.api.nvim_create_autocmd(events, autocmd)
-    end
-  end
-end
-
-local function del_buffer_autocmd(augroup, bufnr)
-  local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
-  if cmds_found then vim.tbl_map(function(cmd) vim.api.nvim_del_autocmd(cmd.id) end, cmds) end
-end
-
-local function has_capability(capability, filter)
-  -- TODO: remove check after dropping support for Neovim v0.9
-  ---@diagnostic disable-next-line: deprecated
-  for _, client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients)(filter)) do
-    if client.supports_method(capability) then return true end
-  end
-  return false
-end
-
 --- The `on_attach` function used by AstroNvim
 ---@param client table The LSP client details when attaching
 ---@param bufnr integer The buffer that the LSP client is attaching to
 M.on_attach = function(client, bufnr)
-  if client.supports_method "textDocument/codeLens" then
-    add_buffer_autocmd("lsp_codelens_refresh", bufnr, {
-      events = { "InsertLeave", "BufEnter" },
-      desc = "Refresh codelens",
-      callback = function()
-        if not has_capability("textDocument/codeLens", { bufnr = bufnr }) then
-          del_buffer_autocmd("lsp_codelens_refresh", bufnr)
-          return
-        end
-        if M.config.features.codelens then vim.lsp.codelens.refresh() end
-      end,
-    })
-    if M.config.features.codelens then vim.lsp.codelens.refresh() end
-  end
+  if client.supports_method "textDocument/codeLens" and M.config.features.codelens then vim.lsp.codelens.refresh() end
 
   if
     client.supports_method "textDocument/formatting"
@@ -131,42 +89,6 @@ M.on_attach = function(client, bufnr)
         and (tbl_isempty(autoformat.allow_filetypes or {}) or tbl_contains(autoformat.allow_filetypes, filetype))
         and (tbl_isempty(autoformat.ignore_filetypes or {}) or not tbl_contains(autoformat.ignore_filetypes, filetype))
     end
-    add_buffer_autocmd("lsp_auto_format", bufnr, {
-      events = "BufWritePre",
-      desc = "autoformat on save",
-      callback = function()
-        if not has_capability("textDocument/formatting", { bufnr = bufnr }) then
-          del_buffer_autocmd("lsp_auto_format", bufnr)
-          return
-        end
-        local buffer_autoformat = vim.b[bufnr].autoformat
-        if buffer_autoformat == nil then buffer_autoformat = autoformat.enabled end
-        if buffer_autoformat and ((not autoformat.filter) or autoformat.filter(bufnr)) then
-          vim.lsp.buf.format(vim.tbl_deep_extend("force", M.format_opts, { bufnr = bufnr }))
-        end
-      end,
-    })
-  end
-
-  if client.supports_method "textDocument/documentHighlight" then
-    add_buffer_autocmd("lsp_document_highlight", bufnr, {
-      {
-        events = { "CursorHold", "CursorHoldI" },
-        desc = "highlight references when cursor holds",
-        callback = function()
-          if not has_capability("textDocument/documentHighlight", { bufnr = bufnr }) then
-            del_buffer_autocmd("lsp_document_highlight", bufnr)
-            return
-          end
-          vim.lsp.buf.document_highlight()
-        end,
-      },
-      {
-        events = { "CursorMoved", "CursorMovedI", "BufLeave" },
-        desc = "clear references when cursor moves",
-        callback = function() vim.lsp.buf.clear_references() end,
-      },
-    })
   end
 
   if client.supports_method "textDocument/inlayHint" then
@@ -180,6 +102,43 @@ M.on_attach = function(client, bufnr)
       vim.b[bufnr].semantic_tokens = true
     else
       client.server_capabilities.semanticTokensProvider = nil
+    end
+  end
+
+  for augroup, autocmds in pairs(M.config.autocmds) do
+    if autocmds then
+      local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
+      if not cmds_found or vim.tbl_isempty(cmds) then
+        local cond = autocmds.cond
+        local cond_func = type(cond) == "string" and function(c) return c.supports_method(cond) end or cond
+        if cond_func == nil or cond_func(client, bufnr) then
+          vim.api.nvim_create_augroup(augroup, { clear = false })
+          for _, autocmd in ipairs(autocmds) do
+            local opts = vim.deepcopy(autocmd)
+            opts.command, opts.event = nil, nil
+            opts.group, opts.buffer = augroup, bufnr
+            local callback = autocmd.callback
+            if autocmd.command and not callback then callback = function() vim.cmd(autocmd.command) end end
+            opts.callback = function(args)
+              local valid = false
+              for _, cb_client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { buffer = bufnr }) do
+                if cond_func == nil or cond_func(cb_client, bufnr) then
+                  valid = true
+                  break
+                end
+              end
+              if not valid then
+                local cb_cmds_found, cb_cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
+                if cb_cmds_found then vim.tbl_map(function(cmd) vim.api.nvim_del_autocmd(cmd.id) end, cb_cmds) end
+                return
+              end
+              ---@diagnostic disable-next-line: redundant-parameter
+              return callback(args, client, bufnr)
+            end
+            vim.api.nvim_create_autocmd(autocmd.event, opts)
+          end
+        end
+      end
     end
   end
 

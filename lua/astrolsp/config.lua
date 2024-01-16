@@ -31,7 +31,41 @@
 ---@field timeout_ms integer? configure the timeout length for formatting
 ---@field filter (fun(client):boolean)? fully override the default formatting filter function
 
+---@class AstroLSPAutocmds
+---@field cond string|(fun(client,bufnr):boolean)? condition for the auto commands
+---@field [integer] table an autocommand definition
+
 ---@class AstroLSPOpts
+---Configuration of auto commands
+---The key into the table is the group name for the auto commands (`:h augroup`) and the value
+---is a list of autocmd tables where `event` key is the event(s) that trigger the auto command
+---and the rest are auto command options (`:h nvim_create_autocmd`). A `cond` key can also be
+---added to the list to control when an `augroup` should be added as well as deleted if it's never matching
+---Example:
+---
+---```lua
+---autocmds = {
+---  -- first key is the `augroup` (:h augroup)
+---  lsp_document_highlight = {
+---    -- condition to create/delete auto command group
+---    cond = "textDocument/documentHighlight",
+---    -- list of auto commands to set
+---    {
+---      -- events to trigger
+---      event = { "CursorHold", "CursorHoldI" },
+---      -- the rest of the autocmd options (:h nvim_create_autocmd)
+---      desc = "Document Highlighting",
+---      callback = function() vim.lsp.buf.document_highlight() end
+---    },
+---    {
+---      event = { "CursorMoved", "CursorMovedI", "BufLeave" },
+---      desc = "Document Highlighting Clear",
+---      callback = function() vim.lsp.buf.clear_references() end
+---    }
+---  }
+---}
+---```
+---@field autocmds table<string,AstroLSPAutocmds|false>?
 ---Configuration table of features provided by AstroLSP
 ---Example:
 --
@@ -199,6 +233,7 @@
 
 ---@type AstroLSPOpts
 local M = {
+  autocmds = {},
   features = {
     codelens = true,
     diagnostics_mode = 3,

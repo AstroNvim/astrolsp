@@ -32,13 +32,13 @@ Install the plugin with your plugin manager of choice:
 [**packer.nvim**](https://github.com/wbthomason/packer.nvim)
 
 ```lua
-use({
+use {
   "AstroNvim/astrolsp",
-})
+}
 
-require("astrolsp").setup({
+require("astrolsp").setup {
   -- set configuration options  as described below
-})
+}
 ```
 
 ## ⚙️ Configuration
@@ -47,7 +47,7 @@ require("astrolsp").setup({
 
 ```lua
 ---@type AstroLSPConfig
-{
+local opts = {
   -- Configuration table of features provided by AstroLSP
   features = {
     autoformat = true, -- enable or disable auto formatting on start
@@ -56,6 +56,30 @@ require("astrolsp").setup({
     inlay_hints = false, -- enable/disable inlay hints on start
     lsp_handlers = true, -- enable/disable setting of lsp_handlers
     semantic_tokens = true, -- enable/disable semantic token highlighting
+  },
+  -- Configure buffer local auto commands to add when attaching a language server
+  autocmds = {
+    -- first key is the `augroup` (:h augroup)
+    lsp_document_highlight = {
+      -- condition to create/delete auto command group
+      -- can either be a string of a client capability or a function of `fun(client, bufnr): boolean`
+      -- condition will be resolved for each client on each execution and if it ever fails for all clients,
+      -- the auto commands will be deleted for that buffer
+      cond = "textDocument/documentHighlight",
+      -- list of auto commands to set
+      {
+        -- events to trigger
+        event = { "CursorHold", "CursorHoldI" },
+        -- the rest of the autocmd options (:h nvim_create_autocmd)
+        desc = "Document Highlighting",
+        callback = function() vim.lsp.buf.document_highlight() end,
+      },
+      {
+        event = { "CursorMoved", "CursorMovedI", "BufLeave" },
+        desc = "Document Highlighting Clear",
+        callback = function() vim.lsp.buf.clear_references() end,
+      },
+    },
   },
   -- Configure default capabilities for language servers (`:h vim.lsp.protocol.make_client.capabilities()`)
   capabilities = {
@@ -108,20 +132,14 @@ require("astrolsp").setup({
     -- default format timeout
     timeout_ms = 1000,
     -- fully override the default formatting function
-    filter = function(client)
-      return true
-    end,
+    filter = function(client) return true end,
   },
   -- Configure how language servers get set up
   handlers = {
     -- default handler, first entry with no key
-    function(server, opts)
-      require("lspconfig")[server].setup(opts)
-    end,
+    function(server, opts) require("lspconfig")[server].setup(opts) end,
     -- custom function handler for pyright
-    pyright = function(_, opts)
-      require("lspconfig").pyright.setup(opts)
-    end,
+    pyright = function(_, opts) require("lspconfig").pyright.setup(opts) end,
     -- set to false to disable the setup of a language server
     rust_analyzer = false,
   },
@@ -157,9 +175,7 @@ require("astrolsp").setup({
   -- A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
   servers = { "dartls" },
   -- A custom `on_attach` function to be run after the default `on_attach` function, takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
-  on_attach = function(client, bufnr)
-    client.server_capabilities.semanticTokensProvider = nil
-  end,
+  on_attach = function(client, bufnr) client.server_capabilities.semanticTokensProvider = nil end,
 }
 ```
 
