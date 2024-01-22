@@ -7,17 +7,23 @@
 -- copyright 2023
 -- license GNU General Public License v3.0
 
+---@alias AstroLSPCondition string|boolean|fun(client:lsp.Client,bufnr:integer):boolean conditional for doing something when attaching a language server
+
 ---@class AstroLSPMapping: vim.api.keyset.keymap
 ---@field [1] string|function rhs of keymap
 ---@field name string? optional which-key mapping name
----@field cond boolean|function|string? condition for the mapping
+---@field cond AstroLSPCondition? condition for whether or not to set the mapping during language server attachment
+
+---@class AstroLSPCommand: vim.api.keyset.user_command
+---@field [1] string|function the command to execute
+---@field cond AstroLSPCondition? condition for whether or not to create the user command during language server attachment
 
 ---@class AstroLSPAutocmd: vim.api.keyset.create_autocmd
 ---@field event string|string[] Event(s) that will trigger the handler
 
----@class AstroLSPCommand: vim.api.keyset.user_command
----@field [1] string|function the command to execute
----@field cond string|(fun(client,bufnr):boolean)? condition for the user command
+---@class AstroLSPAutocmds
+---@field cond AstroLSPCondition? condition for whether or not to create the auto commands during language server attachment
+---@field [integer] AstroLSPAutocmd an autocommand definition
 
 ---@class AstroLSPFeatureOpts
 ---@field codelens boolean? enable/disable codelens refresh on start (boolean; default = true)
@@ -37,10 +43,6 @@
 ---@field disabled true|string[]? true to disable all or a list like table of language server names to disable formatting
 ---@field timeout_ms integer? configure the timeout length for formatting
 ---@field filter (fun(client):boolean)? fully override the default formatting filter function
-
----@class AstroLSPAutocmds
----@field cond string|(fun(client,bufnr):boolean)? condition for the auto commands
----@field [integer] AstroLSPAutocmd an autocommand definition
 
 ---@class AstroLSPOpts
 ---Configuration of auto commands

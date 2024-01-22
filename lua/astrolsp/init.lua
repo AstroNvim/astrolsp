@@ -21,6 +21,21 @@ local function lsp_event(name)
   vim.schedule(function() vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end)
 end
 
+---@param cond AstroLSPCondition?
+---@param client lsp.Client
+---@param bufnr integer
+local function check_cond(cond, client, bufnr)
+  local active = true
+  if type(cond) == "function" then
+    active = cond(client, bufnr)
+  elseif type(cond) == "string" then
+    active = client.supports_method(cond)
+  elseif type(cond) == "boolean" then
+    active = cond
+  end
+  return active
+end
+
 --- A table of settings for different levels of diagnostics
 M.diagnostics = { [0] = {}, {}, {}, {} }
 
@@ -103,8 +118,7 @@ M.on_attach = function(client, bufnr)
   for cmd, spec in pairs(M.config.commands) do
     if spec then
       local cond = spec.cond
-      local cond_func = type(cond) == "string" and function(c) return c.supports_method(cond) end or cond
-      if cond_func == nil or cond_func(client, bufnr) then
+      if check_cond(cond, client, bufnr) then
         local action = spec[1]
         spec[1], spec.cond = nil, nil
         vim.api.nvim_buf_create_user_command(bufnr, cmd, action, spec)
@@ -118,8 +132,7 @@ M.on_attach = function(client, bufnr)
       local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
       if not cmds_found or vim.tbl_isempty(cmds) then
         local cond = autocmds.cond
-        local cond_func = type(cond) == "string" and function(c) return c.supports_method(cond) end or cond
-        if cond_func == nil or cond_func(client, bufnr) then
+        if check_cond(cond, client, bufnr) then
           local group = vim.api.nvim_create_augroup(augroup, { clear = false })
           for _, autocmd in ipairs(autocmds) do
             local callback, command, event = autocmd.callback, autocmd.command, autocmd.event
@@ -129,7 +142,7 @@ M.on_attach = function(client, bufnr)
             autocmd.callback = function(args)
               local invalid = true
               for _, cb_client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { buffer = bufnr }) do
-                if cond_func == nil or cond_func(cb_client, bufnr) then
+                if check_cond(cond, cb_client, bufnr) then
                   invalid = false
                   break
                 end
@@ -153,28 +166,25 @@ M.on_attach = function(client, bufnr)
   local wk_avail, wk = pcall(require, "which-key")
   for mode, maps in pairs(M.config.mappings) do
     for lhs, map_opts in pairs(maps) do
-      if
-        type(map_opts) ~= "table"
-        or map_opts.cond == nil
-        or type(map_opts.cond) == "boolean" and map_opts.cond
-        or type(map_opts.cond) == "function" and map_opts.cond(client, bufnr)
-        or type(map_opts.cond) == "string" and client.supports_method(map_opts.cond)
-      then
-        local rhs
-        if type(map_opts) == "table" then
-          rhs = map_opts[1]
-          map_opts = assert(vim.tbl_deep_extend("force", map_opts, { buffer = bufnr }))
-          map_opts[1], map_opts.cond = nil, nil
-        else
-          ---@cast map_opts -AstroLSPMapping
-          rhs = map_opts
-          map_opts = { buffer = bufnr }
-        end
-        if not rhs or map_opts.name then
-          if not map_opts.name then map_opts.name = map_opts.desc end
-          if wk_avail then wk.register({ [lhs] = map_opts }, { mode = mode }) end
-        else
-          vim.keymap.set(mode, lhs, rhs, map_opts)
+      if map_opts then
+        local active = map_opts ~= false
+        if type(map_opts) == "table" then active = check_cond(map_opts.cond, client, bufnr) end
+        if active then
+          local rhs
+          if type(map_opts) == "string" then
+            rhs = map_opts
+            map_opts = { buffer = bufnr }
+          else
+            rhs = map_opts[1]
+            map_opts = assert(vim.tbl_deep_extend("force", map_opts, { buffer = bufnr }))
+            map_opts[1], map_opts.cond = nil, nil
+          end
+          if not rhs or map_opts.name then
+            if not map_opts.name then map_opts.name = map_opts.desc end
+            if wk_avail then wk.register({ [lhs] = map_opts }, { mode = mode }) end
+          else
+            vim.keymap.set(mode, lhs, rhs, map_opts)
+          end
         end
       end
     end
