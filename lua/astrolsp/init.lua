@@ -25,15 +25,11 @@ end
 ---@param client lsp.Client
 ---@param bufnr integer
 local function check_cond(cond, client, bufnr)
-  local active = true
-  if type(cond) == "function" then
-    active = cond(client, bufnr)
-  elseif type(cond) == "string" then
-    active = client.supports_method(cond)
-  elseif type(cond) == "boolean" then
-    active = cond
-  end
-  return active
+  local cond_type = type(cond)
+  if cond_type == "function" then return cond(client, bufnr) end
+  if cond_type == "string" then return client.supports_method(cond) end
+  if cond_type == "boolean" then return cond end
+  return true
 end
 
 --- A table of settings for different levels of diagnostics
