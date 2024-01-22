@@ -14,8 +14,7 @@
   },
   "lspconfig": {
     "lua_ls": {
-      "Lua.format.enable": false,
-      "Lua.diagnostics.globals": ["astronvim"]
+      "Lua.format.enable": false
     }
   }
 }

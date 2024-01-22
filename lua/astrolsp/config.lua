@@ -35,6 +35,10 @@
 ---@field cond string|(fun(client,bufnr):boolean)? condition for the auto commands
 ---@field [integer] table an autocommand definition
 
+---@class AstroLSPCommand
+---@field cond string|(fun(client,bufnr):boolean)? condition for the user command
+---@field [string] any an autocommand definition
+
 ---@class AstroLSPOpts
 ---Configuration of auto commands
 ---The key into the table is the group name for the auto commands (`:h augroup`) and the value
@@ -66,6 +70,25 @@
 ---}
 ---```
 ---@field autocmds table<string,AstroLSPAutocmds|false>?
+---Configuration of user commands
+---The key into the table is the name of the user command and the value is a table of command options. A `cond` key
+---be added to control whether or not the user command is created when the language server is created.
+---Example:
+---
+---```lua
+---commands = {
+---  -- key is the command name
+---  Format = {
+---    -- first element with no key is the command (string or function)
+---    function() vim.lsp.buf.format() end,
+---    -- condition to create the user command
+---    cond = "textDocument/formatting",
+---    -- the rest are options for creating user commands (:h nvim_create_user_command)
+---    desc = "Format file with LSP",
+---  }
+---}
+---```
+---@field commands table<string,AstroLSPCommand|false>?
 ---Configuration table of features provided by AstroLSP
 ---Example:
 --

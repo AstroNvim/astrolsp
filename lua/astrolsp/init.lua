@@ -71,17 +71,11 @@ end
 M.on_attach = function(client, bufnr)
   if client.supports_method "textDocument/codeLens" and M.config.features.codelens then vim.lsp.codelens.refresh() end
 
+  local formatting_disabled = vim.tbl_get(M.config, "formatting", "disabled")
   if
     client.supports_method "textDocument/formatting"
-    and M.config.formatting.disabled ~= true
-    and not tbl_contains(vim.tbl_get(M.config, "formatting", "disabled"), client.name)
+    and (formatting_disabled ~= true and not tbl_contains(formatting_disabled, client.name))
   then
-    vim.api.nvim_buf_create_user_command(
-      bufnr,
-      "Format",
-      function() vim.lsp.buf.format(M.format_opts) end,
-      { desc = "Format file with LSP" }
-    )
     local autoformat = assert(M.config.formatting.format_on_save)
     local filetype = vim.bo[bufnr].filetype
     if vim.b[bufnr].autoformat == nil then
@@ -102,6 +96,20 @@ M.on_attach = function(client, bufnr)
       vim.b[bufnr].semantic_tokens = true
     else
       client.server_capabilities.semanticTokensProvider = nil
+    end
+  end
+
+  -- user commands
+  for cmd, spec in pairs(M.config.commands) do
+    if spec then
+      local cond = spec.cond
+      local cond_func = type(cond) == "string" and function(c) return c.supports_method(cond) end or cond
+      if cond_func == nil or cond_func(client, bufnr) then
+        local action = spec[1]
+        local opts = vim.deepcopy(spec)
+        opts[1], opts.cond = nil, nil
+        vim.api.nvim_buf_create_user_command(bufnr, cmd, action, opts)
+      end
     end
   end
 

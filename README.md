@@ -81,6 +81,17 @@ local opts = {
       },
     },
   },
+  -- Configure buffer local user commands to add when attaching a language server
+  commands = {
+    Format = {
+      function() vim.lsp.buf.format() end,
+      -- condition to create the user command
+      -- can either be a string of a client capability or a function of `fun(client, bufnr): boolean`
+      cond = "textDocument/formatting",
+      -- the rest of the user command options (:h nvim_create_user_command)
+      desc = "Format file with LSP",
+    },
+  },
   -- Configure default capabilities for language servers (`:h vim.lsp.protocol.make_client.capabilities()`)
   capabilities = {
     textDocument = {
