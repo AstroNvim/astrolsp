@@ -17,7 +17,7 @@ M.config = require "astrolsp.config"
 --- A table of lsp progress messages that can be used to display LSP progress in a statusline
 M.lsp_progress = {}
 
-local function event(name)
+local function lsp_event(name)
   vim.schedule(function() vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end)
 end
 
@@ -106,9 +106,9 @@ M.on_attach = function(client, bufnr)
       local cond_func = type(cond) == "string" and function(c) return c.supports_method(cond) end or cond
       if cond_func == nil or cond_func(client, bufnr) then
         local action = spec[1]
-        local opts = vim.deepcopy(spec)
-        opts[1], opts.cond = nil, nil
-        vim.api.nvim_buf_create_user_command(bufnr, cmd, action, opts)
+        spec[1], spec.cond = nil, nil
+        vim.api.nvim_buf_create_user_command(bufnr, cmd, action, spec)
+        spec[1], spec.cond = action, cond
       end
     end
   end
@@ -120,30 +120,30 @@ M.on_attach = function(client, bufnr)
         local cond = autocmds.cond
         local cond_func = type(cond) == "string" and function(c) return c.supports_method(cond) end or cond
         if cond_func == nil or cond_func(client, bufnr) then
-          vim.api.nvim_create_augroup(augroup, { clear = false })
+          local group = vim.api.nvim_create_augroup(augroup, { clear = false })
           for _, autocmd in ipairs(autocmds) do
-            local opts = vim.deepcopy(autocmd)
-            opts.command, opts.event = nil, nil
-            opts.group, opts.buffer = augroup, bufnr
-            local callback = autocmd.callback
-            if autocmd.command and not callback then callback = function() vim.cmd(autocmd.command) end end
-            opts.callback = function(args)
-              local valid = false
+            local callback, command, event = autocmd.callback, autocmd.command, autocmd.event
+            autocmd.command, autocmd.event = nil, nil
+            autocmd.group, autocmd.buffer = group, bufnr
+            local callback_func = command and function(_, _, _) vim.cmd(command) end or callback
+            autocmd.callback = function(args)
+              local invalid = true
               for _, cb_client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { buffer = bufnr }) do
                 if cond_func == nil or cond_func(cb_client, bufnr) then
-                  valid = true
+                  invalid = false
                   break
                 end
               end
-              if not valid then
+              if invalid then
                 local cb_cmds_found, cb_cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
                 if cb_cmds_found then vim.tbl_map(function(cmd) vim.api.nvim_del_autocmd(cmd.id) end, cb_cmds) end
-                return
+              else
+                callback_func(args, client, bufnr)
               end
-              ---@diagnostic disable-next-line: redundant-parameter
-              return callback(args, client, bufnr)
             end
-            vim.api.nvim_create_autocmd(autocmd.event, opts)
+            vim.api.nvim_create_autocmd(event, autocmd)
+            autocmd.callback, autocmd.command, autocmd.event = callback, command, event
+            autocmd.group, autocmd.buffer = nil, nil
           end
         end
       end
@@ -257,10 +257,10 @@ function M.setup(opts)
     if progress[id].kind == "end" then
       vim.defer_fn(function()
         progress[id] = nil
-        event "Progress"
+        lsp_event "Progress"
       end, 100)
     end
-    event "Progress"
+    lsp_event "Progress"
     orig_handler(_, msg, info)
   end
 

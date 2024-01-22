@@ -12,6 +12,13 @@
 ---@field name string? optional which-key mapping name
 ---@field cond boolean|function|string? condition for the mapping
 
+---@class AstroLSPAutocmd: vim.api.keyset.create_autocmd
+---@field event string|string[] Event(s) that will trigger the handler
+
+---@class AstroLSPCommand: vim.api.keyset.user_command
+---@field [1] string|function the command to execute
+---@field cond string|(fun(client,bufnr):boolean)? condition for the user command
+
 ---@class AstroLSPFeatureOpts
 ---@field codelens boolean? enable/disable codelens refresh on start (boolean; default = true)
 ---@field diagnostics_mode integer? diagnostic mode on start (0 = off, 1 = no signs/virtual text, 2 = no virtual text, 3 = off; default = 3)
@@ -33,11 +40,7 @@
 
 ---@class AstroLSPAutocmds
 ---@field cond string|(fun(client,bufnr):boolean)? condition for the auto commands
----@field [integer] table an autocommand definition
-
----@class AstroLSPCommand
----@field cond string|(fun(client,bufnr):boolean)? condition for the user command
----@field [string] any an autocommand definition
+---@field [integer] AstroLSPAutocmd an autocommand definition
 
 ---@class AstroLSPOpts
 ---Configuration of auto commands
@@ -257,6 +260,7 @@
 ---@type AstroLSPOpts
 local M = {
   autocmds = {},
+  commands = {},
   features = {
     codelens = true,
     diagnostics_mode = 3,
