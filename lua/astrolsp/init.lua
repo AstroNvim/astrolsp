@@ -80,7 +80,9 @@ end
 ---@param client table The LSP client details when attaching
 ---@param bufnr integer The buffer that the LSP client is attaching to
 M.on_attach = function(client, bufnr)
-  if client.supports_method "textDocument/codeLens" and M.config.features.codelens then vim.lsp.codelens.refresh() end
+  if client.supports_method "textDocument/codeLens" and M.config.features.codelens then
+    vim.lsp.codelens.refresh { bufnr = bufnr }
+  end
 
   local formatting_disabled = vim.tbl_get(M.config, "formatting", "disabled")
   if
