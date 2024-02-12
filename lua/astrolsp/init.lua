@@ -36,7 +36,9 @@ end
 M.diagnostics = { [0] = {}, {}, {}, {} }
 
 local function setup_diagnostics()
-  if M.config.signs then vim.fn.sign_define(M.config.signs) end
+  for name, dict in pairs(M.config.signs or {}) do
+    if dict then vim.fn.sign_define(name, dict) end
+  end
   M.diagnostics = {
     -- diagnostics off
     [0] = vim.tbl_deep_extend(
@@ -226,15 +228,17 @@ function M.setup(opts)
   -- TODO: Remove when dropping support for Neovim v0.9
   -- Backwards compatibility of new diagnostic sign API to Neovim v0.9
   if vim.fn.has "nvim-0.10" ~= 1 then
-    local diagnostic_text = vim.tbl_get(M.config, "diagnostics", "signs", "text") or {}
+    local signs = vim.tbl_get(M.config, "diagnostics", "signs") or {}
     if not M.config.signs then M.config.signs = {} end
     for _, type in ipairs { "Error", "Hint", "Info", "Warn" } do
-      local name = "DiagnosticSign" .. type
-      table.insert(M.config.signs, {
-        name = name,
-        text = diagnostic_text[vim.diagnostic.severity[type:upper()]],
-        texthl = name,
-      })
+      local name, severity = "DiagnosticSign" .. type, vim.diagnostic.severity[type:upper()]
+      if M.config.signs[name] == nil then M.config.signs[name] = { text = "" } end
+      if M.config.signs[name] then
+        if not M.config.signs[name].texthl then M.config.signs[name].texthl = name end
+        for attribute, severities in pairs(signs) do
+          if severities[severity] then M.config.signs[name][attribute] = severities[severity] end
+        end
+      end
     end
   end
 

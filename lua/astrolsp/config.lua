@@ -140,7 +140,7 @@
 ---```lua
 ---diagnostics = { update_in_insert = false },
 ---```
----@field diagnostics table?
+---@field diagnostics vim.diagnostic.Opts?
 ---A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
 ---Example:
 --
@@ -248,7 +248,7 @@
 ---  { name = "DapBreakPoint", text = "", texthl = "DiagnosticInfo" },
 ---},
 ---```
----@field signs table[]?
+---@field signs table<string,vim.fn.sign_define.dict|false>?
 ---A custom `on_attach` function to be run after the default `on_attach` function, takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
 ---Example:
 --
@@ -279,7 +279,6 @@ local M = {
   handlers = {},
   mappings = {},
   servers = {},
-  signs = {},
   on_attach = nil,
 }
 
