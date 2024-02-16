@@ -147,12 +147,7 @@ M.on_attach = function(client, bufnr)
                   break
                 end
               end
-              if invalid then
-                local cb_cmds_found, cb_cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
-                if cb_cmds_found then vim.tbl_map(function(cmd) vim.api.nvim_del_autocmd(cmd.id) end, cb_cmds) end
-              else
-                callback_func(args, client, bufnr)
-              end
+              return invalid or callback_func(args, client, bufnr)
             end
             vim.api.nvim_create_autocmd(event, autocmd)
             autocmd.callback, autocmd.command, autocmd.event = callback, command, event
