@@ -81,7 +81,6 @@ Here are descriptions of the options and some example usages:
         codelens = true, -- enable/disable codelens refresh on start
         diagnostics_mode = 3, -- diagnostic mode on start (0 = off, 1 = no signs/virtual text, 2 = no virtual text, 3 = off)
         inlay_hints = false, -- enable/disable inlay hints on start
-        lsp_handlers = true, -- enable/disable setting of lsp_handlers
         semantic_tokens = true, -- enable/disable semantic token highlighting
       },
       -- Configure buffer local auto commands to add when attaching a language server
@@ -180,6 +179,11 @@ Here are descriptions of the options and some example usages:
         pyright = function(_, opts) require("lspconfig").pyright.setup(opts) end,
         -- set to false to disable the setup of a language server
         rust_analyzer = false,
+      },
+      -- Configure `vim.lsp.handlers`
+      lsp_handlers = {
+        ["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded", silent = true }),
+        ["textDocument/signatureHelp"] = false, -- set to false to disable any custom handlers
       },
       -- Configuration of mappings added when attaching a language server during the core `on_attach` function
       -- The first key into the table is the vim map mode (`:h map-modes`), and the value is a table of entries to be passed to `vim.keymap.set` (`:h vim.keymap.set`):
