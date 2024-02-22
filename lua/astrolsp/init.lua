@@ -282,7 +282,9 @@ function M.setup(opts)
   local register_capability_handler = vim.lsp.handlers["client/registerCapability"]
   vim.lsp.handlers["client/registerCapability"] = function(err, res, ctx)
     local ret = register_capability_handler(err, res, ctx)
-    configure_environment(assert(vim.lsp.get_client_by_id(ctx.client_id)), vim.api.nvim_get_current_buf())
+    local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+    -- TODO: remove `if` statement when dropping support for Neovim v0.9
+    if client.supports_method then configure_environment(client, vim.api.nvim_get_current_buf()) end
     return ret
   end
 
