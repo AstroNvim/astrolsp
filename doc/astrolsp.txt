@@ -1,4 +1,4 @@
-*astrolsp.txt*        For Neovim >= 0.9.0        Last change: 2024 February 16
+*astrolsp.txt*        For Neovim >= 0.9.0        Last change: 2024 February 22
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -379,7 +379,7 @@ _param_ `server` — The name of the server to be setup
 ON_ATTACH ~
 
 >lua
-    function astrolsp.on_attach(client: table, bufnr: integer)
+    function astrolsp.on_attach(client: lsp.Client, bufnr: integer)
 <
 
 _param_ `client` — The LSP client details when attaching

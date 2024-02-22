@@ -78,7 +78,7 @@ function astrolsp.lsp_setup(server: string)
 
 
 ```lua
-function astrolsp.on_attach(client: table, bufnr: integer)
+function astrolsp.on_attach(client: lsp.Client, bufnr: integer)
 ```
 
 *param* `client` — The LSP client details when attaching
