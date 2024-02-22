@@ -266,9 +266,9 @@ function M.setup(opts)
   end
 
   local progress_handler = vim.lsp.handlers["$/progress"]
-  vim.lsp.handlers["$/progress"] = function(_, msg, info)
-    local progress, id = M.lsp_progress, ("%s.%s"):format(info.client_id, msg.token)
-    progress[id] = progress[id] and vim.tbl_deep_extend("force", progress[id], msg.value) or msg.value
+  vim.lsp.handlers["$/progress"] = function(err, res, ctx)
+    local progress, id = M.lsp_progress, ("%s.%s"):format(ctx.client_id, res.token)
+    progress[id] = progress[id] and vim.tbl_deep_extend("force", progress[id], res.value) or res.value
     if progress[id].kind == "end" then
       vim.defer_fn(function()
         progress[id] = nil
@@ -276,7 +276,7 @@ function M.setup(opts)
       end, 100)
     end
     lsp_event "Progress"
-    progress_handler(_, msg, info)
+    progress_handler(err, res, ctx)
   end
 
   local register_capability_handler = vim.lsp.handlers["client/registerCapability"]
@@ -286,10 +286,8 @@ function M.setup(opts)
     return ret
   end
 
-  if M.config.features.lsp_handlers then
-    vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded", silent = true })
-    vim.lsp.handlers["textDocument/signatureHelp"] =
-      vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded", silent = true })
+  for method, handler in pairs(M.config.lsp_handlers or {}) do
+    if handler then vim.lsp.handlers[method] = handler end
   end
 end
 

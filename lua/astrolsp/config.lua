@@ -29,7 +29,6 @@
 ---@field codelens boolean? enable/disable codelens refresh on start (boolean; default = true)
 ---@field diagnostics_mode integer? diagnostic mode on start (0 = off, 1 = no signs/virtual text, 2 = no virtual text, 3 = off; default = 3)
 ---@field inlay_hints boolean? enable/disable inlay hints on start (boolean; default = false)
----@field lsp_handlers boolean? enable/disable setting of lsp_handlers (boolean; default = true)
 ---@field semantic_tokens boolean? enable/disable semantic token highlighting (boolean; default = true)
 
 ---@class AstroLSPFormatOnSaveOpts
@@ -102,7 +101,6 @@
 ---  codelens = true,
 ---  diagnostics_mode = 3,
 ---  inlay_hints = false,
----  lsp_handlers = true,
 ---  semantic_tokens = true,
 ---}
 ---```
@@ -197,6 +195,21 @@
 ---}
 ---```
 ---@field handlers table<string|integer,fun(server:string,opts:_.lspconfig.options)|boolean?>?
+---Configure global LSP handlers, set a method to `false` to use the Neovim default
+---Example:
+--
+---```lua
+---handlers = {
+---  -- custom function handler for pyright
+---  ["textDocument/hover"] = vim.lsp.with(
+---    vim.lsphandlers.hover, {
+---      border = "single",
+---      title = "hover",
+---    }
+---  )
+---}
+---```
+---@field lsp_handlers table<string,fun(err:lsp.ResponseError?,server:string,result:any,ctx:lsp.HandlerContext,config:table?)|false>|false?
 ---Configuration of mappings added when attaching a language server during the core `on_attach` function
 ---The first key into the table is the vim map mode (`:h map-modes`), and the value is a table of entries to be passed to `vim.keymap.set` (`:h vim.keymap.set`):
 ---  - The key is the first parameter or the vim mode (only a single mode supported) and the value is a table of keymaps within that mode:
@@ -267,7 +280,6 @@ local M = {
     codelens = true,
     diagnostics_mode = 3,
     inlay_hints = false,
-    lsp_handlers = true,
     semantic_tokens = true,
   },
   capabilities = {},
@@ -277,6 +289,7 @@ local M = {
   flags = {},
   formatting = { format_on_save = { enabled = true }, disabled = {} },
   handlers = {},
+  lsp_handlers = {},
   mappings = {},
   servers = {},
   on_attach = nil,
