@@ -78,10 +78,11 @@ function M.lsp_setup(server)
   end
 end
 
---- The `on_attach` function used by AstroNvim
----@param client table The LSP client details when attaching
----@param bufnr integer The buffer that the LSP client is attaching to
-M.on_attach = function(client, bufnr)
+--- Helper function that does the actual configuring of the language server configure_environment
+--- Useful when dynamically refreshing the environment when capabilities are registered dynamically
+---@param client lsp.Client
+---@param bufnr integer
+local configure_environment = function(client, bufnr)
   if client.supports_method "textDocument/codeLens" and M.config.features.codelens then
     vim.lsp.codelens.refresh { bufnr = bufnr }
   end
@@ -108,7 +109,7 @@ M.on_attach = function(client, bufnr)
 
   if client.supports_method "textDocument/semanticTokens/full" and vim.lsp.semantic_tokens then
     if M.config.features.semantic_tokens then
-      vim.b[bufnr].semantic_tokens = true
+      if vim.b[bufnr].semantic_tokens == nil then vim.b[bufnr].semantic_tokens = true end
     else
       client.server_capabilities.semanticTokensProvider = nil
     end
@@ -184,6 +185,13 @@ M.on_attach = function(client, bufnr)
       end
     end
   end
+end
+
+--- The `on_attach` function used by AstroNvim
+---@param client lsp.Client The LSP client details when attaching
+---@param bufnr integer The buffer that the LSP client is attaching to
+M.on_attach = function(client, bufnr)
+  configure_environment(client, bufnr)
 
   for id, _ in pairs(M.lsp_progress) do -- clear lingering progress messages
     -- TODO: remove check after dropping support for Neovim v0.9
@@ -257,7 +265,7 @@ function M.setup(opts)
       and not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
   end
 
-  local orig_handler = vim.lsp.handlers["$/progress"]
+  local progress_handler = vim.lsp.handlers["$/progress"]
   vim.lsp.handlers["$/progress"] = function(_, msg, info)
     local progress, id = M.lsp_progress, ("%s.%s"):format(info.client_id, msg.token)
     progress[id] = progress[id] and vim.tbl_deep_extend("force", progress[id], msg.value) or msg.value
@@ -268,7 +276,14 @@ function M.setup(opts)
       end, 100)
     end
     lsp_event "Progress"
-    orig_handler(_, msg, info)
+    progress_handler(_, msg, info)
+  end
+
+  local register_capability_handler = vim.lsp.handlers["client/registerCapability"]
+  vim.lsp.handlers["client/registerCapability"] = function(err, res, ctx)
+    local ret = register_capability_handler(err, res, ctx)
+    configure_environment(assert(vim.lsp.get_client_by_id(ctx.client_id)), vim.api.nvim_get_current_buf())
+    return ret
   end
 
   if M.config.features.lsp_handlers then
