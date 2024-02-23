@@ -16,10 +16,10 @@ local tbl_isempty = vim.tbl_isempty
 M.config = require "astrolsp.config"
 --- A table of lsp progress messages that can be used to display LSP progress in a statusline
 M.lsp_progress = {}
+--- A table of LSP clients that have been attached with AstroLSP
+M.attached_clients = {}
 
-local function lsp_event(name)
-  vim.schedule(function() vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end)
-end
+local function lsp_event(name) vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end
 
 ---@param cond AstroLSPCondition?
 ---@param client lsp.Client
@@ -78,11 +78,10 @@ function M.lsp_setup(server)
   end
 end
 
---- Helper function that does the actual configuring of the language server configure_environment
---- Useful when dynamically refreshing the environment when capabilities are registered dynamically
----@param client lsp.Client
----@param bufnr integer
-local configure_environment = function(client, bufnr)
+--- The `on_attach` function used by AstroNvim
+---@param client lsp.Client The LSP client details when attaching
+---@param bufnr integer The buffer that the LSP client is attaching to
+M.on_attach = function(client, bufnr)
   if client.supports_method "textDocument/codeLens" and M.config.features.codelens then
     vim.lsp.codelens.refresh { bufnr = bufnr }
   end
@@ -185,23 +184,10 @@ local configure_environment = function(client, bufnr)
       end
     end
   end
-end
-
---- The `on_attach` function used by AstroNvim
----@param client lsp.Client The LSP client details when attaching
----@param bufnr integer The buffer that the LSP client is attaching to
-M.on_attach = function(client, bufnr)
-  configure_environment(client, bufnr)
-
-  for id, _ in pairs(M.lsp_progress) do -- clear lingering progress messages
-    -- TODO: remove check after dropping support for Neovim v0.9
-    ---@diagnostic disable-next-line: deprecated
-    if not next((vim.lsp.get_clients or vim.lsp.get_active_clients) { id = tonumber(id:match "^%d+") }) then
-      M.lsp_progress[id] = nil
-    end
-  end
 
   if type(M.config.on_attach) == "function" then M.config.on_attach(client, bufnr) end
+
+  if not M.attached_clients[client.id] then M.attached_clients[client.id] = client end
 end
 
 --- Get the server configuration for a given language server to be provided to the server's `setup()` call
@@ -265,6 +251,22 @@ function M.setup(opts)
       and not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
   end
 
+  vim.api.nvim_create_autocmd("LspDetach", {
+    group = vim.api.nvim_create_augroup("astrolsp_detach", { clear = true }),
+    desc = "Clear state when language server is detached like LSP progress messages",
+    callback = function(args)
+      M.attached_clients[args.data.client_id] = nil
+      local changed = false
+      for id, _ in pairs(M.lsp_progress) do -- clear lingering progress messages
+        if tonumber(id:match "^%d+") == args.data.client_id then
+          M.lsp_progress[id] = nil
+          changed = true
+        end
+      end
+      if changed then lsp_event "Progress" end
+    end,
+  })
+
   local progress_handler = vim.lsp.handlers["$/progress"]
   vim.lsp.handlers["$/progress"] = function(err, res, ctx)
     local progress, id = M.lsp_progress, ("%s.%s"):format(ctx.client_id, res.token)
@@ -282,9 +284,8 @@ function M.setup(opts)
   local register_capability_handler = vim.lsp.handlers["client/registerCapability"]
   vim.lsp.handlers["client/registerCapability"] = function(err, res, ctx)
     local ret = register_capability_handler(err, res, ctx)
-    local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
-    -- TODO: remove `if` statement when dropping support for Neovim v0.9
-    if client.supports_method then configure_environment(client, vim.api.nvim_get_current_buf()) end
+    local attached_client = M.attached_clients[ctx.client_id]
+    if attached_client then M.on_attach(attached_client, vim.api.nvim_get_current_buf()) end
     return ret
   end
 
