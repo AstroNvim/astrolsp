@@ -13,6 +13,15 @@ This module can be loaded with `local astro = require "astrolsp"`
 copyright 2023
 license GNU General Public License v3.0
 
+### attached_clients
+
+
+```lua
+table
+```
+
+ A table of LSP clients that have been attached with AstroLSP
+
 ### config
 
 

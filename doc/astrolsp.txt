@@ -1,4 +1,4 @@
-*astrolsp.txt*        For Neovim >= 0.9.0        Last change: 2024 February 22
+*astrolsp.txt*        For Neovim >= 0.9.0        Last change: 2024 February 23
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -313,6 +313,15 @@ Various utility functions to use within AstroNvim for the LSP engine
 This module can be loaded with `local astro = require "astrolsp"`
 
 copyright 2023 license GNU General Public License v3.0
+
+
+ATTACHED_CLIENTS ~
+
+>lua
+    table
+<
+
+A table of LSP clients that have been attached with AstroLSP
 
 
 CONFIG ~
