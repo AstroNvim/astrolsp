@@ -209,7 +209,7 @@
 ---  )
 ---}
 ---```
----@field lsp_handlers table<string,fun(err:lsp.ResponseError?,server:string,result:any,ctx:lsp.HandlerContext,config:table?)|false>|false?
+---@field lsp_handlers table<string,lsp.Handler|false>|false?
 ---Configuration of mappings added when attaching a language server during the core `on_attach` function
 ---The first key into the table is the vim map mode (`:h map-modes`), and the value is a table of entries to be passed to `vim.keymap.set` (`:h vim.keymap.set`):
 ---  - The key is the first parameter or the vim mode (only a single mode supported) and the value is a table of keymaps within that mode:
