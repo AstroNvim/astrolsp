@@ -31,15 +31,6 @@ AstroLSPOpts
 
  The configuration as set by the user through the `setup()` function
 
-### diagnostics
-
-
-```lua
-table
-```
-
- A table of settings for different levels of diagnostics
-
 ### format_opts
 
 
@@ -177,17 +168,6 @@ function astrolsp.toggles.codelens(silent?: boolean)
 ```
 
  Toggle codelens
-
-*param* `silent` — if true then don't sent a notification
-
-### diagnostics
-
-
-```lua
-function astrolsp.toggles.diagnostics(silent?: boolean)
-```
-
- Toggle diagnostics
 
 *param* `silent` — if true then don't sent a notification
 
