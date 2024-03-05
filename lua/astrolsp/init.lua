@@ -61,11 +61,14 @@ end
 ---@param server string The name of the server to be setup
 function M.lsp_setup(server)
   -- if server doesn't exist, set it up from user server definition
-  local config_avail, config = pcall(require, "lspconfig.server_configurations." .. server)
-  if not config_avail or not config.default_config then
-    local server_definition = M.config.config[server]
-    if server_definition and server_definition.cmd then
-      require("lspconfig.configs")[server] = { default_config = server_definition }
+  local lspconfig_avail, lspconfig = pcall(require, "lspconfig")
+  if lspconfig_avail then
+    local config_avail, config = pcall(require, "lspconfig.server_configurations." .. server)
+    if not config_avail or not config.default_config then
+      local server_definition = M.config.config[server]
+      if server_definition and server_definition.cmd then
+        require("lspconfig.configs")[server] = { default_config = server_definition }
+      end
     end
   end
   local opts = M.lsp_opts(server)
@@ -74,7 +77,11 @@ function M.lsp_setup(server)
   if handler then
     handler(server, opts)
   elseif handler == nil then
-    require("lspconfig")[server].setup(opts)
+    if lspconfig_avail then
+      lspconfig[server].setup(opts)
+    else
+      vim.notify(("No handler defined for `%s`"):format(server), vim.log.levels.WARN)
+    end
   end
 end
 
@@ -199,7 +206,10 @@ function M.lsp_opts(server_name)
   if M.config.config[server_name] then opts = vim.tbl_deep_extend("force", opts, M.config.config[server_name]) end
   assert(opts)
 
-  local old_on_attach = require("lspconfig.configs")[server_name] and require("lspconfig")[server_name].on_attach
+  local lspconfig_avail, lspconfig = pcall(require, "lspconfig")
+  local old_on_attach = lspconfig_avail
+    and require("lspconfig.configs")[server_name]
+    and lspconfig[server_name].on_attach
   local user_on_attach = opts.on_attach
   opts.on_attach = function(client, bufnr)
     if type(old_on_attach) == "function" then old_on_attach(client, bufnr) end
