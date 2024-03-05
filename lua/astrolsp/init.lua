@@ -32,31 +32,6 @@ local function check_cond(cond, client, bufnr)
   return true
 end
 
---- A table of settings for different levels of diagnostics
-M.diagnostics = { [0] = {}, {}, {}, {} }
-
-local function setup_diagnostics()
-  for name, dict in pairs(M.config.signs or {}) do
-    if dict then vim.fn.sign_define(name, dict) end
-  end
-  M.diagnostics = {
-    -- diagnostics off
-    [0] = vim.tbl_deep_extend(
-      "force",
-      M.config.diagnostics,
-      { underline = false, virtual_text = false, signs = false, update_in_insert = false }
-    ),
-    -- status only
-    vim.tbl_deep_extend("force", M.config.diagnostics, { virtual_text = false, signs = false }),
-    -- virtual text off, signs on
-    vim.tbl_deep_extend("force", M.config.diagnostics, { virtual_text = false }),
-    -- all diagnostics on
-    M.config.diagnostics,
-  }
-
-  vim.diagnostic.config(M.diagnostics[M.config.features.diagnostics_mode])
-end
-
 --- Helper function to set up a given server with the Neovim LSP client
 ---@param server string The name of the server to be setup
 function M.lsp_setup(server)
@@ -223,25 +198,6 @@ end
 ---@param opts AstroLSPOpts options passed by the user to configure AstroLSP
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts)
-
-  -- TODO: Remove when dropping support for Neovim v0.9
-  -- Backwards compatibility of new diagnostic sign API to Neovim v0.9
-  if vim.fn.has "nvim-0.10" ~= 1 then
-    local signs = vim.tbl_get(M.config, "diagnostics", "signs") or {}
-    if not M.config.signs then M.config.signs = {} end
-    for _, type in ipairs { "Error", "Hint", "Info", "Warn" } do
-      local name, severity = "DiagnosticSign" .. type, vim.diagnostic.severity[type:upper()]
-      if M.config.signs[name] == nil then M.config.signs[name] = { text = "" } end
-      if M.config.signs[name] then
-        if not M.config.signs[name].texthl then M.config.signs[name].texthl = name end
-        for attribute, severities in pairs(signs) do
-          if severities[severity] then M.config.signs[name][attribute] = severities[severity] end
-        end
-      end
-    end
-  end
-
-  setup_diagnostics()
 
   -- normalize format_on_save to table format
   if vim.tbl_get(M.config, "formatting", "format_on_save") == false then

@@ -79,20 +79,4 @@ function M.codelens(silent)
   ui_notify(silent, ("CodeLens %s"):format(bool2str(features.codelens)))
 end
 
---- Toggle diagnostics
----@param silent? boolean if true then don't sent a notification
-function M.diagnostics(silent)
-  features.diagnostics_mode = (features.diagnostics_mode - 1) % 4
-  vim.diagnostic.config(require("astrolsp").diagnostics[features.diagnostics_mode])
-  if features.diagnostics_mode == 0 then
-    ui_notify(silent, "diagnostics off")
-  elseif features.diagnostics_mode == 1 then
-    ui_notify(silent, "only status diagnostics")
-  elseif features.diagnostics_mode == 2 then
-    ui_notify(silent, "virtual text off")
-  else
-    ui_notify(silent, "all diagnostics on")
-  end
-end
-
 return M

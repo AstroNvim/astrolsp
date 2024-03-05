@@ -52,7 +52,6 @@ local opts = {
   features = {
     autoformat = true, -- enable or disable auto formatting on start
     codelens = true, -- enable/disable codelens refresh on start
-    diagnostics_mode = 3, -- diagnostic mode on start (0 = off, 1 = no signs/virtual text, 2 = no virtual text, 3 = off)
     inlay_hints = false, -- enable/disable inlay hints on start
     semantic_tokens = true, -- enable/disable semantic token highlighting
   },
@@ -111,10 +110,6 @@ local opts = {
         offsetEncoding = "utf-8",
       },
     },
-  },
-  -- Configure diagnostics options (`:h vim.diagnostic.config()`)
-  diagnostics = {
-    update_in_insert = false,
   },
   -- A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
   flags = {

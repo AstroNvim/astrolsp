@@ -27,7 +27,6 @@
 
 ---@class AstroLSPFeatureOpts
 ---@field codelens boolean? enable/disable codelens refresh on start (boolean; default = true)
----@field diagnostics_mode integer? diagnostic mode on start (0 = off, 1 = no signs/virtual text, 2 = no virtual text, 3 = off; default = 3)
 ---@field inlay_hints boolean? enable/disable inlay hints on start (boolean; default = false)
 ---@field semantic_tokens boolean? enable/disable semantic token highlighting (boolean; default = true)
 
@@ -99,7 +98,6 @@
 ---```lua
 ---features = {
 ---  codelens = true,
----  diagnostics_mode = 3,
 ---  inlay_hints = false,
 ---  semantic_tokens = true,
 ---}
@@ -132,13 +130,6 @@
 ---}
 ---```
 ---@field config lspconfig.options?
----Configure diagnostics options (`:h vim.diagnostic.config()`)
----Example:
---
----```lua
----diagnostics = { update_in_insert = false },
----```
----@field diagnostics vim.diagnostic.Opts?
 ---A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
 ---Example:
 --
@@ -253,15 +244,6 @@
 ---servers = { "dartls" }
 ---```
 ---@field servers string[]?
----Configure signs (`:h sign_define()`)
----Example:
---
----```lua
----signs = {
----  { name = "DapBreakPoint", text = "", texthl = "DiagnosticInfo" },
----},
----```
----@field signs table<string,vim.fn.sign_define.dict|false>?
 ---A custom `on_attach` function to be run after the default `on_attach` function, takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
 ---Example:
 --
@@ -278,14 +260,12 @@ local M = {
   commands = {},
   features = {
     codelens = true,
-    diagnostics_mode = 3,
     inlay_hints = false,
     semantic_tokens = true,
   },
   capabilities = {},
   ---@diagnostic disable-next-line: missing-fields
   config = {},
-  diagnostics = {},
   flags = {},
   formatting = { format_on_save = { enabled = true }, disabled = {} },
   handlers = {},
