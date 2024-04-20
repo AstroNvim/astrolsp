@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/AstroNvim/astrolsp/compare/v1.0.0...v1.0.1) (2024-04-20)
+
+
+### Bug Fixes
+
+* lsp inlay hint API change. ([9386ed4](https://github.com/AstroNvim/astrolsp/commit/9386ed4d1d742fb39f6d191f66ed582284b6007a))
+
 ## 1.0.0 (2024-03-05)
 
 
