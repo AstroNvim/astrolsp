@@ -7,7 +7,7 @@
 -- copyright 2023
 -- license GNU General Public License v3.0
 
----@alias AstroLSPCondition string|boolean|fun(client:lsp.Client,bufnr:integer):boolean conditional for doing something when attaching a language server
+---@alias AstroLSPCondition string|boolean|fun(client:vim.lsp.Client,bufnr:integer):boolean conditional for doing something when attaching a language server
 
 ---@class AstroLSPMapping: vim.api.keyset.keymap
 ---@field [1] string|function rhs of keymap
@@ -252,7 +252,7 @@
 ---  client.server_capabilities.semanticTokensProvider = nil
 ---end
 ---```
----@field on_attach fun(client:lsp.Client,bufnr:integer)?
+---@field on_attach fun(client:vim.lsp.Client,bufnr:integer)?
 
 ---@type AstroLSPOpts
 local M = {

@@ -22,7 +22,7 @@ M.attached_clients = {}
 local function lsp_event(name) vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end
 
 ---@param cond AstroLSPCondition?
----@param client lsp.Client
+---@param client vim.lsp.Client
 ---@param bufnr integer
 local function check_cond(cond, client, bufnr)
   local cond_type = type(cond)
@@ -61,7 +61,7 @@ function M.lsp_setup(server)
 end
 
 --- The `on_attach` function used by AstroNvim
----@param client lsp.Client The LSP client details when attaching
+---@param client vim.lsp.Client The LSP client details when attaching
 ---@param bufnr integer The buffer that the LSP client is attaching to
 M.on_attach = function(client, bufnr)
   if client.supports_method "textDocument/codeLens" and M.config.features.codelens then
@@ -160,7 +160,7 @@ M.on_attach = function(client, bufnr)
             if not map_opts.name then map_opts.name = map_opts.desc end
             if wk_avail then wk.register({ [lhs] = map_opts }, { mode = mode }) end
           else
-            vim.keymap.set(mode, lhs, rhs, map_opts)
+            vim.keymap.set(mode, lhs, rhs, map_opts --[[@as vim.keymap.set.Opts]])
           end
         end
       end
