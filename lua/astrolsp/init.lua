@@ -32,6 +32,21 @@ local function check_cond(cond, client, bufnr)
   return true
 end
 
+--- Add a new LSP progress message to the message queue
+---@param data {client_id: integer, result: lsp.ProgressParams}
+function M.progress(data)
+  local id = ("%s.%s"):format(data.client_id, data.result.token)
+  M.lsp_progress[id] = M.lsp_progress[id] and vim.tbl_deep_extend("force", M.lsp_progress[id], data.result.value)
+    or data.result.value
+  if M.lsp_progress[id].kind == "end" then
+    vim.defer_fn(function()
+      M.lsp_progress[id] = nil
+      lsp_event "Progress"
+    end, 100)
+  end
+  lsp_event "Progress"
+end
+
 --- Helper function to set up a given server with the Neovim LSP client
 ---@param server string The name of the server to be setup
 function M.lsp_setup(server)
@@ -233,18 +248,17 @@ function M.setup(opts)
     end,
   })
 
-  local progress_handler = vim.lsp.handlers["$/progress"]
-  vim.lsp.handlers["$/progress"] = function(err, res, ctx)
-    local progress, id = M.lsp_progress, ("%s.%s"):format(ctx.client_id, res.token)
-    progress[id] = progress[id] and vim.tbl_deep_extend("force", progress[id], res.value) or res.value
-    if progress[id].kind == "end" then
-      vim.defer_fn(function()
-        progress[id] = nil
-        lsp_event "Progress"
-      end, 100)
+  local ok = pcall(vim.api.nvim_create_autocmd, "LspProgress", {
+    group = vim.api.nvim_create_augroup("astrolsp_progress", { clear = true }),
+    desc = "Collect LSP progress messages for later handling",
+    callback = function(event) M.progress(event.data) end,
+  })
+  if not ok then
+    local progress_handler = vim.lsp.handlers["$/progress"]
+    vim.lsp.handlers["$/progress"] = function(err, res, ctx)
+      M.progress { client_id = ctx.client_id, result = res }
+      progress_handler(err, res, ctx)
     end
-    lsp_event "Progress"
-    progress_handler(err, res, ctx)
   end
 
   local register_capability_handler = vim.lsp.handlers["client/registerCapability"]
