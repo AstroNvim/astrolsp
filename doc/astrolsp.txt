@@ -378,7 +378,7 @@ _param_ `server` — The name of the server to be setup
 ON_ATTACH ~
 
 >lua
-    function astrolsp.on_attach(client: lsp.Client, bufnr: integer)
+    function astrolsp.on_attach(client: vim.lsp.Client, bufnr: integer)
 <
 
 _param_ `client` — The LSP client details when attaching
@@ -386,6 +386,15 @@ _param_ `client` — The LSP client details when attaching
 _param_ `bufnr` — The buffer that the LSP client is attaching to
 
 The `on_attach` function used by AstroNvim
+
+
+PROGRESS ~
+
+>lua
+    function astrolsp.progress(data: { client_id: integer, result: lsp.ProgressParams })
+<
+
+Add a new LSP progress message to the message queue
 
 
 SETUP ~
