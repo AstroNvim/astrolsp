@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.2](https://github.com/AstroNvim/astrolsp/compare/v1.0.1...v1.0.2) (2024-05-03)
+
+
+### Bug Fixes
+
+* fix typing `lsp.Client` rename to `vim.lsp.Client` ([ea527ce](https://github.com/AstroNvim/astrolsp/commit/ea527ceb770c14c30f3280f01a1e3382bbf0834f))
+* upstrean 0.10 API changes to `inlay_hints` ([45f35ad](https://github.com/AstroNvim/astrolsp/commit/45f35ad7022937dbdf57ea1f8ffe77749ed78fa8))
+
+
+### Performance Improvements
+
+* improve LSP progress message handling in Neovim v0.10 ([c02cb0c](https://github.com/AstroNvim/astrolsp/commit/c02cb0c2fcda07d15e7c4f26b3c80b9442c1a731))
+
 ## [1.0.1](https://github.com/AstroNvim/astrolsp/compare/v1.0.0...v1.0.1) (2024-04-20)
 
 
