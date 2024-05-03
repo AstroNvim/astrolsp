@@ -180,4 +180,15 @@ function astrolsp.toggles.codelens(silent?: boolean)
 
 *param* `silent` — if true then don't sent a notification
 
+### inlay_hints
+
+
+```lua
+function astrolsp.toggles.inlay_hints(silent?: boolean)
+```
+
+ Toggle global LSP inlay hints
+
+*param* `silent` — if true then don't sent a notification
+
 
