@@ -41,12 +41,19 @@ end
 ---@param bufnr? integer the buffer to toggle the clients on
 ---@param silent? boolean if true then don't sent a notification
 function M.buffer_inlay_hints(bufnr, silent)
-  bufnr = bufnr or 0
-  vim.b[bufnr].inlay_hints = not vim.b[bufnr].inlay_hints
-  -- TODO: remove check after dropping support for Neovim v0.9
   if vim.lsp.inlay_hint then
-    vim.lsp.inlay_hint.enable(vim.b[bufnr].inlay_hints, { bufnr = bufnr })
-    ui_notify(silent, ("Inlay hints %s"):format(bool2str(vim.b[bufnr].inlay_hints)))
+    local filter = { bufnr = bufnr or 0 }
+    vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled(filter), filter)
+    ui_notify(silent, ("Buffer inlay hints %s"):format(bool2str(vim.lsp.inlay_hint.is_enabled(filter))))
+  end
+end
+
+--- Toggle global LSP inlay hints
+---@param silent? boolean if true then don't sent a notification
+function M.inlay_hints(silent)
+  if vim.lsp.inlay_hint then
+    vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+    ui_notify(silent, ("Global inlay hints %s"):format(bool2str(vim.lsp.inlay_hint.is_enabled())))
   end
 end
 

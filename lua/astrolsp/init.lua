@@ -97,12 +97,6 @@ M.on_attach = function(client, bufnr)
     end
   end
 
-  if client.supports_method "textDocument/inlayHint" then
-    if vim.b[bufnr].inlay_hints == nil then vim.b[bufnr].inlay_hints = M.config.features.inlay_hints end
-    -- TODO: remove check after dropping support for Neovim v0.9
-    if vim.lsp.inlay_hint and vim.b[bufnr].inlay_hints then vim.lsp.inlay_hint.enable(true, { bufnr = bufnr }) end
-  end
-
   if client.supports_method "textDocument/semanticTokens/full" and vim.lsp.semantic_tokens then
     if M.config.features.semantic_tokens then
       if vim.b[bufnr].semantic_tokens == nil then vim.b[bufnr].semantic_tokens = true end
@@ -231,6 +225,9 @@ function M.setup(opts)
     return disabled ~= true
       and not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
   end
+
+  -- TODO: remove check when dropping support for Neovim v0.9
+  if vim.lsp.inlay_hint then vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false) end
 
   vim.api.nvim_create_autocmd("LspDetach", {
     group = vim.api.nvim_create_augroup("astrolsp_detach", { clear = true }),
