@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/AstroNvim/astrolsp/compare/v1.0.2...v1.0.3) (2024-05-07)
+
+
+### Bug Fixes
+
+* `LspProgress` renamed `data.result` =&gt; `data.params` ([8db1ace](https://github.com/AstroNvim/astrolsp/commit/8db1ace2e7f3e3b45e0c5285abb31093e924e6f9))
+
 ## [1.0.2](https://github.com/AstroNvim/astrolsp/compare/v1.0.1...v1.0.2) (2024-05-03)
 
 
