@@ -33,11 +33,11 @@ local function check_cond(cond, client, bufnr)
 end
 
 --- Add a new LSP progress message to the message queue
----@param data {client_id: integer, result: lsp.ProgressParams}
+---@param data {client_id: integer, params: lsp.ProgressParams}
 function M.progress(data)
-  local id = ("%s.%s"):format(data.client_id, data.result.token)
-  M.lsp_progress[id] = M.lsp_progress[id] and vim.tbl_deep_extend("force", M.lsp_progress[id], data.result.value)
-    or data.result.value
+  local id = ("%s.%s"):format(data.client_id, data.params.token)
+  M.lsp_progress[id] = M.lsp_progress[id] and vim.tbl_deep_extend("force", M.lsp_progress[id], data.params.value)
+    or data.params.value
   if M.lsp_progress[id].kind == "end" then
     vim.defer_fn(function()
       M.lsp_progress[id] = nil
@@ -253,7 +253,7 @@ function M.setup(opts)
   if not ok then
     local progress_handler = vim.lsp.handlers["$/progress"]
     vim.lsp.handlers["$/progress"] = function(err, res, ctx)
-      M.progress { client_id = ctx.client_id, result = res }
+      M.progress { client_id = ctx.client_id, params = res }
       progress_handler(err, res, ctx)
     end
   end
