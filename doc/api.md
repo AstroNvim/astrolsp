@@ -91,7 +91,7 @@ function astrolsp.on_attach(client: vim.lsp.Client, bufnr: integer)
 
 
 ```lua
-function astrolsp.progress(data: { client_id: integer, result: lsp.ProgressParams })
+function astrolsp.progress(data: { client_id: integer, params: lsp.ProgressParams })
 ```
 
  Add a new LSP progress message to the message queue
