@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/AstroNvim/astrolsp/compare/v1.0.3...v1.0.4) (2024-05-22)
+
+
+### Bug Fixes
+
+* **toggles:** semantic tokens API requires real `bufnr` ([af4485f](https://github.com/AstroNvim/astrolsp/commit/af4485fd9f5656a6bdf591acdfe3b4304f37e1fe))
+
 ## [1.0.3](https://github.com/AstroNvim/astrolsp/compare/v1.0.2...v1.0.3) (2024-05-07)
 
 
