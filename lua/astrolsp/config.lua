@@ -36,11 +36,9 @@
 ---@field ignore_filetypes string[]? a list like table of filetypes to blacklist formatting on save
 ---@field filter (fun(bufnr):boolean)? a function for doing a custom format on save filter based on buffer number
 
----@class AstroLSPFormatOpts
+---@class AstroLSPFormatOpts: vim.lsp.buf.format.Opts
 ---@field format_on_save boolean|AstroLSPFormatOnSaveOpts? control formatting on save options
 ---@field disabled true|string[]? true to disable all or a list like table of language server names to disable formatting
----@field timeout_ms integer? configure the timeout length for formatting
----@field filter (fun(client):boolean)? fully override the default formatting filter function
 
 ---@class AstroLSPOpts
 ---Configuration of auto commands
