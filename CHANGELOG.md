@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5](https://github.com/AstroNvim/astrolsp/compare/v1.0.4...v1.0.5) (2024-07-10)
+
+
+### Bug Fixes
+
+* **config:** correct type inheritance of format options ([9860c40](https://github.com/AstroNvim/astrolsp/commit/9860c404c02c1b5cc9520ec1e4d73071ec1d53bc))
+
 ## [1.0.4](https://github.com/AstroNvim/astrolsp/compare/v1.0.3...v1.0.4) (2024-05-22)
 
 
