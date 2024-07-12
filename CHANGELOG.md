@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6](https://github.com/AstroNvim/astrolsp/compare/v1.0.5...v1.0.6) (2024-07-12)
+
+
+### Bug Fixes
+
+* update to which-key v3 ([8b1295b](https://github.com/AstroNvim/astrolsp/commit/8b1295be3c1c2aa30c4a9c9305be0797bee16eb8))
+
 ## [1.0.5](https://github.com/AstroNvim/astrolsp/compare/v1.0.4...v1.0.5) (2024-07-10)
 
 
