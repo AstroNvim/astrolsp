@@ -165,9 +165,10 @@ M.on_attach = function(client, bufnr)
             map_opts = assert(vim.tbl_deep_extend("force", map_opts, { buffer = bufnr }))
             map_opts[1], map_opts.cond = nil, nil
           end
-          if not rhs or map_opts.name then
-            if not map_opts.name then map_opts.name = map_opts.desc end
-            if wk_avail then wk.register({ [lhs] = map_opts }, { mode = mode }) end
+          if not rhs and wk_avail then
+            map_opts[1], map_opts.mode = lhs, mode
+            if not map_opts.group then map_opts.group = map_opts.desc end
+            wk.add(map_opts)
           else
             vim.keymap.set(mode, lhs, rhs, map_opts --[[@as vim.keymap.set.Opts]])
           end
