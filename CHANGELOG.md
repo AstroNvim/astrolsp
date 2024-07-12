@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.7](https://github.com/AstroNvim/astrolsp/compare/v1.0.6...v1.0.7) (2024-07-12)
+
+
+### Bug Fixes
+
+* fix incorrect mapping resolution order ([83e48bc](https://github.com/AstroNvim/astrolsp/commit/83e48bca693b0da9ac576b7cba9d22b8ea6c8ad9))
+
 ## [1.0.6](https://github.com/AstroNvim/astrolsp/compare/v1.0.5...v1.0.6) (2024-07-12)
 
 
