@@ -78,7 +78,7 @@ end
 --- The `on_attach` function used by AstroNvim
 ---@param client vim.lsp.Client The LSP client details when attaching
 ---@param bufnr integer The buffer that the LSP client is attaching to
-M.on_attach = function(client, bufnr)
+function M.on_attach(client, bufnr)
   if client.supports_method "textDocument/codeLens" and M.config.features.codelens then
     vim.lsp.codelens.refresh { bufnr = bufnr }
   end
