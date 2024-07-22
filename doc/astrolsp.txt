@@ -1,4 +1,4 @@
-*astrolsp.txt*          For Neovim >= 0.9.0          Last change: 2024 July 12
+*astrolsp.txt*          For Neovim >= 0.9.0          Last change: 2024 July 22
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -380,11 +380,11 @@ ON_ATTACH ~
     function astrolsp.on_attach(client: vim.lsp.Client, bufnr: integer)
 <
 
+The `on_attach` function used by AstroNvim
+
 _param_ `client` — The LSP client details when attaching
 
 _param_ `bufnr` — The buffer that the LSP client is attaching to
-
-The `on_attach` function used by AstroNvim
 
 
 PROGRESS ~

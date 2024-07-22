@@ -81,11 +81,11 @@ function astrolsp.lsp_setup(server: string)
 function astrolsp.on_attach(client: vim.lsp.Client, bufnr: integer)
 ```
 
+ The `on_attach` function used by AstroNvim
+
 *param* `client` — The LSP client details when attaching
 
 *param* `bufnr` — The buffer that the LSP client is attaching to
-
- The `on_attach` function used by AstroNvim
 
 ### progress
 
