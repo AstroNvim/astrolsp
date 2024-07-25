@@ -186,7 +186,6 @@ end
 ---@param server_name string The name of the server
 ---@return table # The table of LSP options used when setting up the given language server
 function M.lsp_opts(server_name)
-  if server_name == "lua_ls" then pcall(require, "neodev") end
   local opts = { capabilities = M.config.capabilities, flags = M.config.flags }
   if M.config.config[server_name] then opts = vim.tbl_deep_extend("force", opts, M.config.config[server_name]) end
   assert(opts)
