@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.8](https://github.com/AstroNvim/astrolsp/compare/v1.0.7...v1.0.8) (2024-07-25)
+
+
+### Bug Fixes
+
+* remove `neodev` activation as it's end of life ([dc6cfcb](https://github.com/AstroNvim/astrolsp/commit/dc6cfcbb12c6fdf91c56963148c28ed6f07d8e72))
+
 ## [1.0.7](https://github.com/AstroNvim/astrolsp/compare/v1.0.6...v1.0.7) (2024-07-12)
 
 
