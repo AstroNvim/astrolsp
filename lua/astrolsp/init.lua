@@ -229,6 +229,39 @@ function M.setup(opts)
   -- TODO: remove check when dropping support for Neovim v0.9
   if vim.lsp.inlay_hint then vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false) end
 
+  -- Set up tracking of signature help trigger characters
+  local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
+  vim.api.nvim_create_autocmd("LspAttach", {
+    group = augroup,
+    desc = "Add signature help triggers as language servers attach",
+    callback = function(args)
+      local client = vim.lsp.get_client_by_id(args.data.client_id)
+      if client and client.supports_method "textDocument/signatureHelp" then
+        vim.b[args.buf].signature_help_trigger = require("astrocore").list_insert_unique(
+          vim.b[args.buf].signature_help_trigger,
+          client.server_capabilities.signatureHelpProvider.triggerCharacters or {}
+        )
+      end
+    end,
+  })
+  vim.api.nvim_create_autocmd("LspDetach", {
+    group = augroup,
+    desc = "Safely remove LSP signature help triggers when language servers detach",
+    callback = vim.schedule_wrap(function(args)
+      if not vim.api.nvim_buf_is_valid(args.buf) then return end
+      local signature_help_trigger = {}
+      for _, client in pairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = args.buf }) do
+        if client.id ~= args.data.client_id and client.supports_method "textDocument/signatureHelp" then
+          require("astrocore").list_insert_unique(
+            signature_help_trigger,
+            client.server_capabilities.signatureHelpProvider.triggerCharacters or {}
+          )
+        end
+      end
+      vim.b[args.buf].signature_help_trigger = signature_help_trigger
+    end),
+  })
+
   vim.api.nvim_create_autocmd("LspDetach", {
     group = vim.api.nvim_create_augroup("astrolsp_detach", { clear = true }),
     desc = "Clear state when language server is detached like LSP progress messages",

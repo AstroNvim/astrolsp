@@ -29,6 +29,7 @@
 ---@field codelens boolean? enable/disable codelens refresh on start (boolean; default = true)
 ---@field inlay_hints boolean? enable/disable inlay hints on start (boolean; default = false)
 ---@field semantic_tokens boolean? enable/disable semantic token highlighting (boolean; default = true)
+---@field signature_help boolean? enable/disable automatic signature help (boolean; default = false)
 
 ---@class AstroLSPFormatOnSaveOpts
 ---@field enabled boolean? enable or disable format on save globally
@@ -260,6 +261,7 @@ local M = {
     codelens = true,
     inlay_hints = false,
     semantic_tokens = true,
+    signature_help = false,
   },
   capabilities = {},
   ---@diagnostic disable-next-line: missing-fields

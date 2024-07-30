@@ -89,4 +89,26 @@ function M.codelens(silent)
   ui_notify(silent, ("CodeLens %s"):format(bool2str(features.codelens)))
 end
 
+--- Toggle automatic signature help
+---@param silent? boolean if true then don't sent a notification
+function M.signature_help(silent)
+  config.features.signature_help = not config.features.signature_help
+  ui_notify(silent, ("Global signature help %s"):format(bool2str(config.features.signature_help)))
+end
+
+--- Toggle buffer local automatic signature help
+---@param bufnr? integer The buffer to toggle the auto signature help of, default the current buffer
+---@param silent? boolean if true then don't sent a notification
+function M.buffer_signature_help(bufnr, silent)
+  bufnr = bufnr or 0
+  local old_val = vim.b[bufnr].signature_help
+  if old_val == nil then old_val = config.features.signature_help end
+  if not next(vim.b[bufnr].signature_help_trigger) then
+    ui_notify(silent, "No LSP attached with signature help triggers")
+    return
+  end
+  vim.b[bufnr].signature_help = not old_val
+  ui_notify(silent, ("Buffer signature help %s"):format(bool2str(vim.b[bufnr].signature_help)))
+end
+
 return M
