@@ -1,4 +1,4 @@
-*astrolsp.txt*          For Neovim >= 0.9.0          Last change: 2024 July 25
+*astrolsp.txt*          For Neovim >= 0.9.0          Last change: 2024 July 31
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -470,6 +470,20 @@ _param_ `bufnr` — the buffer to toggle the clients on
 _param_ `silent` — if true then don’t sent a notification
 
 
+BUFFER_SIGNATURE_HELP ~
+
+>lua
+    function astrolsp.toggles.buffer_signature_help(bufnr?: integer, silent?: boolean)
+<
+
+Toggle buffer local automatic signature help
+
+_param_ `bufnr` — The buffer to toggle the auto signature help of, default
+the current buffer
+
+_param_ `silent` — if true then don’t sent a notification
+
+
 CODELENS ~
 
 >lua
@@ -488,6 +502,17 @@ INLAY_HINTS ~
 <
 
 Toggle global LSP inlay hints
+
+_param_ `silent` — if true then don’t sent a notification
+
+
+SIGNATURE_HELP ~
+
+>lua
+    function astrolsp.toggles.signature_help(silent?: boolean)
+<
+
+Toggle automatic signature help
 
 _param_ `silent` — if true then don’t sent a notification
 

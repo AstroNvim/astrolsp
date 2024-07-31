@@ -169,6 +169,19 @@ function astrolsp.toggles.buffer_semantic_tokens(bufnr?: integer, silent?: boole
 
 *param* `silent` — if true then don't sent a notification
 
+### buffer_signature_help
+
+
+```lua
+function astrolsp.toggles.buffer_signature_help(bufnr?: integer, silent?: boolean)
+```
+
+ Toggle buffer local automatic signature help
+
+*param* `bufnr` — The buffer to toggle the auto signature help of, default the current buffer
+
+*param* `silent` — if true then don't sent a notification
+
 ### codelens
 
 
@@ -188,6 +201,17 @@ function astrolsp.toggles.inlay_hints(silent?: boolean)
 ```
 
  Toggle global LSP inlay hints
+
+*param* `silent` — if true then don't sent a notification
+
+### signature_help
+
+
+```lua
+function astrolsp.toggles.signature_help(silent?: boolean)
+```
+
+ Toggle automatic signature help
 
 *param* `silent` — if true then don't sent a notification
 
