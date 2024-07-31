@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/AstroNvim/astrolsp/compare/v1.0.8...v1.1.0) (2024-07-31)
+
+
+### Features
+
+* add ability to track signature help triggers for automatic signature help display ([59780ab](https://github.com/AstroNvim/astrolsp/commit/59780abf24924b5ad72692d1bb8b73d8a84f5777))
+
 ## [1.0.8](https://github.com/AstroNvim/astrolsp/compare/v1.0.7...v1.0.8) (2024-07-25)
 
 
