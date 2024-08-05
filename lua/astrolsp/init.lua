@@ -12,6 +12,28 @@ local M = {}
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
 
+--- Insert one or more values into a list like table and maintain that you do not insert non-unique values (THIS MODIFIES `dst`)
+--- (taken from astrocore)
+---@param dst any[]|nil The list like table that you want to insert into
+---@param src any[] Values to be inserted
+---@return any[] # The modified list like table
+function M.list_insert_unique(dst, src)
+  if not dst then dst = {} end
+  -- TODO: remove check after dropping support for Neovim v0.9
+  assert((vim.islist or vim.tbl_islist)(dst), "Provided table is not a list like table")
+  local added = {}
+  for _, val in ipairs(dst) do
+    added[val] = true
+  end
+  for _, val in ipairs(src) do
+    if not added[val] then
+      table.insert(dst, val)
+      added[val] = true
+    end
+  end
+  return dst
+end
+
 --- The configuration as set by the user through the `setup()` function
 M.config = require "astrolsp.config"
 --- A table of lsp progress messages that can be used to display LSP progress in a statusline
@@ -237,7 +259,7 @@ function M.setup(opts)
     callback = function(args)
       local client = vim.lsp.get_client_by_id(args.data.client_id)
       if client and client.supports_method "textDocument/signatureHelp" then
-        vim.b[args.buf].signature_help_trigger = require("astrocore").list_insert_unique(
+        vim.b[args.buf].signature_help_trigger = M.list_insert_unique(
           vim.b[args.buf].signature_help_trigger,
           client.server_capabilities.signatureHelpProvider.triggerCharacters or {}
         )
@@ -252,7 +274,7 @@ function M.setup(opts)
       local signature_help_trigger = {}
       for _, client in pairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = args.buf }) do
         if client.id ~= args.data.client_id and client.supports_method "textDocument/signatureHelp" then
-          require("astrocore").list_insert_unique(
+          M.list_insert_unique(
             signature_help_trigger,
             client.server_capabilities.signatureHelpProvider.triggerCharacters or {}
           )
