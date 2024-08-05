@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/AstroNvim/astrolsp/compare/v1.1.1...v1.1.2) (2024-08-05)
+
+
+### Performance Improvements
+
+* optimize signature help trigger management ([fec0cc7](https://github.com/AstroNvim/astrolsp/commit/fec0cc7f1eac3a7e4c79e56ede619530d71ade77))
+
 ## [1.1.1](https://github.com/AstroNvim/astrolsp/compare/v1.1.0...v1.1.1) (2024-08-05)
 
 
