@@ -32,24 +32,6 @@ local function check_cond(cond, client, bufnr)
   return true
 end
 
----@param dst any[]
----@param src any[]?
-local function list_insert_unique(dst, src)
-  if not dst then dst = {} end
-  if not src then return dst end
-  local added = {}
-  for _, val in ipairs(dst) do
-    added[val] = true
-  end
-  for _, val in ipairs(src) do
-    if not added[val] then
-      table.insert(dst, val)
-      added[val] = true
-    end
-  end
-  return dst
-end
-
 --- Add a new LSP progress message to the message queue
 ---@param data {client_id: integer, params: lsp.ProgressParams}
 function M.progress(data)
@@ -255,10 +237,17 @@ function M.setup(opts)
     callback = function(args)
       local client = vim.lsp.get_client_by_id(args.data.client_id)
       if client and client.supports_method "textDocument/signatureHelp" then
-        vim.b[args.buf].signature_help_trigger = list_insert_unique(
-          vim.b[args.buf].signature_help_trigger,
-          client.server_capabilities.signatureHelpProvider.triggerCharacters
-        )
+        local triggers, added_triggers = vim.b[args.buf].signature_help_trigger or {}, {}
+        for _, trigger in ipairs(triggers) do
+          added_triggers[trigger] = true
+        end
+        for _, trigger in ipairs(client.server_capabilities.signatureHelpProvider.triggerCharacters or {}) do
+          if not added_triggers[trigger] then
+            table.insert(triggers, trigger)
+            added_triggers[trigger] = true
+          end
+        end
+        vim.b[args.buf].signature_help_trigger = triggers
       end
     end,
   })
@@ -267,10 +256,15 @@ function M.setup(opts)
     desc = "Safely remove LSP signature help triggers when language servers detach",
     callback = vim.schedule_wrap(function(args)
       if not vim.api.nvim_buf_is_valid(args.buf) then return end
-      local signature_help_trigger = {}
+      local signature_help_trigger, added_triggers = {}, {}
       for _, client in pairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = args.buf }) do
         if client.id ~= args.data.client_id and client.supports_method "textDocument/signatureHelp" then
-          list_insert_unique(signature_help_trigger, client.server_capabilities.signatureHelpProvider.triggerCharacters)
+          for _, trigger in ipairs(client.server_capabilities.signatureHelpProvider.triggerCharacters or {}) do
+            if not added_triggers[trigger] then
+              table.insert(signature_help_trigger, trigger)
+              added_triggers[trigger] = true
+            end
+          end
         end
       end
       vim.b[args.buf].signature_help_trigger = signature_help_trigger
