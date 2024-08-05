@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/AstroNvim/astrolsp/compare/v1.1.0...v1.1.1) (2024-08-05)
+
+
+### Bug Fixes
+
+* remove astrocore dependency ([#20](https://github.com/AstroNvim/astrolsp/issues/20)) ([cb966ce](https://github.com/AstroNvim/astrolsp/commit/cb966ce71d537ea0f0f29aa54a2d629090d816db))
+
 ## [1.1.0](https://github.com/AstroNvim/astrolsp/compare/v1.0.8...v1.1.0) (2024-07-31)
 
 
