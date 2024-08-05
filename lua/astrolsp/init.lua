@@ -32,6 +32,24 @@ local function check_cond(cond, client, bufnr)
   return true
 end
 
+---@param dst any[]
+---@param src any[]?
+local function list_insert_unique(dst, src)
+  if not dst then dst = {} end
+  if not src then return dst end
+  local added = {}
+  for _, val in ipairs(dst) do
+    added[val] = true
+  end
+  for _, val in ipairs(src) do
+    if not added[val] then
+      table.insert(dst, val)
+      added[val] = true
+    end
+  end
+  return dst
+end
+
 --- Add a new LSP progress message to the message queue
 ---@param data {client_id: integer, params: lsp.ProgressParams}
 function M.progress(data)
@@ -237,9 +255,9 @@ function M.setup(opts)
     callback = function(args)
       local client = vim.lsp.get_client_by_id(args.data.client_id)
       if client and client.supports_method "textDocument/signatureHelp" then
-        vim.b[args.buf].signature_help_trigger = require("astrocore").list_insert_unique(
+        vim.b[args.buf].signature_help_trigger = list_insert_unique(
           vim.b[args.buf].signature_help_trigger,
-          client.server_capabilities.signatureHelpProvider.triggerCharacters or {}
+          client.server_capabilities.signatureHelpProvider.triggerCharacters
         )
       end
     end,
@@ -252,10 +270,7 @@ function M.setup(opts)
       local signature_help_trigger = {}
       for _, client in pairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = args.buf }) do
         if client.id ~= args.data.client_id and client.supports_method "textDocument/signatureHelp" then
-          require("astrocore").list_insert_unique(
-            signature_help_trigger,
-            client.server_capabilities.signatureHelpProvider.triggerCharacters or {}
-          )
+          list_insert_unique(signature_help_trigger, client.server_capabilities.signatureHelpProvider.triggerCharacters)
         end
       end
       vim.b[args.buf].signature_help_trigger = signature_help_trigger
