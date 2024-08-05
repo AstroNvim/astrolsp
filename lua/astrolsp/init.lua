@@ -12,28 +12,6 @@ local M = {}
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
 
---- Insert one or more values into a list like table and maintain that you do not insert non-unique values (THIS MODIFIES `dst`)
---- (taken from astrocore)
----@param dst any[]|nil The list like table that you want to insert into
----@param src any[] Values to be inserted
----@return any[] # The modified list like table
-function M.list_insert_unique(dst, src)
-  if not dst then dst = {} end
-  -- TODO: remove check after dropping support for Neovim v0.9
-  assert((vim.islist or vim.tbl_islist)(dst), "Provided table is not a list like table")
-  local added = {}
-  for _, val in ipairs(dst) do
-    added[val] = true
-  end
-  for _, val in ipairs(src) do
-    if not added[val] then
-      table.insert(dst, val)
-      added[val] = true
-    end
-  end
-  return dst
-end
-
 --- The configuration as set by the user through the `setup()` function
 M.config = require "astrolsp.config"
 --- A table of lsp progress messages that can be used to display LSP progress in a statusline
@@ -52,6 +30,24 @@ local function check_cond(cond, client, bufnr)
   if cond_type == "string" then return client.supports_method(cond) end
   if cond_type == "boolean" then return cond end
   return true
+end
+
+---@param dst any[]
+---@param src any[]?
+local function list_insert_unique(dst, src)
+  if not dst then dst = {} end
+  if not src then return dst end
+  local added = {}
+  for _, val in ipairs(dst) do
+    added[val] = true
+  end
+  for _, val in ipairs(src) do
+    if not added[val] then
+      table.insert(dst, val)
+      added[val] = true
+    end
+  end
+  return dst
 end
 
 --- Add a new LSP progress message to the message queue
@@ -259,9 +255,9 @@ function M.setup(opts)
     callback = function(args)
       local client = vim.lsp.get_client_by_id(args.data.client_id)
       if client and client.supports_method "textDocument/signatureHelp" then
-        vim.b[args.buf].signature_help_trigger = M.list_insert_unique(
+        vim.b[args.buf].signature_help_trigger = list_insert_unique(
           vim.b[args.buf].signature_help_trigger,
-          client.server_capabilities.signatureHelpProvider.triggerCharacters or {}
+          client.server_capabilities.signatureHelpProvider.triggerCharacters
         )
       end
     end,
@@ -274,10 +270,7 @@ function M.setup(opts)
       local signature_help_trigger = {}
       for _, client in pairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = args.buf }) do
         if client.id ~= args.data.client_id and client.supports_method "textDocument/signatureHelp" then
-          M.list_insert_unique(
-            signature_help_trigger,
-            client.server_capabilities.signatureHelpProvider.triggerCharacters or {}
-          )
+          list_insert_unique(signature_help_trigger, client.server_capabilities.signatureHelpProvider.triggerCharacters)
         end
       end
       vim.b[args.buf].signature_help_trigger = signature_help_trigger
