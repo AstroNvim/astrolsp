@@ -229,6 +229,20 @@ function M.setup(opts)
   -- TODO: remove check when dropping support for Neovim v0.9
   if vim.lsp.inlay_hint then vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false) end
 
+  local function build_signature_help_list(bufnr, list_var, new_list)
+    local triggers, added_triggers = vim.b[bufnr][list_var] or {}, {}
+    for _, trigger in ipairs(triggers) do
+      added_triggers[trigger] = true
+    end
+    for _, trigger in ipairs(new_list or {}) do
+      if not added_triggers[trigger] then
+        table.insert(triggers, trigger)
+        added_triggers[trigger] = true
+      end
+    end
+    vim.b[bufnr][list_var] = triggers
+  end
+
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
   vim.api.nvim_create_autocmd("LspAttach", {
@@ -237,17 +251,9 @@ function M.setup(opts)
     callback = function(args)
       local client = vim.lsp.get_client_by_id(args.data.client_id)
       if client and client.supports_method "textDocument/signatureHelp" then
-        local triggers, added_triggers = vim.b[args.buf].signature_help_trigger or {}, {}
-        for _, trigger in ipairs(triggers) do
-          added_triggers[trigger] = true
-        end
-        for _, trigger in ipairs(client.server_capabilities.signatureHelpProvider.triggerCharacters or {}) do
-          if not added_triggers[trigger] then
-            table.insert(triggers, trigger)
-            added_triggers[trigger] = true
-          end
-        end
-        vim.b[args.buf].signature_help_trigger = triggers
+        local signature_help = client.server_capabilities.signatureHelpProvider or {}
+        build_signature_help_list(args.buf, "signature_help_trigger", signature_help.triggerCharacters)
+        build_signature_help_list(args.buf, "signature_help_retrigger", signature_help.retriggerCharacters)
       end
     end,
   })
@@ -256,7 +262,7 @@ function M.setup(opts)
     desc = "Safely remove LSP signature help triggers when language servers detach",
     callback = vim.schedule_wrap(function(args)
       if not vim.api.nvim_buf_is_valid(args.buf) then return end
-      local signature_help_trigger, added_triggers = {}, {}
+      local signature_help_trigger, added_triggers, signature_help_retrigger, added_retriggers = {}, {}, {}, {}
       for _, client in pairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = args.buf }) do
         if client.id ~= args.data.client_id and client.supports_method "textDocument/signatureHelp" then
           for _, trigger in ipairs(client.server_capabilities.signatureHelpProvider.triggerCharacters or {}) do
@@ -265,9 +271,16 @@ function M.setup(opts)
               added_triggers[trigger] = true
             end
           end
+          for _, retrigger in ipairs(client.server_capabilities.signatureHelpProvider.retriggerCharacters or {}) do
+            if not added_retriggers[retrigger] then
+              table.insert(signature_help_retrigger, retrigger)
+              added_retriggers[retrigger] = true
+            end
+          end
         end
       end
       vim.b[args.buf].signature_help_trigger = signature_help_trigger
+      vim.b[args.buf].signature_help_retrigger = signature_help_retrigger
     end),
   })
 
