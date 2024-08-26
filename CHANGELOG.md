@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0](https://github.com/AstroNvim/astrolsp/compare/v1.1.2...v2.0.0) (2024-08-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* use set table for signature trigger and retrigger characters
+
+### Features
+
+* maintain list signature help retrigger characters as well ([9e0d495](https://github.com/AstroNvim/astrolsp/commit/9e0d495138a3e530946dd982ce68ea69058e66c9))
+
+
+### Performance Improvements
+
+* use set table for signature trigger and retrigger characters ([5663067](https://github.com/AstroNvim/astrolsp/commit/5663067d0ac2a2b80fdc582ba04d80f539ce4daa))
+
 ## [1.1.2](https://github.com/AstroNvim/astrolsp/compare/v1.1.1...v1.1.2) (2024-08-05)
 
 
