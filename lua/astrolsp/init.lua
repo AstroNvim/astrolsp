@@ -260,7 +260,7 @@ function M.setup(opts)
             triggers[trigger] = true
           end
           for _, retrigger in ipairs(client.server_capabilities.signatureHelpProvider.retriggerCharacters or {}) do
-            retrigger[retrigger] = true
+            retriggers[retrigger] = true
           end
         end
       end
