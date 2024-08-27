@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/AstroNvim/astrolsp/compare/v2.0.0...v2.0.1) (2024-08-27)
+
+
+### Bug Fixes
+
+* typo in variable name ([968a52a](https://github.com/AstroNvim/astrolsp/commit/968a52a6111db1acb82400fabf3fea7c68f73003))
+
 ## [2.0.0](https://github.com/AstroNvim/astrolsp/compare/v1.1.2...v2.0.0) (2024-08-26)
 
 
