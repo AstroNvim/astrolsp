@@ -21,7 +21,7 @@ M.attached_clients = {}
 
 local function lsp_event(name) vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end
 
----@param cond AstroLSPCondition?
+---@param cond? AstroLSPCondition
 ---@param client vim.lsp.Client
 ---@param bufnr integer
 local function check_cond(cond, client, bufnr)
