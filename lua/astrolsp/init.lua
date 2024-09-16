@@ -226,8 +226,7 @@ function M.setup(opts)
       and not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
   end
 
-  -- TODO: remove check when dropping support for Neovim v0.9
-  if vim.lsp.inlay_hint then vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false) end
+  vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false)
 
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
