@@ -14,9 +14,6 @@ local M = {}
 
 local config = vim.tbl_get(require "astrolsp", "config", "file_operations") or {}
 
--- TODO: remove check when dropping support for Neovim v0.9
-local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients
-
 ---@class AstroLSPFileOperationsRename
 ---@field from string the original filename
 ---@field to string the new filename
@@ -50,7 +47,7 @@ end
 ---@param fnames string|string[] a file or list of files that were created
 function M.didCreateFiles(fnames)
   if not vim.tbl_get(config, "operations", "didCreate") then return end
-  for _, client in pairs(get_clients()) do
+  for _, client in pairs(vim.lsp.get_clients()) do
     local did_create = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "didCreate")
     if did_create then
       if type(fnames) == "string" then fnames = { fnames } end
@@ -70,7 +67,7 @@ end
 ---@param fnames string|string[] a file or list of files that were deleted
 function M.didDeleteFiles(fnames)
   if not vim.tbl_get(config, "operations", "didDelete") then return end
-  for _, client in pairs(get_clients()) do
+  for _, client in pairs(vim.lsp.get_clients()) do
     local did_delete = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "didDelete")
     if did_delete ~= nil then
       if type(fnames) == "string" then fnames = { fnames } end
@@ -90,7 +87,7 @@ end
 ---@param renames AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[] a table or list of tables of files that were renamed
 function M.didRenameFiles(renames)
   if not vim.tbl_get(config, "operations", "didRename") then return end
-  for _, client in pairs(get_clients()) do
+  for _, client in pairs(vim.lsp.get_clients()) do
     local did_rename = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "didRename")
     if did_rename ~= nil then
       if renames.from then renames = { renames } end
@@ -120,7 +117,7 @@ end
 ---@param fnames string|string[] a file or list of files that will be created
 function M.willCreateFiles(fnames)
   if not vim.tbl_get(config, "operations", "willCreate") then return end
-  for _, client in pairs(get_clients()) do
+  for _, client in pairs(vim.lsp.get_clients()) do
     local will_create = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "willCreate")
     if will_create then
       if type(fnames) == "string" then fnames = { fnames } end
@@ -142,7 +139,7 @@ end
 ---@param fnames string|string[] a file or list of files that will be deleted
 function M.willDeleteFiles(fnames)
   if not vim.tbl_get(config, "operations", "willDelete") then return end
-  for _, client in pairs(get_clients()) do
+  for _, client in pairs(vim.lsp.get_clients()) do
     local will_delete = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "willDelete")
     if will_delete then
       if type(fnames) == "string" then fnames = { fnames } end
@@ -164,7 +161,7 @@ end
 ---@param renames AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[] a table or list of tables of files that will be renamed
 function M.willRenameFiles(renames)
   if not vim.tbl_get(config, "operations", "willRename") then return end
-  for _, client in pairs(get_clients()) do
+  for _, client in pairs(vim.lsp.get_clients()) do
     local will_rename = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "willRename")
     if will_rename then
       if renames.from then renames = { renames } end

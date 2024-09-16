@@ -12,7 +12,7 @@ AstroLSP provides a simple API for configuring and setting up language servers i
 
 ## ⚡️ Requirements
 
-- Neovim >= 0.9
+- Neovim >= 0.10
 
 ## 📦 Installation
 

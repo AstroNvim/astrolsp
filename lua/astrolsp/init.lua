@@ -132,7 +132,7 @@ function M.on_attach(client, bufnr)
             local callback_func = command and function(_, _, _) vim.cmd(command) end or callback
             autocmd.callback = function(args)
               local invalid = true
-              for _, cb_client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { buffer = bufnr }) do
+              for _, cb_client in ipairs(vim.lsp.get_clients { buffer = bufnr }) do
                 if check_cond(cond, cb_client, bufnr) then
                   invalid = false
                   break
@@ -247,8 +247,7 @@ function M.setup(opts)
       and not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
   end
 
-  -- TODO: remove check when dropping support for Neovim v0.9
-  if vim.lsp.inlay_hint then vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false) end
+  vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false)
 
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
@@ -275,7 +274,7 @@ function M.setup(opts)
     callback = function(args)
       if not vim.api.nvim_buf_is_valid(args.buf) then return end
       local triggers, retriggers = {}, {}
-      for _, client in pairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = args.buf }) do
+      for _, client in pairs(vim.lsp.get_clients { bufnr = args.buf }) do
         if client.id ~= args.data.client_id and client.supports_method "textDocument/signatureHelp" then
           for _, trigger in ipairs(client.server_capabilities.signatureHelpProvider.triggerCharacters or {}) do
             triggers[trigger] = true
