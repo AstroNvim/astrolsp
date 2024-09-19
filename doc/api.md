@@ -4,15 +4,6 @@ astrolsp API documentation
 
 ## astrolsp
 
-AstroNvim LSP Utilities
-
-Various utility functions to use within AstroNvim for the LSP engine
-
-This module can be loaded with `local astro = require "astrolsp"`
-
-copyright 2023
-license GNU General Public License v3.0
-
 ### attached_clients
 
 
@@ -109,15 +100,6 @@ function astrolsp.setup(opts: AstroLSPOpts)
 
 
 ## astrolsp.toggles
-
-AstroNvim LSP Toggles
-
-Utility functions for easy LSP toggles
-
-This module can be loaded with `local ui = require("astrolsp.toggles")`
-
-copyright 2023
-license GNU General Public License v3.0
 
 ### autoformat
 

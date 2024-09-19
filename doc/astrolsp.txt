@@ -1,4 +1,4 @@
-*astrolsp.txt*         For Neovim >= 0.9.0         Last change: 2024 August 27
+*astrolsp.txt*        For Neovim >= 0.9.0       Last change: 2024 September 19
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -300,14 +300,6 @@ astrolsp API documentation
 
 ASTROLSP                                           *astrolsp-lua-api-astrolsp*
 
-AstroNvim LSP Utilities
-
-Various utility functions to use within AstroNvim for the LSP engine
-
-This module can be loaded with `local astro = require "astrolsp"`
-
-copyright 2023 license GNU General Public License v3.0
-
 
 ATTACHED_CLIENTS ~
 
@@ -408,14 +400,6 @@ _param_ `opts` — options passed by the user to configure AstroLSP
 
 
 ASTROLSP.TOGGLES                           *astrolsp-lua-api-astrolsp.toggles*
-
-AstroNvim LSP Toggles
-
-Utility functions for easy LSP toggles
-
-This module can be loaded with `local ui = require("astrolsp.toggles")`
-
-copyright 2023 license GNU General Public License v3.0
 
 
 AUTOFORMAT ~
