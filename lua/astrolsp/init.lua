@@ -21,7 +21,7 @@ M.attached_clients = {}
 
 local function lsp_event(name) vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end
 
----@param cond AstroLSPCondition?
+---@param cond? AstroLSPCondition
 ---@param client vim.lsp.Client
 ---@param bufnr integer
 local function check_cond(cond, client, bufnr)
@@ -226,8 +226,7 @@ function M.setup(opts)
       and not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
   end
 
-  -- TODO: remove check when dropping support for Neovim v0.9
-  if vim.lsp.inlay_hint then vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false) end
+  vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false)
 
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
