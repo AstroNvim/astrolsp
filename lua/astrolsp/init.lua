@@ -53,7 +53,7 @@ function M.lsp_setup(server)
   -- if server doesn't exist, set it up from user server definition
   local lspconfig_avail, lspconfig = pcall(require, "lspconfig")
   if lspconfig_avail then
-    local config_avail, config = pcall(require, "lspconfig.server_configurations." .. server)
+    local config_avail, config = pcall(require, "lspconfig.configs." .. server)
     if not config_avail or not config.default_config then
       local server_definition = M.config.config[server]
       if server_definition and server_definition.cmd then
