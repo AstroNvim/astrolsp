@@ -251,7 +251,7 @@ function M.setup(opts)
   vim.api.nvim_create_autocmd("LspDetach", {
     group = augroup,
     desc = "Safely remove LSP signature help triggers when language servers detach",
-    callback = vim.schedule_wrap(function(args)
+    callback = function(args)
       if not vim.api.nvim_buf_is_valid(args.buf) then return end
       local triggers, retriggers = {}, {}
       for _, client in pairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = args.buf }) do
@@ -266,7 +266,7 @@ function M.setup(opts)
       end
       vim.b[args.buf].signature_help_triggerCharacters = triggers
       vim.b[args.buf].signature_help_retriggerCharacters = retriggers
-    end),
+    end,
   })
 
   vim.api.nvim_create_autocmd("LspDetach", {
