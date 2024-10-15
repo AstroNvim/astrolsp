@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.2](https://github.com/AstroNvim/astrolsp/compare/v2.0.1...v2.0.2) (2024-10-15)
+
+
+### Bug Fixes
+
+* `lspconfig` module renamed `server_configurations` -&gt; `configs` ([79982a0](https://github.com/AstroNvim/astrolsp/commit/79982a077ae3b5a116ea4229f9c1011dfbd2c6a4))
+* do not schedule signature help trigger character cleanup ([0348222](https://github.com/AstroNvim/astrolsp/commit/0348222fd7f63bd8c76534179850700377a3ce10))
+
 ## [2.0.1](https://github.com/AstroNvim/astrolsp/compare/v2.0.0...v2.0.1) (2024-08-27)
 
 
