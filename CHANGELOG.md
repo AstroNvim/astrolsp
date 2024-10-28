@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/AstroNvim/astrolsp/compare/v2.0.2...v2.1.0) (2024-10-28)
+
+
+### Features
+
+* **health:** add health check for conflicting mappings ([a1a3e6b](https://github.com/AstroNvim/astrolsp/commit/a1a3e6bccb02b4d55dd2ec489b79f42f1d396692))
+
 ## [2.0.2](https://github.com/AstroNvim/astrolsp/compare/v2.0.1...v2.0.2) (2024-10-15)
 
 
