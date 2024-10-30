@@ -10,9 +10,11 @@
 ---@alias AstroLSPCondition string|boolean|fun(client:vim.lsp.Client,bufnr:integer):boolean conditional for doing something when attaching a language server
 
 ---@class AstroLSPMapping: vim.api.keyset.keymap
----@field [1] string|function rhs of keymap
+---@field [1] string|function? rhs of keymap
 ---@field name string? optional which-key mapping name
 ---@field cond AstroLSPCondition? condition for whether or not to set the mapping during language server attachment
+
+---@alias AstroLSPMappings table<string,table<string,(AstroLSPMapping|string|false)?>?>
 
 ---@class AstroLSPCommand: vim.api.keyset.user_command
 ---@field [1] string|function the command to execute
@@ -235,7 +237,7 @@
 ---  }
 ---}
 ---```
----@field mappings table<string,table<string,(AstroLSPMapping|string|false)?>?>?
+---@field mappings AstroLSPMappings?
 ---A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
 ---Example:
 --
