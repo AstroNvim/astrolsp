@@ -43,6 +43,10 @@
 ---@field format_on_save boolean|AstroLSPFormatOnSaveOpts? control formatting on save options
 ---@field disabled true|string[]? true to disable all or a list like table of language server names to disable formatting
 
+---@class AstroLSPDefaultOpts
+---@field hover vim.lsp.buf.hover.Opts? control the default options for `vim.lsp.buf.hover()` (`:h vim.lsp.buf.hover.Opts`)
+---@field signature_help vim.lsp.buf.signature_help.Opts? control the default options for `vim.lsp.buf.signature_help()` (`:h vim.lsp.buf.signature_help.Opts`)
+
 ---@class AstroLSPOpts
 ---Configuration of auto commands
 ---The key into the table is the group name for the auto commands (`:h augroup`) and the value
@@ -131,6 +135,23 @@
 ---}
 ---```
 ---@field config lspconfig.options?
+---Configure default options passed to `vim.lsp.buf` functions
+---Example:
+---
+---```lua
+---defaults = {
+---  hover = {
+---    border = "rounded",
+---    silent = true,
+---  },
+---  signature_help = {
+---    border = "rounded",
+---    silent = true,
+---    focusable = false,
+---  },
+---}
+---```
+---@field defaults AstroLSPDefaultOpts?
 ---A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
 ---Example:
 --
@@ -187,18 +208,12 @@
 ---}
 ---```
 ---@field handlers table<string|integer,fun(server:string,opts:_.lspconfig.options)|boolean?>?
----Configure global LSP handlers, set a method to `false` to use the Neovim default
+---Configure global LSP handlers, set a method to `false` to use the Neovim default (`:h vim.lsp.handlers`)
 ---Example:
 --
 ---```lua
 ---handlers = {
----  -- custom function handler for pyright
----  ["textDocument/hover"] = vim.lsp.with(
----    vim.lsphandlers.hover, {
----      border = "single",
----      title = "hover",
----    }
----  )
+---  ["textDocument/publishDiagnostics"] = my_custom_diagnostics_handler,
 ---}
 ---```
 ---@field lsp_handlers table<string,lsp.Handler|false>|false?
@@ -268,6 +283,10 @@ local M = {
   capabilities = {},
   ---@diagnostic disable-next-line: missing-fields
   config = {},
+  defaults = {
+    hover = {},
+    signature_help = {},
+  },
   flags = {},
   formatting = { format_on_save = { enabled = true }, disabled = {} },
   handlers = {},
