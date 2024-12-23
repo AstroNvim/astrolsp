@@ -21,7 +21,7 @@ M.attached_clients = {}
 
 local function lsp_event(name) vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end
 
----@param cond AstroLSPCondition?
+---@param cond? AstroLSPCondition
 ---@param client vim.lsp.Client
 ---@param bufnr integer
 local function check_cond(cond, client, bufnr)
@@ -132,7 +132,7 @@ function M.on_attach(client, bufnr)
             local callback_func = command and function(_, _, _) vim.cmd(command) end or callback
             autocmd.callback = function(args)
               local invalid = true
-              for _, cb_client in ipairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { buffer = bufnr }) do
+              for _, cb_client in ipairs(vim.lsp.get_clients { buffer = bufnr }) do
                 if check_cond(cond, cb_client, bufnr) then
                   invalid = false
                   break
@@ -226,8 +226,7 @@ function M.setup(opts)
       and not (vim.tbl_contains(disabled, client.name) or (type(filter) == "function" and not filter(client)))
   end
 
-  -- TODO: remove check when dropping support for Neovim v0.9
-  if vim.lsp.inlay_hint then vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false) end
+  vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false)
 
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
@@ -254,7 +253,7 @@ function M.setup(opts)
     callback = function(args)
       if not vim.api.nvim_buf_is_valid(args.buf) then return end
       local triggers, retriggers = {}, {}
-      for _, client in pairs((vim.lsp.get_clients or vim.lsp.get_active_clients) { bufnr = args.buf }) do
+      for _, client in pairs(vim.lsp.get_clients { bufnr = args.buf }) do
         if client.id ~= args.data.client_id and client.supports_method "textDocument/signatureHelp" then
           for _, trigger in ipairs(client.server_capabilities.signatureHelpProvider.triggerCharacters or {}) do
             triggers[trigger] = true
@@ -304,6 +303,26 @@ function M.setup(opts)
     local attached_client = M.attached_clients[ctx.client_id]
     if attached_client then M.on_attach(attached_client, vim.api.nvim_get_current_buf()) end
     return ret
+  end
+
+  for method, default in pairs(M.config.defaults) do
+    -- TODO: remove conditional after dropping support for Neovim v0.10
+    if vim.fn.has "nvim-0.11" == 1 then
+      local original_method = vim.lsp.buf[method]
+      if type(original_method) == "function" then
+        vim.lsp.buf[method] = function(user_opts)
+          return original_method(vim.tbl_deep_extend("force", default or {}, user_opts or {}))
+        end
+      end
+    else
+      local deprecated_handler = ({
+        hover = "textDocument/hover",
+        signature_help = "textDocument/signatureHelp",
+      })[method]
+      if deprecated_handler and default then
+        vim.lsp.handlers[deprecated_handler] = vim.lsp.with(vim.lsp.handlers[deprecated_handler], default)
+      end
+    end
   end
 
   for method, handler in pairs(M.config.lsp_handlers or {}) do
