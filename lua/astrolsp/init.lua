@@ -203,9 +203,29 @@ function M.lsp_opts(server_name)
   return opts
 end
 
+local key_cache = {} ---@type { [string]: string }
+
+---@param mappings AstroLSPMappings?
+local function normalize_mappings(mappings)
+  if not mappings then return end
+  for _, mode_maps in pairs(mappings) do
+    for key, _ in pairs(mode_maps) do
+      if not key_cache[key] then
+        key_cache[key] = vim.fn.keytrans(vim.api.nvim_replace_termcodes(key, true, true, true))
+      end
+      local normkey = key_cache[key]
+      if key ~= normkey then
+        mode_maps[normkey], mode_maps[key] = mode_maps[key], nil
+      end
+    end
+  end
+end
+
 --- Setup and configure AstroLSP
 ---@param opts AstroLSPOpts options passed by the user to configure AstroLSP
 function M.setup(opts)
+  normalize_mappings(M.config.mappings)
+  normalize_mappings(opts.mappings)
   M.config = vim.tbl_deep_extend("force", M.config, opts)
 
   -- enable necessary capabilities for enabled LSP file operations
