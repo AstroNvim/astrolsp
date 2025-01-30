@@ -59,6 +59,16 @@
 ---@field hover vim.lsp.buf.hover.Opts? control the default options for `vim.lsp.buf.hover()` (`:h vim.lsp.buf.hover.Opts`)
 ---@field signature_help vim.lsp.buf.signature_help.Opts? control the default options for `vim.lsp.buf.signature_help()` (`:h vim.lsp.buf.signature_help.Opts`)
 
+---@class AstroLSPMasonLspconfigServer
+---@field public package string the Mason package name
+---@field filetypes string|string[] the filetype(s) that the server applies to
+---@field config? table|(fun(): table) extensions tothe default language server configuration
+
+---@alias AstroLSPMasonLspconfigServers { [string]: AstroLSPMasonLspconfigServer }
+
+---@class AstroLSPMasonLspconfigOpts
+---@field servers AstroLSPMasonLspconfigServers? a table of servers to register with mason-lspconfig.nvim
+
 ---@class AstroLSPOpts
 ---Configuration of auto commands
 ---The key into the table is the group name for the auto commands (`:h augroup`) and the value
@@ -284,6 +294,21 @@
 ---}
 ---```
 ---@field mappings AstroLSPMappings?
+---Extra options for the `mason-lspconfig.nvim` plugin such as registering new packages as language servers.
+---Example:
+--
+---```lua
+---mason_lspconfig = {
+---  servers = {
+---    nextflow_ls = {
+---      package = "nextflow-language-server",
+---      filetypes = "nextflow",
+---      config = { cmd = { "nextflow-language-server" } }
+---    }
+---  }
+---}
+---```
+---@field mason_lspconfig AstroLSPMasonLspconfigOpts?
 ---A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
 ---Example:
 --
@@ -324,6 +349,7 @@ local M = {
   handlers = {},
   lsp_handlers = {},
   mappings = {},
+  mason_lspconfig = {},
   servers = {},
   on_attach = nil,
 }
