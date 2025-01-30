@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/AstroNvim/astrolsp/compare/v2.1.0...v2.1.1) (2025-01-30)
+
+
+### Bug Fixes
+
+* improve typos detection ([30ac0f6](https://github.com/AstroNvim/astrolsp/commit/30ac0f6019d7387ea07398f6de7f6a2fff83bbf5))
+
 ## [2.1.0](https://github.com/AstroNvim/astrolsp/compare/v2.0.2...v2.1.0) (2024-10-28)
 
 
