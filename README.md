@@ -195,6 +195,21 @@ local opts = {
       },
     },
   },
+ -- Extra configuration for the `mason-lspconfig.nvim` plugin
+  mason_lspconfig = {
+    -- Allow registering more Mason packages as language servers for autodetection/setup
+    servers = {
+      -- The key is the lspconfig server name to register a package for
+      nextflow_ls = {
+        -- The Mason package name to register to the language server
+        package = "nextflow-language-server",
+        -- The filetypes that apply to the package and language server
+        filetypes = { "nextflow" },
+        -- (Optional) any default configuration changes that may need to happen (can be a table or a function that returns a table)
+        config = { cmd = { "nextflow-language-server" } }
+      }
+    }
+  }
   -- A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
   servers = { "dartls" },
   -- A custom `on_attach` function to be run after the default `on_attach` function, takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
@@ -231,12 +246,16 @@ local opts = {
     {
       "williamboman/mason-lspconfig.nvim", -- MUST be set up before `nvim-lspconfig`
       dependencies = { "williamboman/mason.nvim" },
-      opts = function()
-        return {
-          -- use AstroLSP setup for mason-lspconfig
-          handlers = { function(server) require("astrolsp").lsp_setup(server) end },
-        }
-      end,
+      opts = {
+        -- use AstroLSP setup for mason-lspconfig
+        handlers = { function(server) require("astrolsp").lsp_setup(server) end },
+      },
+      config = function(_, opts)
+        -- Optionally tell AstroLSP to register new language servers before calling the `setup` function
+        -- this enables the `mason-lspconfig.servers` option in the AstroLSP configuration
+        require("astrolsp.mason-lspconfig").register_servers()
+        require("mason-lspconfig").setup(opts)
+      end
     },
   },
   config = function()
