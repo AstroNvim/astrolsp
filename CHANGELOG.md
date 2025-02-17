@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.2.0](https://github.com/AstroNvim/astrolsp/compare/v2.1.0...v2.2.0) (2025-02-17)
+
+
+### Features
+
+* add module for LSP based file operation utilities ([9d22023](https://github.com/AstroNvim/astrolsp/commit/9d22023d9827ee762025934877108d91bd19d109))
+* **file_operations:** trigger rename file operations on AstroCore file rename ([1ea8c69](https://github.com/AstroNvim/astrolsp/commit/1ea8c6934e962d5c3ba081099accdec0f2b7240f))
+
+
+### Bug Fixes
+
+* **file_operations:** allow `file_operations` configuration to be set to `false` ([e406799](https://github.com/AstroNvim/astrolsp/commit/e406799b3b0ce4c774e3a6a6bf7cc759c60cd2d5))
+* **file_operations:** resolve typo in utility function ([b372161](https://github.com/AstroNvim/astrolsp/commit/b3721617ceab4d136678d9faa0b8b26a82353be0))
+* improve typos detection ([30ac0f6](https://github.com/AstroNvim/astrolsp/commit/30ac0f6019d7387ea07398f6de7f6a2fff83bbf5))
+
 ## [2.1.0](https://github.com/AstroNvim/astrolsp/compare/v2.0.2...v2.1.0) (2024-10-28)
 
 
