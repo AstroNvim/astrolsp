@@ -25,7 +25,7 @@ local filter_cache = {}
 local match_filters = function(filters, name)
   local fname = vim.fn.fnamemodify(name, ":p")
   for _, filter in pairs(filters) do
-    if not filter_cache[filter] then filter_cache = {} end
+    if not filter_cache[filter] then filter_cache[filter] = {} end
     if filter_cache[filter][fname] == nil then
       local matched = false
       local pattern = filter.pattern
