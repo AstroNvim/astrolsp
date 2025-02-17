@@ -208,6 +208,11 @@ end
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts)
 
+  -- enable necessary capabilities for enabled LSP file operations
+  M.config.capabilities = vim.tbl_deep_extend("force", M.config.capabilities or {}, {
+    workspace = { fileOperations = vim.tbl_get(M.config, "file_operations", "operations") },
+  })
+
   -- normalize format_on_save to table format
   if vim.tbl_get(M.config, "formatting", "format_on_save") == false then
     M.config.formatting.format_on_save = { enabled = false }

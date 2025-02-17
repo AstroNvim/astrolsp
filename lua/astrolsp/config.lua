@@ -43,6 +43,18 @@
 ---@field format_on_save boolean|AstroLSPFormatOnSaveOpts? control formatting on save options
 ---@field disabled true|string[]? true to disable all or a list like table of language server names to disable formatting
 
+---@class AstroLSPFileOperationsOperationsOpts
+---@field willCreate boolean? enable/disable pre-create file notifications
+---@field willDelete boolean? enable/disable pre-create file notifications
+---@field willRename boolean? enable/disable pre-rename file notifications
+---@field didCreate boolean? enable/disable post-create file notifications
+---@field didDelete boolean? enable/disable post-create file notifications
+---@field didRename boolean? enable/disable post-rename file notifications
+
+---@class AstroLSPFileOperationsOpts
+---@field timeout integer? timeout length in ms when executing LSP client file operations
+---@field operations AstroLSPFileOperationsOperationsOpts? enable/disable file operations
+
 ---@class AstroLSPOpts
 ---Configuration of auto commands
 ---The key into the table is the group name for the auto commands (`:h augroup`) and the value
@@ -131,6 +143,25 @@
 ---}
 ---```
 ---@field config lspconfig.options?
+---Configure LSP based file operations
+---Example:
+--
+---```lua
+---file_operations = {
+---  -- the timeout when executing LSP client operations
+---  timeout = 10000,
+---  -- fully disable/enable file operation methods
+---  operations = {
+---   willRenameFiles = true,
+---   didRenameFiles = true,
+---   willCreateFiles = true,
+---   didCreateFiles = true,
+---   willDeleteFiles = true,
+---   didDeleteFiles = true,
+---  }
+--- }
+---```
+---@field file_operations AstroLSPFileOperationsOpts?
 ---A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
 ---Example:
 --
@@ -268,6 +299,7 @@ local M = {
   capabilities = {},
   ---@diagnostic disable-next-line: missing-fields
   config = {},
+  file_operations = { timeout = 10000, operations = {} },
   flags = {},
   formatting = { format_on_save = { enabled = true }, disabled = {} },
   handlers = {},

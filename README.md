@@ -110,6 +110,20 @@ local opts = {
       },
     },
   },
+  -- Configuration of LSP file operation functionality
+  file_operations = {
+    -- the timeout when executing LSP client operations
+    timeout = 10000,
+    -- fully disable/enable file operation methods
+    operations = {
+      willRename = true,
+      didRename = true,
+      willCreate = true,
+      didCreate = true,
+      willDelete = true,
+      didDelete = true,
+    },
+  },
   -- A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
   flags = {
     exit_timeout = 5000,
