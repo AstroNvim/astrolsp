@@ -99,6 +99,75 @@ function astrolsp.setup(opts: AstroLSPOpts)
 *param* `opts` — options passed by the user to configure AstroLSP
 
 
+## astrolsp.file_operations
+
+### didCreateFiles
+
+
+```lua
+function astrolsp.file_operations.didCreateFiles(fnames: string|string[])
+```
+
+ Notify LSP clients that file(s) were created
+
+*param* `fnames` — a file or list of files that were created
+
+### didDeleteFiles
+
+
+```lua
+function astrolsp.file_operations.didDeleteFiles(fnames: string|string[])
+```
+
+ Notify LSP clients that file(s) were deleted
+
+*param* `fnames` — a file or list of files that were deleted
+
+### didRenameFiles
+
+
+```lua
+function astrolsp.file_operations.didRenameFiles(renames: AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[])
+```
+
+ Notify LSP clients that file(s) were renamed
+
+*param* `renames` — a table or list of tables of files that were renamed
+
+### willCreateFiles
+
+
+```lua
+function astrolsp.file_operations.willCreateFiles(fnames: string|string[])
+```
+
+ Notify LSP clients that file(s) are going to be created
+
+*param* `fnames` — a file or list of files that will be created
+
+### willDeleteFiles
+
+
+```lua
+function astrolsp.file_operations.willDeleteFiles(fnames: string|string[])
+```
+
+ Notify LSP clients that file(s) are going to be deleted
+
+*param* `fnames` — a file or list of files that will be deleted
+
+### willRenameFiles
+
+
+```lua
+function astrolsp.file_operations.willRenameFiles(renames: AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[])
+```
+
+ Notify LSP clients that file(s) are going to be renamed
+
+*param* `renames` — a table or list of tables of files that will be renamed
+
+
 ## astrolsp.toggles
 
 ### autoformat

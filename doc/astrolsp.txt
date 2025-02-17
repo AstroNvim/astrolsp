@@ -1,4 +1,4 @@
-*astrolsp.txt*         For Neovim >= 0.9.0        Last change: 2025 January 30
+*astrolsp.txt*        For Neovim >= 0.9.0        Last change: 2025 February 17
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -13,6 +13,7 @@ Table of Contents                                 *astrolsp-table-of-contents*
   - Contributing                              |astrolsp-astrolsp-contributing|
 2. Lua API                                                  |astrolsp-lua-api|
   - astrolsp                                       |astrolsp-lua-api-astrolsp|
+  - astrolsp.file_operations       |astrolsp-lua-api-astrolsp.file_operations|
   - astrolsp.toggles                       |astrolsp-lua-api-astrolsp.toggles|
 
 ==============================================================================
@@ -135,6 +136,20 @@ Here are descriptions of the options and some example usages:
           capabilities = {
             offsetEncoding = "utf-8",
           },
+        },
+      },
+      -- Configuration of LSP file operation functionality
+      file_operations = {
+        -- the timeout when executing LSP client operations
+        timeout = 10000,
+        -- fully disable/enable file operation methods
+        operations = {
+          willRename = true,
+          didRename = true,
+          willCreate = true,
+          didCreate = true,
+          willDelete = true,
+          didDelete = true,
         },
       },
       -- A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
@@ -397,6 +412,75 @@ SETUP ~
 Setup and configure AstroLSP
 
 _param_ `opts` — options passed by the user to configure AstroLSP
+
+
+ASTROLSP.FILE_OPERATIONS           *astrolsp-lua-api-astrolsp.file_operations*
+
+
+DIDCREATEFILES ~
+
+>lua
+    function astrolsp.file_operations.didCreateFiles(fnames: string|string[])
+<
+
+Notify LSP clients that file(s) were created
+
+_param_ `fnames` — a file or list of files that were created
+
+
+DIDDELETEFILES ~
+
+>lua
+    function astrolsp.file_operations.didDeleteFiles(fnames: string|string[])
+<
+
+Notify LSP clients that file(s) were deleted
+
+_param_ `fnames` — a file or list of files that were deleted
+
+
+DIDRENAMEFILES ~
+
+>lua
+    function astrolsp.file_operations.didRenameFiles(renames: AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[])
+<
+
+Notify LSP clients that file(s) were renamed
+
+_param_ `renames` — a table or list of tables of files that were renamed
+
+
+WILLCREATEFILES ~
+
+>lua
+    function astrolsp.file_operations.willCreateFiles(fnames: string|string[])
+<
+
+Notify LSP clients that file(s) are going to be created
+
+_param_ `fnames` — a file or list of files that will be created
+
+
+WILLDELETEFILES ~
+
+>lua
+    function astrolsp.file_operations.willDeleteFiles(fnames: string|string[])
+<
+
+Notify LSP clients that file(s) are going to be deleted
+
+_param_ `fnames` — a file or list of files that will be deleted
+
+
+WILLRENAMEFILES ~
+
+>lua
+    function astrolsp.file_operations.willRenameFiles(renames: AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[])
+<
+
+Notify LSP clients that file(s) are going to be renamed
+
+_param_ `renames` — a table or list of tables of files that will be renamed
 
 
 ASTROLSP.TOGGLES                           *astrolsp-lua-api-astrolsp.toggles*
