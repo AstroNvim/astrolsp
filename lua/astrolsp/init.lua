@@ -212,6 +212,19 @@ function M.setup(opts)
   M.config.capabilities = vim.tbl_deep_extend("force", M.config.capabilities or {}, {
     workspace = { fileOperations = vim.tbl_get(M.config, "file_operations", "operations") },
   })
+  local rename_augroup = vim.api.nvim_create_augroup("astrolsp_rename_operations", { clear = true })
+  vim.api.nvim_create_autocmd("User", {
+    group = rename_augroup,
+    desc = "trigger willRenameFiles LSP operation on AstroCore file rename",
+    pattern = "AstroRenameFilePre",
+    callback = function(args) require("astrolsp.file_operations").willRenameFiles(args.data) end,
+  })
+  vim.api.nvim_create_autocmd("User", {
+    group = rename_augroup,
+    desc = "trigger didRenameFiles LSP operation on AstroCore file rename",
+    pattern = "AstroRenameFilePost",
+    callback = function(args) require("astrolsp.file_operations").didRenameFiles(args.data) end,
+  })
 
   -- normalize format_on_save to table format
   if vim.tbl_get(M.config, "formatting", "format_on_save") == false then
