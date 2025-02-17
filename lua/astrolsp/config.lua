@@ -161,7 +161,7 @@
 ---  }
 --- }
 ---```
----@field file_operations AstroLSPFileOperationsOpts?
+---@field file_operations AstroLSPFileOperationsOpts|false?
 ---A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
 ---Example:
 --
