@@ -258,6 +258,172 @@ local opts = {
 }
 ```
 
+### LSP File Operations
+
+AstroLSP provides an API for triggering LSP based file operations and currently supports:
+
+- `workspace/willCreateFiles`
+- `workspace/didCreateFiles`
+- `workspace/willDeleteFiles`
+- `workspace/didDeleteFiles`
+- `workspace/willRenameFiles`
+- `workspace/didRenameFiles`
+
+These methods can be integrated with file management plugins such as [mini.files](https://github.com/echasnovski/mini.files), [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim), [nvim-tree.lua](https://github.com/nvim-tree/nvim-tree.lua), and [triptych.nvim](https://github.com/simonmclean/triptych.nvim). (Some file managers already have support out of the box such as [oil.nvim](https://github.com/stevearc/oil.nvim) so integration with them is unnecessary).
+
+#### [mini.files](https://github.com/echasnovski/mini.files)
+
+`mini.files` provides `autocommand` events which can be used to trigger functionality. As of writing these only include events after an operation is completed and therefore does not support the `willCreateFiles`/`willDeleteFiles`/`willRenameFiles` events.
+
+```lua
+vim.api.nvim_create_autocmd("User", {
+  pattern = "MiniFilesActionCreate",
+  desc = "trigger `workspace/didCreateFiles` after creating files",
+  callback = function(args) require("astrolsp.file_operations").didCreateFiles(args.data.to) end,
+})
+vim.api.nvim_create_autocmd("User", {
+  pattern = "MiniFilesActionDelete",
+  desc = "trigger `workspace/didDeleteFiles` after deleting files",
+  callback = function(args) require("astrolsp.file_operations").didDeleteFiles(args.data.from) end,
+})
+vim.api.nvim_create_autocmd("User", {
+  pattern = { "MiniFilesActionRename", "MiniFilesActionMove" },
+  desc = "trigger `workspace/didRenameFiles` after renaming or moving files",
+  callback = function(args) require("astrolsp.file_operations").didRenameFiles(args.data) end,
+})
+```
+
+#### [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim)
+
+`neo-tree.nvim` provides configuration options for event handlers which can be used to set up the necessary handling before/after file operations. There is also a Lua API to do this outside of the plugin configuration (information on this can be found in their documentation). Here is an example for doing it within the setup of `neo-tree.nvim`:
+
+```lua
+local events = require "neo-tree.events"
+require("neo-tree").setup {
+  event_handlers = {
+    {
+      event = events.BEFORE_FILE_ADD,
+      handler = function(args) require("astrolsp.file_operations").willCreateFiles(args) end,
+    },
+    {
+      event = events.FILE_ADDED,
+      handler = function(args) require("astrolsp.file_operations").didCreateFiles(args) end,
+    },
+    {
+      event = events.BEFORE_FILE_DELETE,
+      handler = function(args) require("astrolsp.file_operations").willDeleteFiles(args) end,
+    },
+    {
+      event = events.FILE_DELETED,
+      handler = function(args) require("astrolsp.file_operations").didDeleteFiles(args) end,
+    },
+    {
+      event = events.BEFORE_FILE_MOVE,
+      handler = function(args)
+        require("astrolsp.file_operations").willRenameFiles { from = args.source, to = args.destination }
+      end,
+    },
+    {
+      event = events.BEFORE_FILE_RENAME,
+      handler = function(args)
+        require("astrolsp.file_operations").willRenameFiles { from = args.source, to = args.destination }
+      end,
+    },
+    {
+      event = events.FILE_MOVED,
+      handler = function(args)
+        require("astrolsp.file_operations").didRenameFiles { from = args.source, to = args.destination }
+      end,
+    },
+    {
+      event = events.FILE_RENAMED,
+      handler = function(args)
+        require("astrolsp.file_operations").didRenameFiles { from = args.source, to = args.destination }
+      end,
+    },
+  },
+}
+```
+
+#### [nvim-tree.lua](https://github.com/nvim-tree/nvim-tree.lua)
+
+`nvim-tree.lua` provides a Lua API to subscribe to file operation events which can be easily accessed through an `autocommand` which runs after the plugin is setup.
+
+```lua
+vim.api.nvim_create_autocmd("User", {
+  pattern = "NvimTreeSetup",
+  desc = "Subscribe file operation events to AstroLSP file operations",
+  callback = function()
+    local events = require("nvim-tree.api").events
+    events.subscribe(
+      events.Event.WillCreateFile,
+      function(args) require("astrolsp.file_operations").willCreateFiles(args.fname) end
+    )
+    events.subscribe(
+      events.Event.FileCreated,
+      function(args) require("astrolsp.file_operations").didCreateFiles(args.fname) end
+    )
+    events.subscribe(
+      events.Event.WillRemoveFile,
+      function(args) require("astrolsp.file_operations").willDeleteFiles(args.fname) end
+    )
+    events.subscribe(
+      events.Event.FileRemoved,
+      function(args) require("astrolsp.file_operations").didDeleteFiles(args.fname) end
+    )
+    events.subscribe(
+      events.Event.WillRenameNode,
+      function(args) require("astrolsp.file_operations").willRenameFiles { from = args.old_name, to = args.new_name } end
+    )
+    events.subscribe(
+      events.Event.NodeRenamed,
+      function(args) require("astrolsp.file_operations").didRenameFiles { from = args.old_name, to = args.new_name } end
+    )
+  end,
+})
+```
+
+#### [triptych.nvim](https://github.com/simonmclean/triptych.nvim)
+
+`triptych.nvim` provides `autocommand` events which can be used to trigger functionality.
+
+```lua
+vim.api.nvim_create_autocmd("User", {
+  pattern = "TriptychWillCreateNode",
+  desc = "trigger `workspace/willCreateFiles` before creating files",
+  callback = function(args) require("astrolsp.file_operations").willCreateFiles(args.data.path) end,
+})
+vim.api.nvim_create_autocmd("User", {
+  pattern = "TriptychDidCreateNode",
+  desc = "trigger `workspace/didCreateFiles` after creating files",
+  callback = function(args) require("astrolsp.file_operations").didCreateFiles(args.data.path) end,
+})
+vim.api.nvim_create_autocmd("User", {
+  pattern = "TriptychWillDeleteNode",
+  desc = "trigger `workspace/willDeleteFiles` before deleting files",
+  callback = function(args) require("astrolsp.file_operations").willDeleteFiles(args.data.path) end,
+})
+vim.api.nvim_create_autocmd("User", {
+  pattern = "TriptychDidDeleteNode",
+  desc = "trigger `workspace/didDeleteFiles` after deleting files",
+  callback = function(args) require("astrolsp.file_operations").didDeleteFiles(args.data.path) end,
+})
+vim.api.nvim_create_autocmd("User", {
+  pattern = "TriptychWillMoveNode",
+  desc = "trigger `workspace/willRenameFiles` before moving files",
+  callback = function(args)
+    require("astrolsp.file_operations").willRenameFiles { from = args.data.from_path, to = args.data.to_path }
+  end,
+})
+vim.api.nvim_create_autocmd("User", {
+  pattern = "TriptychDidMoveNode",
+  desc = "trigger `workspace/didRenameFiles` after moving files",
+  callback = function(args)
+    require("astrolsp.file_operations").didRenameFiles { from = args.data.from_path, to = args.data.to_path }
+  end,
+})
+```
+
 ## 📦 API
 
 **AstroLSP** provides a Lua API with utility functions. This can be viewed with `:h astrolsp` or in the repository at [doc/api.md](doc/api.md)
