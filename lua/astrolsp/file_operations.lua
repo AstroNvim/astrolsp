@@ -33,7 +33,7 @@ local match_filters = function(filters, name)
       local is_dir = string.sub(fname, #fname) == "/"
       if not match_type or (match_type == "folder" and is_dir) or (match_type == "file" and not is_dir) then
         local regex = vim.fn.glob2regpat(pattern.glob)
-        if vim.tbl_get(pattern, "options", "ignorecase") then regex = "\\c" .. regex end
+        if vim.tbl_get(pattern, "options", "ignoreCase") then regex = "\\c" .. regex end
         local previous_ignorecase = vim.o.ignorecase
         vim.o.ignorecase = false
         matched = vim.fn.match(fname, regex) ~= -1
