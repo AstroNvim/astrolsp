@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/AstroNvim/astrolsp/compare/v2.2.0...v2.2.1) (2025-02-19)
+
+
+### Bug Fixes
+
+* **file_operations:** correct casing in file operation options ([c736d7a](https://github.com/AstroNvim/astrolsp/commit/c736d7a1ec5a93a929f7f3692f810a823f196961))
+
 ## [2.2.0](https://github.com/AstroNvim/astrolsp/compare/v2.1.0...v2.2.0) (2025-02-17)
 
 
