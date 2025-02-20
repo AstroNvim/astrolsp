@@ -209,9 +209,12 @@ function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts)
 
   -- enable necessary capabilities for enabled LSP file operations
-  M.config.capabilities = vim.tbl_deep_extend("force", M.config.capabilities or {}, {
-    workspace = { fileOperations = vim.tbl_get(M.config, "file_operations", "operations") },
-  })
+  local fileOperations = vim.tbl_get(M.config, "file_operations", "operations")
+  if fileOperations and not vim.tbl_isempty(fileOperations) then
+    M.config.capabilities = vim.tbl_deep_extend("force", M.config.capabilities or {}, {
+      workspace = { fileOperations = fileOperations },
+    })
+  end
   local rename_augroup = vim.api.nvim_create_augroup("astrolsp_rename_operations", { clear = true })
   vim.api.nvim_create_autocmd("User", {
     group = rename_augroup,
