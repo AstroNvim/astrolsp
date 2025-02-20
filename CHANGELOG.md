@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.2](https://github.com/AstroNvim/astrolsp/compare/v2.2.1...v2.2.2) (2025-02-20)
+
+
+### Bug Fixes
+
+* handle when `file_operations.operations` is `nil` ([8a4bb83](https://github.com/AstroNvim/astrolsp/commit/8a4bb8376f0d304dbc97d0574a7614f529c94857))
+
 ## [2.2.1](https://github.com/AstroNvim/astrolsp/compare/v2.2.0...v2.2.1) (2025-02-19)
 
 
