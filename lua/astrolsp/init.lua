@@ -246,7 +246,9 @@ function M.setup(opts)
     group = rename_augroup,
     desc = "trigger didRenameFiles LSP operation on AstroCore file rename",
     pattern = "AstroRenameFilePost",
-    callback = function(args) require("astrolsp.file_operations").didRenameFiles(args.data) end,
+    callback = function(args)
+      if args.data.success then require("astrolsp.file_operations").didRenameFiles(args.data) end
+    end,
   })
 
   -- normalize format_on_save to table format
