@@ -55,6 +55,20 @@
 ---@field timeout integer? timeout length in ms when executing LSP client file operations
 ---@field operations AstroLSPFileOperationsOperationsOpts? enable/disable file operations
 
+---@class AstroLSPDefaultOpts
+---@field hover vim.lsp.buf.hover.Opts? control the default options for `vim.lsp.buf.hover()` (`:h vim.lsp.buf.hover.Opts`)
+---@field signature_help vim.lsp.buf.signature_help.Opts? control the default options for `vim.lsp.buf.signature_help()` (`:h vim.lsp.buf.signature_help.Opts`)
+
+---@class AstroLSPMasonLspconfigServer
+---@field public package string the Mason package name
+---@field filetypes string|string[] the filetype(s) that the server applies to
+---@field config? table|(fun(): table) extensions tothe default language server configuration
+
+---@alias AstroLSPMasonLspconfigServers { [string]: AstroLSPMasonLspconfigServer }
+
+---@class AstroLSPMasonLspconfigOpts
+---@field servers AstroLSPMasonLspconfigServers? a table of servers to register with mason-lspconfig.nvim
+
 ---@class AstroLSPOpts
 ---Configuration of auto commands
 ---The key into the table is the group name for the auto commands (`:h augroup`) and the value
@@ -143,6 +157,23 @@
 ---}
 ---```
 ---@field config lspconfig.options?
+---Configure default options passed to `vim.lsp.buf` functions
+---Example:
+---
+---```lua
+---defaults = {
+---  hover = {
+---    border = "rounded",
+---    silent = true,
+---  },
+---  signature_help = {
+---    border = "rounded",
+---    silent = true,
+---    focusable = false,
+---  },
+---}
+---```
+---@field defaults AstroLSPDefaultOpts?
 ---Configure LSP based file operations
 ---Example:
 --
@@ -218,18 +249,12 @@
 ---}
 ---```
 ---@field handlers table<string|integer,fun(server:string,opts:_.lspconfig.options)|boolean?>?
----Configure global LSP handlers, set a method to `false` to use the Neovim default
+---Configure global LSP handlers, set a method to `false` to use the Neovim default (`:h vim.lsp.handlers`)
 ---Example:
 --
 ---```lua
 ---handlers = {
----  -- custom function handler for pyright
----  ["textDocument/hover"] = vim.lsp.with(
----    vim.lsphandlers.hover, {
----      border = "single",
----      title = "hover",
----    }
----  )
+---  ["textDocument/publishDiagnostics"] = my_custom_diagnostics_handler,
 ---}
 ---```
 ---@field lsp_handlers table<string,lsp.Handler|false>|false?
@@ -269,6 +294,21 @@
 ---}
 ---```
 ---@field mappings AstroLSPMappings?
+---Extra options for the `mason-lspconfig.nvim` plugin such as registering new packages as language servers.
+---Example:
+--
+---```lua
+---mason_lspconfig = {
+---  servers = {
+---    nextflow_ls = {
+---      package = "nextflow-language-server",
+---      filetypes = "nextflow",
+---      config = { cmd = { "nextflow-language-server" } }
+---    }
+---  }
+---}
+---```
+---@field mason_lspconfig AstroLSPMasonLspconfigOpts?
 ---A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
 ---Example:
 --
@@ -299,12 +339,17 @@ local M = {
   capabilities = {},
   ---@diagnostic disable-next-line: missing-fields
   config = {},
+  defaults = {
+    hover = {},
+    signature_help = {},
+  },
   file_operations = { timeout = 10000, operations = {} },
   flags = {},
   formatting = { format_on_save = { enabled = true }, disabled = {} },
   handlers = {},
   lsp_handlers = {},
   mappings = {},
+  mason_lspconfig = {},
   servers = {},
   on_attach = nil,
 }
