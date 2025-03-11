@@ -110,6 +110,10 @@ local opts = {
       },
     },
   },
+  defaults = {
+    hover = { border = "rounded", silent = true } -- customize lsp hover window
+    signature_help = false, -- disable any default customizations
+  },
   -- Configuration of LSP file operation functionality
   file_operations = {
     -- the timeout when executing LSP client operations
@@ -163,8 +167,7 @@ local opts = {
   },
   -- Configure `vim.lsp.handlers`
   lsp_handlers = {
-    ["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded", silent = true }),
-    ["textDocument/signatureHelp"] = false, -- set to false to disable any custom handlers
+    ["textDocument/publishDiagnostics"] = function(...) end, -- customize a handler with a custom function
   },
   -- Configuration of mappings added when attaching a language server during the core `on_attach` function
   -- The first key into the table is the vim map mode (`:h map-modes`), and the value is a table of entries to be passed to `vim.keymap.set` (`:h vim.keymap.set`):
