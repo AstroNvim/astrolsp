@@ -12,6 +12,8 @@
 ---@class astrolsp.file_operations
 local M = {}
 
+local utils = require "astrolsp.utils"
+
 local config = vim.tbl_get(require "astrolsp", "config", "file_operations") or {}
 
 ---@class AstroLSPFileOperationsRename
@@ -54,7 +56,8 @@ function M.didCreateFiles(fnames)
       local filters = did_create.filters or {}
       local filtered = vim.tbl_filter(function(fname) return match_filters(filters, fname) end, fnames)
       if next(filtered) then
-        client.notify(
+        utils.notify(
+          client,
           "workspace/didCreateFiles",
           { files = vim.tbl_map(function(fname) return { uri = vim.uri_from_fname(fname) } end, filtered) }
         )
@@ -74,7 +77,8 @@ function M.didDeleteFiles(fnames)
       local filters = did_delete.filters or {}
       local filtered = vim.tbl_filter(function(fname) return match_filters(filters, fname) end, fnames)
       if next(filtered) then
-        client.notify(
+        utils.notify(
+          client,
           "workspace/didDeleteFiles",
           { files = vim.tbl_map(function(fname) return { uri = vim.uri_from_fname(fname) } end, filtered) }
         )
@@ -97,7 +101,7 @@ function M.didRenameFiles(renames)
         renames
       )
       if next(filtered) then
-        client.notify("workspace/didRenameFiles", {
+        utils.notify(client, "workspace/didRenameFiles", {
           files = vim.tbl_map(
             function(rename) return { oldUri = vim.uri_from_fname(rename.from), newUri = vim.uri_from_fname(rename.to) } end,
             filtered
@@ -108,8 +112,11 @@ function M.didRenameFiles(renames)
   end
 end
 
-local getWorkspaceEdit = function(client, req, params)
-  local success, resp = pcall(client.request_sync, req, params, config.timeout)
+---@param client vim.lsp.Client
+---@param req string
+---@param params table
+local function getWorkspaceEdit(client, req, params)
+  local success, resp = pcall(utils.request_sync, client, req, params, config.timeout)
   if success then return resp.result end
 end
 
