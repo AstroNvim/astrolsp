@@ -1,5 +1,30 @@
 # Changelog
 
+## [3.0.0](https://github.com/AstroNvim/astrolsp/compare/v2.2.2...v3.0.0) (2025-03-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* move `hover` and `signature_help` configuration to their own settings in a new `defaults` table
+* require Neovim v0.10+
+
+### Features
+
+* add the ability to hotpatch `mason-lspconfig.nvim` with more lsp/package mappings ([6f5ceac](https://github.com/AstroNvim/astrolsp/commit/6f5ceacb5e60458ac58e71d8390afd2836d4f316))
+* move `hover` and `signature_help` configuration to their own settings in a new `defaults` table ([f85e64d](https://github.com/AstroNvim/astrolsp/commit/f85e64d3be0ce84645868467e24a19b3683bc90a))
+
+
+### Bug Fixes
+
+* **config:** normalize `mappings` when running `setup` ([5a297cf](https://github.com/AstroNvim/astrolsp/commit/5a297cf43444965dd25487a7b3f88b87d2555671))
+* update code to use non-deprecated methods in Neovim v0.11 ([f96be4f](https://github.com/AstroNvim/astrolsp/commit/f96be4f79d3f6d34e1d7924a595e23eadd91fb81))
+* update to handle `didRenameFiles` only on successful renaming ([10cadb1](https://github.com/AstroNvim/astrolsp/commit/10cadb106ba2e77a02c47edf979fdedc87ba79ca))
+
+
+### Code Refactoring
+
+* require Neovim v0.10+ ([c5d8c0e](https://github.com/AstroNvim/astrolsp/commit/c5d8c0e375cbafbbd8c15cc7a52e14774c3b66e1))
+
 ## [2.2.2](https://github.com/AstroNvim/astrolsp/compare/v2.2.1...v2.2.2) (2025-02-20)
 
 
