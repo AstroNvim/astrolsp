@@ -168,6 +168,31 @@ function astrolsp.file_operations.willRenameFiles(renames: AstroLSPFileOperation
 *param* `renames` — a table or list of tables of files that will be renamed
 
 
+## astrolsp.mason-lspconfig
+
+### register_server
+
+
+```lua
+function astrolsp.mason-lspconfig.register_server(server: string, spec: AstroLSPMasonLspconfigServer)
+```
+
+ Register a new language server with mason-lspconfig
+
+*param* `server` — the server name in lspconfig
+
+*param* `spec` — the details for registering the server
+
+### register_servers
+
+
+```lua
+function astrolsp.mason-lspconfig.register_servers(server_specs?: { [string]: AstroLSPMasonLspconfigServer })
+```
+
+ Register multiple new language servers with mason-lspconfig
+
+
 ## astrolsp.toggles
 
 ### autoformat
@@ -265,5 +290,35 @@ function astrolsp.toggles.signature_help(silent?: boolean)
  Toggle automatic signature help
 
 *param* `silent` — if true then don't sent a notification
+
+
+## astrolsp.utils
+
+### notify
+
+
+```lua
+function astrolsp.utils.notify(client: vim.lsp.Client, method: string, params?: table)
+```
+
+ Helper function to support deprecated notify usage
+
+### request_sync
+
+
+```lua
+function astrolsp.utils.request_sync(client: vim.lsp.Client, req: string, params: table, timeout?: integer, bufnr?: integer)
+```
+
+ Helper function to support deprecated request_sync usage
+
+### supports_method
+
+
+```lua
+function astrolsp.utils.supports_method(client: vim.lsp.Client, method: string, bufnr?: integer)
+```
+
+ Helper function to support deprecated supports_method usage
 
 
