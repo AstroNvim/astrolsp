@@ -353,21 +353,23 @@ function M.setup(opts)
   end
 
   for method, default in pairs(M.config.defaults) do
-    -- TODO: remove conditional after dropping support for Neovim v0.10
-    if vim.fn.has "nvim-0.11" == 1 then
-      local original_method = vim.lsp.buf[method]
-      if type(original_method) == "function" then
-        vim.lsp.buf[method] = function(user_opts)
-          return original_method(vim.tbl_deep_extend("force", default or {}, user_opts or {}))
+    if default then
+      -- TODO: remove conditional after dropping support for Neovim v0.10
+      if vim.fn.has "nvim-0.11" == 1 then
+        local original_method = vim.lsp.buf[method]
+        if type(original_method) == "function" then
+          vim.lsp.buf[method] = function(user_opts)
+            return original_method(vim.tbl_deep_extend("force", default, user_opts or {}))
+          end
         end
-      end
-    else
-      local deprecated_handler = ({
-        hover = "textDocument/hover",
-        signature_help = "textDocument/signatureHelp",
-      })[method]
-      if deprecated_handler and default then
-        vim.lsp.handlers[deprecated_handler] = vim.lsp.with(vim.lsp.handlers[deprecated_handler], default)
+      else
+        local deprecated_handler = ({
+          hover = "textDocument/hover",
+          signature_help = "textDocument/signatureHelp",
+        })[method]
+        if deprecated_handler and default then
+          vim.lsp.handlers[deprecated_handler] = vim.lsp.with(vim.lsp.handlers[deprecated_handler], default)
+        end
       end
     end
   end

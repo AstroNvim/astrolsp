@@ -56,8 +56,8 @@
 ---@field operations AstroLSPFileOperationsOperationsOpts? enable/disable file operations
 
 ---@class AstroLSPDefaultOpts
----@field hover vim.lsp.buf.hover.Opts? control the default options for `vim.lsp.buf.hover()` (`:h vim.lsp.buf.hover.Opts`)
----@field signature_help vim.lsp.buf.signature_help.Opts? control the default options for `vim.lsp.buf.signature_help()` (`:h vim.lsp.buf.signature_help.Opts`)
+---@field hover vim.lsp.buf.hover.Opts|false? control the default options for `vim.lsp.buf.hover()` (`:h vim.lsp.buf.hover.Opts`)
+---@field signature_help vim.lsp.buf.signature_help.Opts|false? control the default options for `vim.lsp.buf.signature_help()` (`:h vim.lsp.buf.signature_help.Opts`)
 
 ---@class AstroLSPMasonLspconfigServer
 ---@field public package string the Mason package name
@@ -339,10 +339,7 @@ local M = {
   capabilities = {},
   ---@diagnostic disable-next-line: missing-fields
   config = {},
-  defaults = {
-    hover = {},
-    signature_help = {},
-  },
+  defaults = {},
   file_operations = { timeout = 10000, operations = {} },
   flags = {},
   formatting = { format_on_save = { enabled = true }, disabled = {} },
