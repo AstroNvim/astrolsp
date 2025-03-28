@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/AstroNvim/astrolsp/compare/v3.0.0...v3.0.1) (2025-03-28)
+
+
+### Bug Fixes
+
+* allow `defaults` to be set to `false` to disable setting ([40c8801](https://github.com/AstroNvim/astrolsp/commit/40c8801652a754e1e5a1bd235cdfee4190cf325a))
+
 ## [3.0.0](https://github.com/AstroNvim/astrolsp/compare/v2.2.2...v3.0.0) (2025-03-26)
 
 
