@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/AstroNvim/astrolsp/compare/v3.0.1...v3.1.0) (2025-04-15)
+
+
+### Features
+
+* set default `vim.lsp.config` configuration with capabilities/flags/on_attach ([fbf627d](https://github.com/AstroNvim/astrolsp/commit/fbf627d500a6e2c0385bbc79fe5e34f59ebb1ed1))
+
 ## [3.0.1](https://github.com/AstroNvim/astrolsp/compare/v3.0.0...v3.0.1) (2025-03-28)
 
 
