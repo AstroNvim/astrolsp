@@ -253,6 +253,15 @@ function M.setup(opts)
     end,
   })
 
+  -- set default config for `vim.lsp.config`
+  if vim.lsp.config then
+    vim.lsp.config("*", {
+      capabilities = M.config.capabilities,
+      flags = M.config.flags,
+      on_attach = M.on_attach,
+    })
+  end
+
   -- normalize format_on_save to table format
   if vim.tbl_get(M.config, "formatting", "format_on_save") == false then
     M.config.formatting.format_on_save = { enabled = false }
