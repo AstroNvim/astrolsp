@@ -187,7 +187,7 @@ function astrolsp.mason-lspconfig.register_server(server: string, spec: AstroLSP
 
 
 ```lua
-function astrolsp.mason-lspconfig.register_servers(server_specs?: { [string]: AstroLSPMasonLspconfigServer })
+function astrolsp.mason-lspconfig.register_servers(server_specs?: AstroLSPMasonLspconfigServers)
 ```
 
  Register multiple new language servers with mason-lspconfig
