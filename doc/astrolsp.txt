@@ -715,7 +715,7 @@ _param_ `spec` — the details for registering the server
 REGISTER_SERVERS ~
 
 >lua
-    function astrolsp.mason-lspconfig.register_servers(server_specs?: AstroLSPMasonLspconfigServers)
+    function astrolsp.mason-lspconfig.register_servers(server_specs?: { [string]: AstroLSPMasonLspconfigServer })
 <
 
 Register multiple new language servers with mason-lspconfig
