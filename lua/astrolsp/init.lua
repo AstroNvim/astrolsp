@@ -9,6 +9,20 @@
 ---@class astrolsp
 local M = {}
 
+-- TODO: Roadmap to AstroLSP v4
+-- ============================
+-- - Move `on_attach` to an autocommand on `LspAttach` event
+--   - Leave `on_attach` option to allow users to override the default `on_attach` easily
+-- - Remove `mason_lspconfig` option as this is improving with mason-lspconfig v2
+-- - Rely only on `vim.lsp.config`
+--   - Remove `native_lsp_config` option
+--   - Make `capabilities` and `flags` AstroLSP opt call `vim.lsp.config("*", { capabilities = {}, flags = {} })`
+--   - Move logic for enabling servers into the `setup` function
+--     - Maintain `handlers` for setting up, allow users to decide not to call `vim.lsp.enable(server_name)`
+--   - Remove `config` from AstroLSP opts, users should use `lsp/`
+--   - Remove `lsp_opts(server_name)`, users should use `vim.lsp.config[server_name]`
+--   - Remove `lsp_config(server_name)`, users should use `vim.lsp.config[server_name]`
+
 local utils = require "astrolsp.utils"
 
 local tbl_contains = vim.tbl_contains
