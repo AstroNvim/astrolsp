@@ -60,19 +60,7 @@
 ---@field hover vim.lsp.buf.hover.Opts|false? control the default options for `vim.lsp.buf.hover()` (`:h vim.lsp.buf.hover.Opts`)
 ---@field signature_help vim.lsp.buf.signature_help.Opts|false? control the default options for `vim.lsp.buf.signature_help()` (`:h vim.lsp.buf.signature_help.Opts`)
 
----@class AstroLSPMasonLspconfigServer
----@field public package string the Mason package name
----@field filetypes string|string[] the filetype(s) that the server applies to
----@field config? table|(fun(): table) extensions tothe default language server configuration
-
----@alias AstroLSPMasonLspconfigServers { [string]: AstroLSPMasonLspconfigServer }
-
----@class AstroLSPMasonLspconfigOpts
----@field servers AstroLSPMasonLspconfigServers? a table of servers to register with mason-lspconfig.nvim
-
 ---@class AstroLSPOpts
----_EXPERIMENTAL_ Use the native `vim.lsp.config` for LSP configuration
----@field native_lsp_config boolean?
 ---Configuration of auto commands
 ---The key into the table is the group name for the auto commands (`:h augroup`) and the value
 ---is a list of autocmd tables where `event` key is the event(s) that trigger the auto command
@@ -144,22 +132,6 @@
 ---}
 ---```
 ---@field capabilities lsp.ClientCapabilities?
----Configure language servers for `lspconfig` (`:h lspconfig-setup`)
----Example:
---
----```lua
----config = {
----  lua_ls = {
----    settings = {
----      Lua = {
----        hint = { enable = true, arrayIndex = "Disable" }
----      }
----    }
----  },
----  clangd = { capabilities = { offsetEncoding = "utf-8" } },
----}
----```
----@field config lspconfig.options?
 ---Configure default options passed to `vim.lsp.buf` functions
 ---Example:
 ---
@@ -240,18 +212,16 @@
 ---```lua
 ---handlers = {
 ---  -- default handler
----  function(server, opts)
----    require("lspconfig")[server].setup(opts)
----  end,
+---  ["*"] = vim.lsp.enable,
 ---  -- custom function handler for pyright
----  pyright = function(_, opts)
----    require("lspconfig").pyright.setup(opts)
+---  pyright = function()
+---    -- some custom logic
 ---  end,
 ---  -- set to false to disable the setup of a language server
 ---  rust_analyzer = false,
 ---}
 ---```
----@field handlers table<string|integer,fun(server:string,opts:_.lspconfig.options)|boolean?>?
+---@field handlers table<string,fun(server:string)|boolean?>?
 ---Configure global LSP handlers, set a method to `false` to use the Neovim default (`:h vim.lsp.handlers`)
 ---Example:
 --
@@ -297,21 +267,6 @@
 ---}
 ---```
 ---@field mappings AstroLSPMappings?
----Extra options for the `mason-lspconfig.nvim` plugin such as registering new packages as language servers.
----Example:
---
----```lua
----mason_lspconfig = {
----  servers = {
----    nextflow_ls = {
----      package = "nextflow-language-server",
----      filetypes = "nextflow",
----      config = { cmd = { "nextflow-language-server" } }
----    }
----  }
----}
----```
----@field mason_lspconfig AstroLSPMasonLspconfigOpts?
 ---A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
 ---Example:
 --
@@ -331,7 +286,6 @@
 
 ---@type AstroLSPOpts
 local M = {
-  native_lsp_config = false,
   autocmds = {},
   commands = {},
   features = {
@@ -341,8 +295,6 @@ local M = {
     signature_help = false,
   },
   capabilities = {},
-  ---@diagnostic disable-next-line: missing-fields
-  config = {},
   defaults = {},
   file_operations = { timeout = 10000, operations = {} },
   flags = {},
@@ -350,7 +302,6 @@ local M = {
   handlers = {},
   lsp_handlers = {},
   mappings = {},
-  mason_lspconfig = {},
   servers = {},
   on_attach = nil,
 }

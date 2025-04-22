@@ -12,7 +12,7 @@ AstroLSP provides a simple API for configuring and setting up language servers i
 
 ## ⚡️ Requirements
 
-- Neovim >= 0.10
+- Neovim >= 0.11
 
 ## 📦 Installation
 
@@ -89,25 +89,10 @@ local opts = {
       desc = "Format file with LSP",
     },
   },
-  -- Configure default capabilities for language servers (`:h vim.lsp.protocol.make_client.capabilities()`)
+  -- Configure default capabilities for all language servers (`:h vim.lsp.protocol.make_client.capabilities()`)
   capabilities = {
     textDocument = {
       foldingRange = { dynamicRegistration = false },
-    },
-  },
-  -- Configure language servers for `lspconfig` (`:h lspconfig-setup`)
-  config = {
-    lua_ls = {
-      settings = {
-        Lua = {
-          hint = { enable = true, arrayIndex = "Disable" },
-        },
-      },
-    },
-    clangd = {
-      capabilities = {
-        offsetEncoding = "utf-8",
-      },
     },
   },
   defaults = {
@@ -158,10 +143,10 @@ local opts = {
   },
   -- Configure how language servers get set up
   handlers = {
-    -- default handler, first entry with no key
-    function(server, opts) require("lspconfig")[server].setup(opts) end,
+    -- default handler uses key "*"
+    ["*"] = vim.lsp.enable,
     -- custom function handler for pyright
-    pyright = function(_, opts) require("lspconfig").pyright.setup(opts) end,
+    pyright = function() vim.lsp.enable "pyright" end,
     -- set to false to disable the setup of a language server
     rust_analyzer = false,
   },
@@ -198,25 +183,12 @@ local opts = {
       },
     },
   },
- -- Extra configuration for the `mason-lspconfig.nvim` plugin
-  mason_lspconfig = {
-    -- Allow registering more Mason packages as language servers for autodetection/setup
-    servers = {
-      -- The key is the lspconfig server name to register a package for
-      nextflow_ls = {
-        -- The Mason package name to register to the language server
-        package = "nextflow-language-server",
-        -- The filetypes that apply to the package and language server
-        filetypes = { "nextflow" },
-        -- (Optional) any default configuration changes that may need to happen (can be a table or a function that returns a table)
-        config = { cmd = { "nextflow-language-server" } }
-      }
-    }
-  },
   -- A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
   servers = { "dartls" },
   -- A custom `on_attach` function to be run after the default `on_attach` function, takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
-  on_attach = function(client, bufnr) client.server_capabilities.semanticTokensProvider = nil end,
+  on_attach = function(client, bufnr)
+    -- custom on_attach code to run on all servers
+  end,
 }
 ```
 
@@ -228,14 +200,9 @@ local opts = {
 
 ```lua
 {
-  "neovim/nvim-lspconfig",
-  dependencies = {
-    { "AstroNvim/astrolsp", opts = {} },
-  },
-  config = function()
-    -- set up servers configured with AstroLSP
-    vim.tbl_map(require("astrolsp").lsp_setup, require("astrolsp").config.servers)
-  end,
+  "AstroNvim/astrolsp",
+  dependencies = { "neovim/nvim-lspconfig" },
+  opts = {}
 }
 ```
 
@@ -243,28 +210,16 @@ local opts = {
 
 ```lua
 {
-  "neovim/nvim-lspconfig",
+  "AstroNvim/astrolsp",
   dependencies = {
-    { "AstroNvim/astrolsp", opts = {} },
+    "neovim/nvim-lspconfig",
     {
-      "williamboman/mason-lspconfig.nvim", -- MUST be set up before `nvim-lspconfig`
+      "williamboman/mason-lspconfig.nvim",
       dependencies = { "williamboman/mason.nvim" },
-      opts = {
-        -- use AstroLSP setup for mason-lspconfig
-        handlers = { function(server) require("astrolsp").lsp_setup(server) end },
-      },
-      config = function(_, opts)
-        -- Optionally tell AstroLSP to register new language servers before calling the `setup` function
-        -- this enables the `mason-lspconfig.servers` option in the AstroLSP configuration
-        require("astrolsp.mason-lspconfig").register_servers()
-        require("mason-lspconfig").setup(opts)
-      end
-    },
+      opts = {}
+    }
   },
-  config = function()
-    -- set up servers configured with AstroLSP
-    vim.tbl_map(require("astrolsp").lsp_setup, require("astrolsp").config.servers)
-  end,
+  opts = {}
 }
 ```
 
@@ -276,7 +231,9 @@ local opts = {
   dependencies = {
     { "AstroNvim/astrolsp", opts = {} },
   },
-  opts = function() return { on_attach = require("astrolsp").on_attach } end,
+  opts = {
+    on_attach = function(client, bufnr) require("astrolsp").on_attach(client, bufnr) end
+  },
 }
 ```
 
