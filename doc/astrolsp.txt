@@ -557,24 +557,18 @@ Format options that are passed into the `vim.lsp.buf.format`
 (|vim.lsp.buf.format()|)
 
 
-IS_CONFIGURED ~
-
->lua
-    table
-<
-
-A table of LSP clients that have been configured already
-
-
 LSP_CONFIG ~
 
 >lua
     function astrolsp.lsp_config(server_name: string)
+      -> vim.lsp.Config
 <
 
 Configure the language server using `vim.lsp.config`
 
 _param_ `server_name` — The name of the server
+
+_return_ — The resolved configuration
 
 
 LSP_OPTS ~

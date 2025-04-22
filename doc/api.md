@@ -31,25 +31,19 @@ unknown
 
  Format options that are passed into the `vim.lsp.buf.format` (`:h vim.lsp.buf.format()`)
 
-### is_configured
-
-
-```lua
-table
-```
-
- A table of LSP clients that have been configured already
-
 ### lsp_config
 
 
 ```lua
 function astrolsp.lsp_config(server_name: string)
+  -> vim.lsp.Config
 ```
 
  Configure the language server using `vim.lsp.config`
 
 *param* `server_name` — The name of the server
+
+*return* — The resolved configuration
 
 ### lsp_opts
 
