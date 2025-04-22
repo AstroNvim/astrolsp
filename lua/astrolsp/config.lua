@@ -70,6 +70,8 @@
 ---@field servers AstroLSPMasonLspconfigServers? a table of servers to register with mason-lspconfig.nvim
 
 ---@class AstroLSPOpts
+---_EXPERIMENTAL_ Use the native `vim.lsp.config` for LSP configuration
+---@field native_lsp_config boolean?
 ---Configuration of auto commands
 ---The key into the table is the group name for the auto commands (`:h augroup`) and the value
 ---is a list of autocmd tables where `event` key is the event(s) that trigger the auto command
@@ -328,6 +330,7 @@
 
 ---@type AstroLSPOpts
 local M = {
+  native_lsp_config = false,
   autocmds = {},
   commands = {},
   features = {
