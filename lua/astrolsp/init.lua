@@ -9,20 +9,6 @@
 ---@class astrolsp
 local M = {}
 
--- TODO: Roadmap to AstroLSP v4
--- ============================
--- - Move `on_attach` to an autocommand on `LspAttach` event
---   - Leave `on_attach` option to allow users to override the default `on_attach` easily
--- - Remove `mason_lspconfig` option as this is improving with mason-lspconfig v2
--- - Rely only on `vim.lsp.config`
---   - Remove `native_lsp_config` option
---   - Make `capabilities` and `flags` AstroLSP opt call `vim.lsp.config("*", { capabilities = {}, flags = {} })`
---   - Move logic for enabling servers into the `setup` function
---     - Maintain `handlers` for setting up, allow users to decide not to call `vim.lsp.enable(server_name)`
---   - Remove `config` from AstroLSP opts, users should use `lsp/`
---   - Remove `lsp_opts(server_name)`, users should use `vim.lsp.config[server_name]`
---   - Remove `lsp_config(server_name)`, users should use `vim.lsp.config[server_name]`
-
 local utils = require "astrolsp.utils"
 
 local tbl_contains = vim.tbl_contains
@@ -66,33 +52,8 @@ end
 --- Helper function to set up a given server with the Neovim LSP client
 ---@param server string The name of the server to be setup
 function M.lsp_setup(server)
-  local opts, default_handler
-  if M.config.native_lsp_config then
-    opts = M.lsp_opts(server)
-    default_handler = function(server_name) vim.lsp.enable(server_name) end
-  else
-    -- if server doesn't exist, set it up from user server definition
-    local lspconfig_avail, lspconfig = pcall(require, "lspconfig")
-    if lspconfig_avail then
-      local config_avail, config = pcall(require, "lspconfig.configs." .. server)
-      if not config_avail or not config.default_config then
-        local server_definition = M.config.config[server]
-        if server_definition and server_definition.cmd then
-          require("lspconfig.configs")[server] = { default_config = server_definition }
-        end
-      end
-    end
-    opts = M.lsp_opts(server)
-    default_handler = function(server_name, _opts)
-      if lspconfig_avail then
-        lspconfig[server_name].setup(_opts)
-      else
-        vim.notify(("No handler defined for `%s`"):format(server_name), vim.log.levels.WARN)
-      end
-    end
-  end
-  local handler = vim.F.if_nil(M.config.handlers[server], M.config.handlers[1], default_handler)
-  if handler then handler(server, opts) end
+  local handler = vim.F.if_nil(M.config.handlers[server], M.config.handlers["*"], vim.lsp.enable)
+  if handler then handler(server) end
 end
 
 --- The `on_attach` function used by AstroNvim
@@ -202,51 +163,6 @@ function M.on_attach(client, bufnr)
   if not M.attached_clients[client.id] then M.attached_clients[client.id] = client end
 end
 
--- A table of LSP clients that have been configured already
-local is_configured = {}
-
---- Configure the language server using `vim.lsp.config`
----@param server_name string The name of the server
----@return vim.lsp.Config # The resolved configuration
-function M.lsp_config(server_name)
-  if not is_configured[server_name] then
-    local config = M.config.config[server_name] or {}
-    local existing_on_attach = (vim.lsp.config[server_name] or {}).on_attach
-    local user_on_attach = config.on_attach
-    config.on_attach = function(...)
-      if type(existing_on_attach) == "function" then existing_on_attach(...) end
-      M.on_attach(...)
-      if type(user_on_attach) == "function" then user_on_attach(...) end
-    end
-    vim.lsp.config(server_name, config)
-    is_configured[server_name] = true
-  end
-  return vim.lsp.config[server_name]
-end
-
---- Get the server configuration for a given language server to be provided to the server's `setup()` call
----@param server_name string The name of the server
----@return table # The table of LSP options used when setting up the given language server
-function M.lsp_opts(server_name)
-  -- if native vim.lsp.config, then just return current configuration
-  if M.config.native_lsp_config then return M.lsp_config(server_name) or {} end
-  local opts = { capabilities = M.config.capabilities, flags = M.config.flags }
-  if M.config.config[server_name] then opts = vim.tbl_deep_extend("force", opts, M.config.config[server_name]) end
-  assert(opts)
-
-  local lspconfig_avail, lspconfig = pcall(require, "lspconfig")
-  local old_on_attach = lspconfig_avail
-    and require("lspconfig.configs")[server_name]
-    and lspconfig[server_name].on_attach
-  local user_on_attach = opts.on_attach
-  opts.on_attach = function(client, bufnr)
-    if type(old_on_attach) == "function" then old_on_attach(client, bufnr) end
-    M.on_attach(client, bufnr)
-    if type(user_on_attach) == "function" then user_on_attach(client, bufnr) end
-  end
-  return opts
-end
-
 local key_cache = {} ---@type { [string]: string }
 
 ---@param mappings AstroLSPMappings?
@@ -306,9 +222,17 @@ function M.setup(opts)
     })
   end
 
-  if M.config.native_lsp_config then
-    vim.lsp.config("*", { capabilities = M.config.capabilities, flags = M.config.flags })
-  end
+  vim.lsp.config("*", { capabilities = M.config.capabilities, flags = M.config.flags })
+
+  -- Set up tracking of signature help trigger characters
+  vim.api.nvim_create_autocmd("LspAttach", {
+    group = vim.api.nvim_create_augroup("astrolsp_on_attach", { clear = true }),
+    desc = "AstroLSP on_attach function",
+    callback = function(args)
+      local client = vim.lsp.get_client_by_id(args.data.client_id)
+      if client then M.on_attach(client, args.buf) end
+    end,
+  })
 
   local rename_augroup = vim.api.nvim_create_augroup("astrolsp_rename_operations", { clear = true })
   vim.api.nvim_create_autocmd("User", {
@@ -427,21 +351,10 @@ function M.setup(opts)
 
   for method, default in pairs(M.config.defaults) do
     if default then
-      -- TODO: remove conditional after dropping support for Neovim v0.10
-      if vim.fn.has "nvim-0.11" == 1 then
-        local original_method = vim.lsp.buf[method]
-        if type(original_method) == "function" then
-          vim.lsp.buf[method] = function(user_opts)
-            return original_method(vim.tbl_deep_extend("force", default, user_opts or {}))
-          end
-        end
-      else
-        local deprecated_handler = ({
-          hover = "textDocument/hover",
-          signature_help = "textDocument/signatureHelp",
-        })[method]
-        if deprecated_handler and default then
-          vim.lsp.handlers[deprecated_handler] = vim.lsp.with(vim.lsp.handlers[deprecated_handler], default)
+      local original_method = vim.lsp.buf[method]
+      if type(original_method) == "function" then
+        vim.lsp.buf[method] = function(user_opts)
+          return original_method(vim.tbl_deep_extend("force", default, user_opts or {}))
         end
       end
     end
@@ -450,6 +363,8 @@ function M.setup(opts)
   for method, handler in pairs(M.config.lsp_handlers or {}) do
     if handler then vim.lsp.handlers[method] = handler end
   end
+
+  vim.tbl_map(M.lsp_setup, M.config.servers)
 end
 
 return M
