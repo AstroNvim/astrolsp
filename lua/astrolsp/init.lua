@@ -20,8 +20,6 @@ M.config = require "astrolsp.config"
 M.lsp_progress = {}
 --- A table of LSP clients that have been attached with AstroLSP
 M.attached_clients = {}
--- A table of LSP clients that have been configured already
-M.is_configured = {}
 
 local function lsp_event(name) vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end
 
@@ -56,7 +54,7 @@ end
 function M.lsp_setup(server)
   local opts, default_handler
   if M.config.native_lsp_config then
-    opts = M.lsp_opts(server)
+    opts = M.lsp_config(server)
     default_handler = function(server_name) vim.lsp.enable(server_name) end
   else
     -- if server doesn't exist, set it up from user server definition
@@ -191,18 +189,26 @@ function M.on_attach(client, bufnr)
   if not M.attached_clients[client.id] then M.attached_clients[client.id] = client end
 end
 
+-- A table of LSP clients that have been configured already
+local is_configured = {}
+
 --- Configure the language server using `vim.lsp.config`
 ---@param server_name string The name of the server
+---@return vim.lsp.Config # The resolved configuration
 function M.lsp_config(server_name)
-  local config = M.config.config[server_name] or {}
-  local existing_on_attach = (vim.lsp.config[server_name] or {}).on_attach
-  local user_on_attach = config.on_attach
-  config.on_attach = function(...)
-    if type(existing_on_attach) == "function" then existing_on_attach(...) end
-    M.on_attach(...)
-    if type(user_on_attach) == "function" then user_on_attach(...) end
+  if not is_configured[server_name] then
+    local config = M.config.config[server_name] or {}
+    local existing_on_attach = (vim.lsp.config[server_name] or {}).on_attach
+    local user_on_attach = config.on_attach
+    config.on_attach = function(...)
+      if type(existing_on_attach) == "function" then existing_on_attach(...) end
+      M.on_attach(...)
+      if type(user_on_attach) == "function" then user_on_attach(...) end
+    end
+    vim.lsp.config(server_name, config)
+    is_configured[server_name] = true
   end
-  vim.lsp.config(server_name, config)
+  return vim.lsp.config[server_name]
 end
 
 --- Get the server configuration for a given language server to be provided to the server's `setup()` call
@@ -210,10 +216,7 @@ end
 ---@return table # The table of LSP options used when setting up the given language server
 function M.lsp_opts(server_name)
   -- if native vim.lsp.config, then just return current configuration
-  if M.config.native_lsp_config then
-    if not M.is_configured[server_name] then M.lsp_config(server_name) end
-    return vim.lsp.config[server_name]
-  end
+  if M.config.native_lsp_config then return M.lsp_config(server_name) or {} end
   local opts = { capabilities = M.config.capabilities, flags = M.config.flags }
   if M.config.config[server_name] then opts = vim.tbl_deep_extend("force", opts, M.config.config[server_name]) end
   assert(opts)
