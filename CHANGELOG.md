@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.1.0](https://github.com/AstroNvim/astrolsp/compare/v3.0.1...v3.1.0) (2025-04-22)
+
+
+### Features
+
+* add experimental support for native `vim.lsp.config` ([db1ab0f](https://github.com/AstroNvim/astrolsp/commit/db1ab0fd70fe9d41409f942c830567863a33b02f))
+
+
+### Bug Fixes
+
+* **file_operations:** fix incorrect pcall to request_sync ([9940602](https://github.com/AstroNvim/astrolsp/commit/99406028bdb5df7cfb0463e4c4030a700d6e3592))
+* fix case where handler is false ([b48f92b](https://github.com/AstroNvim/astrolsp/commit/b48f92b45ae931c3c62a4eb63973dca5f161450a))
+* properly maintain table of servers already configured ([7775752](https://github.com/AstroNvim/astrolsp/commit/77757521a20ebeccb2aedd17af71335ecbbd9ea5))
+
 ## [3.0.1](https://github.com/AstroNvim/astrolsp/compare/v3.0.0...v3.0.1) (2025-03-28)
 
 
