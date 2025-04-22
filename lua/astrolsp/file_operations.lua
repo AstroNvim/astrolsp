@@ -116,8 +116,8 @@ end
 ---@param req string
 ---@param params table
 local function getWorkspaceEdit(client, req, params)
-  local success, resp = pcall(utils.request_sync, client, req, params, config.timeout)
-  if success then return resp.result end
+  local resp = utils.request_sync(client, req, params, config.timeout)
+  if resp and resp.result then return resp.result end
 end
 
 --- Notify LSP clients that file(s) are going to be created
