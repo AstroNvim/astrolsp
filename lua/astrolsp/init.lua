@@ -68,7 +68,7 @@ end
 function M.lsp_setup(server)
   local opts, default_handler
   if M.config.native_lsp_config then
-    opts = M.lsp_config(server)
+    opts = M.lsp_opts(server)
     default_handler = function(server_name) vim.lsp.enable(server_name) end
   else
     -- if server doesn't exist, set it up from user server definition
@@ -91,9 +91,8 @@ function M.lsp_setup(server)
       end
     end
   end
-  local handler = M.config.handlers[server]
-  if handler == nil then handler = M.config.handlers[1] end
-  (handler or default_handler)(server, opts)
+  local handler = vim.F.if_nil(M.config.handlers[server], M.config.handlers[1], default_handler)
+  if handler then handler(server, opts) end
 end
 
 --- The `on_attach` function used by AstroNvim
