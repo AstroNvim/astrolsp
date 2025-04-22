@@ -9,8 +9,6 @@
 ---@class astrolsp.toggles
 local M = {}
 
-local utils = require "astrolsp.utils"
-
 local config = require("astrolsp").config
 local features = config.features --[[@as AstroLSPFeatureOpts]]
 local format_on_save = config.formatting.format_on_save --[[@as AstroLSPFormatOnSaveOpts]]
@@ -67,7 +65,7 @@ function M.buffer_semantic_tokens(bufnr, silent)
   vim.b[bufnr].semantic_tokens = not vim.b[bufnr].semantic_tokens
   local toggled = false
   for _, client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
-    if utils.supports_method(client, "textDocument/semanticTokens/full", bufnr) then
+    if client:supports_method("textDocument/semanticTokens/full", bufnr) then
       -- HACK: `semantic_tokens.start/stop` don't support 0 for current buffer
       local real_bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
       vim.lsp.semantic_tokens[vim.b[bufnr].semantic_tokens and "start" or "stop"](real_bufnr, client.id)

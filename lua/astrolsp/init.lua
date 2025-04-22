@@ -9,8 +9,6 @@
 ---@class astrolsp
 local M = {}
 
-local utils = require "astrolsp.utils"
-
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
 
@@ -29,7 +27,7 @@ local function lsp_event(name) vim.api.nvim_exec_autocmds("User", { pattern = "A
 local function check_cond(cond, client, bufnr)
   local cond_type = type(cond)
   if cond_type == "function" then return cond(client, bufnr) end
-  if cond_type == "string" then return utils.supports_method(client, cond, bufnr) end
+  if cond_type == "string" then return client:supports_method(cond, bufnr) end
   if cond_type == "boolean" then return cond end
   return true
 end
@@ -60,13 +58,13 @@ end
 ---@param client vim.lsp.Client The LSP client details when attaching
 ---@param bufnr integer The buffer that the LSP client is attaching to
 function M.on_attach(client, bufnr)
-  if utils.supports_method(client, "textDocument/codeLens", bufnr) and M.config.features.codelens then
+  if client:supports_method("textDocument/codeLens", bufnr) and M.config.features.codelens then
     vim.lsp.codelens.refresh { bufnr = bufnr }
   end
 
   local formatting_disabled = vim.tbl_get(M.config, "formatting", "disabled")
   if
-    utils.supports_method(client, "textDocument/formatting", bufnr)
+    client:supports_method("textDocument/formatting", bufnr)
     and (formatting_disabled ~= true and not tbl_contains(formatting_disabled, client.name))
   then
     local autoformat = assert(M.config.formatting.format_on_save)
@@ -78,7 +76,7 @@ function M.on_attach(client, bufnr)
     end
   end
 
-  if utils.supports_method(client, "textDocument/semanticTokens/full", bufnr) and vim.lsp.semantic_tokens then
+  if client:supports_method("textDocument/semanticTokens/full", bufnr) and vim.lsp.semantic_tokens then
     if M.config.features.semantic_tokens then
       if vim.b[bufnr].semantic_tokens == nil then vim.b[bufnr].semantic_tokens = true end
     else
@@ -277,7 +275,7 @@ function M.setup(opts)
     desc = "Add signature help triggers as language servers attach",
     callback = function(args)
       local client = vim.lsp.get_client_by_id(args.data.client_id)
-      if client and utils.supports_method(client, "textDocument/signatureHelp", args.buf) then
+      if client and client:supports_method("textDocument/signatureHelp", args.buf) then
         for _, set in ipairs { "triggerCharacters", "retriggerCharacters" } do
           local set_var = "signature_help_" .. set
           local triggers = vim.b[args.buf][set_var] or {}
@@ -296,9 +294,7 @@ function M.setup(opts)
       if not vim.api.nvim_buf_is_valid(args.buf) then return end
       local triggers, retriggers = {}, {}
       for _, client in pairs(vim.lsp.get_clients { bufnr = args.buf }) do
-        if
-          client.id ~= args.data.client_id and utils.supports_method(client, "textDocument/signatureHelp", args.buf)
-        then
+        if client.id ~= args.data.client_id and client:supports_method("textDocument/signatureHelp", args.buf) then
           for _, trigger in ipairs(client.server_capabilities.signatureHelpProvider.triggerCharacters or {}) do
             triggers[trigger] = true
           end
