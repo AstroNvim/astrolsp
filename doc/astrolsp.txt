@@ -1,4 +1,4 @@
-*astrolsp.txt*          For Neovim >= 0.9.0         Last change: 2025 April 15
+*astrolsp.txt*          For Neovim >= 0.9.0         Last change: 2025 April 22
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -555,6 +555,26 @@ FORMAT_OPTS ~
 
 Format options that are passed into the `vim.lsp.buf.format`
 (|vim.lsp.buf.format()|)
+
+
+IS_CONFIGURED ~
+
+>lua
+    table
+<
+
+A table of LSP clients that have been configured already
+
+
+LSP_CONFIG ~
+
+>lua
+    function astrolsp.lsp_config(server_name: string)
+<
+
+Configure the language server using `vim.lsp.config`
+
+_param_ `server_name` — The name of the server
 
 
 LSP_OPTS ~
