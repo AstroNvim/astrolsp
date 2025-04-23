@@ -54,6 +54,24 @@ function M.lsp_setup(server)
   if handler then handler(server) end
 end
 
+--- Set up a given `on_attach` function to run when language servers are attached
+---@param on_attach fun(client:vim.lsp.Client, bufnr:integer) the `on_attach` function to run
+---@param opts? { client_name: string?, autocmd: vim.api.keyset.create_autocmd? } options for configuring the `on_attach`
+---@return integer autocmd_id The id for the created LspAttach autocommand
+function M.add_on_attach(on_attach, opts)
+  if not opts then opts = {} end
+  local client_name, autocmd_opts = opts.client_name, opts.autocmd or {}
+  return vim.api.nvim_create_autocmd(
+    "LspAttach",
+    vim.tbl_deep_extend("force", autocmd_opts, {
+      callback = function(args)
+        local client = vim.lsp.get_client_by_id(args.data.client_id)
+        if client and (not client_name or client_name == client.name) then return on_attach(client, args.buf) end
+      end,
+    })
+  )
+end
+
 --- The `on_attach` function used by AstroNvim
 ---@param client vim.lsp.Client The LSP client details when attaching
 ---@param bufnr integer The buffer that the LSP client is attaching to
@@ -223,13 +241,11 @@ function M.setup(opts)
   vim.lsp.config("*", { capabilities = M.config.capabilities, flags = M.config.flags })
 
   -- Set up tracking of signature help trigger characters
-  vim.api.nvim_create_autocmd("LspAttach", {
-    group = vim.api.nvim_create_augroup("astrolsp_on_attach", { clear = true }),
-    desc = "AstroLSP on_attach function",
-    callback = function(args)
-      local client = vim.lsp.get_client_by_id(args.data.client_id)
-      if client then M.on_attach(client, args.buf) end
-    end,
+  M.add_on_attach(M.on_attach, {
+    autocmd = {
+      group = vim.api.nvim_create_augroup("astrolsp_on_attach", { clear = true }),
+      desc = "AstroLSP on_attach function",
+    },
   })
 
   local rename_augroup = vim.api.nvim_create_augroup("astrolsp_rename_operations", { clear = true })
@@ -270,22 +286,22 @@ function M.setup(opts)
 
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
-  vim.api.nvim_create_autocmd("LspAttach", {
-    group = augroup,
-    desc = "Add signature help triggers as language servers attach",
-    callback = function(args)
-      local client = vim.lsp.get_client_by_id(args.data.client_id)
-      if client and client:supports_method("textDocument/signatureHelp", args.buf) then
-        for _, set in ipairs { "triggerCharacters", "retriggerCharacters" } do
-          local set_var = "signature_help_" .. set
-          local triggers = vim.b[args.buf][set_var] or {}
-          for _, trigger in ipairs(client.server_capabilities.signatureHelpProvider[set] or {}) do
-            triggers[trigger] = true
-          end
-          vim.b[args.buf][set_var] = triggers
+  M.add_on_attach(function(client, bufnr)
+    if client:supports_method("textDocument/signatureHelp", bufnr) then
+      for _, set in ipairs { "triggerCharacters", "retriggerCharacters" } do
+        local set_var = "signature_help_" .. set
+        local triggers = vim.b[bufnr][set_var] or {}
+        for _, trigger in ipairs(client.server_capabilities.signatureHelpProvider[set] or {}) do
+          triggers[trigger] = true
         end
+        vim.b[bufnr][set_var] = triggers
       end
-    end,
+    end
+  end, {
+    autocmd = {
+      group = augroup,
+      desc = "Add signature help triggers as language servers attach",
+    },
   })
   vim.api.nvim_create_autocmd("LspDetach", {
     group = augroup,
