@@ -265,12 +265,34 @@ local function normalize_mappings(mappings)
   end
 end
 
+local function unique_list(...)
+  local out, found = {}, {}
+  for _, tbl in ipairs { ... } do
+    for _, i in ipairs(tbl) do
+      if not found[i] then
+        found[i] = true
+        table.insert(out, i)
+      end
+    end
+  end
+  return out
+end
+
 --- Setup and configure AstroLSP
 ---@param opts AstroLSPOpts options passed by the user to configure AstroLSP
 function M.setup(opts)
   normalize_mappings(M.config.mappings)
   normalize_mappings(opts.mappings)
-  M.config = vim.tbl_deep_extend("force", M.config, opts)
+  local extend_method = "force"
+  if vim.fn.has "nvim-0.12" == 1 then
+    extend_method = function(key, prev_value, value)
+      if key == "servers" then
+        if type(value) == "table" and type(prev_value) == "table" then return unique_list(prev_value, value) end
+      end
+      return value
+    end
+  end
+  M.config = vim.tbl_deep_extend(extend_method, M.config, opts)
 
   if not vim.lsp.config then -- disable native `vim.lsp.config` if not available
     M.config.native_lsp_config = false
