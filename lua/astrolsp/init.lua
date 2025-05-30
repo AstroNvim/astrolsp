@@ -226,10 +226,6 @@ function M.setup(opts)
   end
   M.config = vim.tbl_deep_extend(extend_method, M.config, opts)
 
-  if not vim.lsp.config then -- disable native `vim.lsp.config` if not available
-    M.config.native_lsp_config = false
-  end
-
   -- enable necessary capabilities for enabled LSP file operations
   local fileOperations = vim.tbl_get(M.config, "file_operations", "operations")
   if fileOperations and not vim.tbl_isempty(fileOperations) then
