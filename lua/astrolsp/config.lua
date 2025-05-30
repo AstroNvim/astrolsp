@@ -22,6 +22,7 @@
 
 ---@class AstroLSPAutocmd: vim.api.keyset.create_autocmd
 ---@field event string|string[] Event(s) that will trigger the handler
+--- @field callback? string|(fun(args:vim.api.keyset.create_autocmd.callback_args,client:vim.lsp.Client,bufnr:integer): boolean?)
 
 ---@class AstroLSPAutocmds
 ---@field cond AstroLSPCondition? condition for whether or not to create the auto commands during language server attachment
