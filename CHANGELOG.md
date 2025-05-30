@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.2.0](https://github.com/AstroNvim/astrolsp/compare/v3.1.0...v3.2.0) (2025-05-30)
+
+
+### Features
+
+* automatically extend `servers` table in `setup` function in Neovim v0.12 ([c784735](https://github.com/AstroNvim/astrolsp/commit/c7847354b6a1b3b0fb8d55d4bbb78522be46b4d1))
+
+
+### Bug Fixes
+
+* fix docstring for `callback` function in lsp autocommands ([bc2d5fa](https://github.com/AstroNvim/astrolsp/commit/bc2d5fae011bc3175ffbd143ec6004d54cc6f532))
+
 ## [3.1.0](https://github.com/AstroNvim/astrolsp/compare/v3.0.1...v3.1.0) (2025-04-22)
 
 
