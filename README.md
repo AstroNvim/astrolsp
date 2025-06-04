@@ -89,14 +89,24 @@ local opts = {
       desc = "Format file with LSP",
     },
   },
-  -- Configure default capabilities for all language servers (`:h vim.lsp.protocol.make_client.capabilities()`)
-  capabilities = {
-    textDocument = {
-      foldingRange = { dynamicRegistration = false },
+  -- Configure language servers with `vim.lsp.config` (`:h vim.lsp.config`)
+  config = {
+    -- Configure LSP defaults
+    ["*"] = {
+      -- Configure default capabilities
+      capabilities = {
+        textDocument = {
+          foldingRange = { dynamicRegistration = false },
+        },
+      },
+      -- Custom flags table to be passed to all language servers
+      flags = {
+        exit_timeout = 5000,
+      },
     },
   },
   defaults = {
-    hover = { border = "rounded", silent = true } -- customize lsp hover window
+    hover = { border = "rounded", silent = true }, -- customize lsp hover window
     signature_help = false, -- disable any default customizations
   },
   -- Configuration of LSP file operation functionality
@@ -112,10 +122,6 @@ local opts = {
       willDelete = true,
       didDelete = true,
     },
-  },
-  -- A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
-  flags = {
-    exit_timeout = 5000,
   },
   -- Configuration options for controlling formatting with language servers
   formatting = {
@@ -146,7 +152,7 @@ local opts = {
     -- default handler uses key "*"
     ["*"] = vim.lsp.enable,
     -- custom function handler for pyright
-    pyright = function() vim.lsp.enable("pyright") end,
+    pyright = function() vim.lsp.enable "pyright" end,
     -- set to false to disable the setup of a language server
     rust_analyzer = false,
   },
