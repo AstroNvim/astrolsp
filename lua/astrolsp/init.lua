@@ -229,12 +229,16 @@ function M.setup(opts)
   -- enable necessary capabilities for enabled LSP file operations
   local fileOperations = vim.tbl_get(M.config, "file_operations", "operations")
   if fileOperations and not vim.tbl_isempty(fileOperations) then
-    M.config.capabilities = vim.tbl_deep_extend("force", M.config.capabilities or {}, {
-      workspace = { fileOperations = fileOperations },
+    M.config.config = vim.tbl_deep_extend("force", M.config.config or {}, {
+      ["*"] = {
+        capabilities = { workspace = { fileOperations = fileOperations } },
+      },
     })
   end
 
-  vim.lsp.config("*", { capabilities = M.config.capabilities, flags = M.config.flags })
+  for server, config in pairs(M.config.config) do
+    vim.lsp.config(server, config)
+  end
 
   -- Set up tracking of signature help trigger characters
   M.add_on_attach(M.on_attach, {
