@@ -121,17 +121,22 @@
 ---}
 ---```
 ---@field features AstroLSPFeatureOpts?
----Configure default capabilities for language servers (`:h vim.lsp.protocol.make_client.capabilities()`)
+---Configure options for language servers passed to `vim.lsp.config(key, config)` (`:h vim.lsp.config`)
 ---Example
 --
 ---```lua
----capabilities = {
----  textDocument = {
----    foldingRange = { dynamicRegistration = false }
----  }
+---config = {
+---  ["*"] = {
+---    capabilities = {
+---      textDocument = {
+---        foldingRange = { dynamicRegistration = false }
+---      }
+---    },
+---    flags = { exit_timeout = 5000 },
+---  },
 ---}
 ---```
----@field capabilities lsp.ClientCapabilities?
+---@field config table<string,vim.lsp.Config>?
 ---Configure default options passed to `vim.lsp.buf` functions
 ---Example:
 ---
@@ -168,13 +173,6 @@
 --- }
 ---```
 ---@field file_operations AstroLSPFileOperationsOpts|false?
----A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
----Example:
---
----```lua
----flags = { exit_timeout = 5000 }
----```
----@field flags table?
 ---Configuration options for controlling formatting with language servers
 ---Example:
 --
@@ -294,10 +292,9 @@ local M = {
     semantic_tokens = true,
     signature_help = false,
   },
-  capabilities = {},
+  config = {},
   defaults = {},
   file_operations = { timeout = 10000, operations = {} },
-  flags = {},
   formatting = { format_on_save = { enabled = true }, disabled = {} },
   handlers = {},
   lsp_handlers = {},
