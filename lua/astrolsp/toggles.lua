@@ -66,9 +66,7 @@ function M.buffer_semantic_tokens(bufnr, silent)
   local toggled = false
   for _, client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
     if client:supports_method("textDocument/semanticTokens/full", bufnr) then
-      -- HACK: `semantic_tokens.start/stop` don't support 0 for current buffer
-      local real_bufnr = bufnr == 0 and vim.api.nvim_get_current_buf() or bufnr
-      vim.lsp.semantic_tokens[vim.b[bufnr].semantic_tokens and "start" or "stop"](real_bufnr, client.id)
+      vim.lsp.semantic_tokens[vim.b[bufnr].semantic_tokens and "start" or "stop"](bufnr, client.id)
       vim.lsp.semantic_tokens.force_refresh(bufnr)
       toggled = true
     end
