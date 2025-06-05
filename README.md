@@ -206,8 +206,8 @@ local opts = {
 
 ```lua
 {
-  "AstroNvim/astrolsp",
-  dependencies = { "neovim/nvim-lspconfig" },
+  "neovim/nvim-lspconfig",
+  dependencies = { "AstroNvim/astrolsp", opts = {} },
   opts = {}
 }
 ```
@@ -216,14 +216,10 @@ local opts = {
 
 ```lua
 {
-  "AstroNvim/astrolsp",
+  "williamboman/mason-lspconfig.nvim",
   dependencies = {
-    "neovim/nvim-lspconfig",
-    {
-      "williamboman/mason-lspconfig.nvim",
-      dependencies = { "williamboman/mason.nvim" },
-      opts = {}
-    }
+    "williamboman/mason.nvim",
+    { "neovim/nvim-lspconfig", dependencies = { "AstroNvim/astrolsp", opts = {} } },
   },
   opts = {}
 }
@@ -237,9 +233,9 @@ local opts = {
   dependencies = {
     { "AstroNvim/astrolsp", opts = {} },
   },
-  opts = {
-    on_attach = function(client, bufnr) require("astrolsp").on_attach(client, bufnr) end
-  },
+  opts = function(_, opts)
+    opts.on_attach = require("astrolsp").on_attach
+  end
 }
 ```
 
