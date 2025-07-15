@@ -94,7 +94,8 @@ function M.on_attach(client, bufnr)
     end
   end
 
-  if client:supports_method("textDocument/semanticTokens/full", bufnr) and vim.lsp.semantic_tokens then
+  -- TODO: remove when dropping support for Neovim v0.11
+  if client:supports_method("textDocument/semanticTokens/full", bufnr) and not vim.lsp.semantic_tokens.enable then
     if M.config.features.semantic_tokens then
       if vim.b[bufnr].semantic_tokens == nil then vim.b[bufnr].semantic_tokens = true end
     else
@@ -283,6 +284,8 @@ function M.setup(opts)
   end
 
   vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false)
+  -- TODO: remove check when dropping support for Neovim v0.11
+  if vim.lsp.semantic_tokens.enable then vim.lsp.semantic_tokens.enable(M.config.features.semantic_tokens ~= false) end
 
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
