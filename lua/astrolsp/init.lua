@@ -286,6 +286,9 @@ function M.setup(opts)
   vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false)
   -- TODO: remove check when dropping support for Neovim v0.11
   if vim.lsp.semantic_tokens.enable then vim.lsp.semantic_tokens.enable(M.config.features.semantic_tokens ~= false) end
+  if vim.lsp.linked_editing_range then
+    vim.lsp.linked_editing_range.enable(M.config.features.linked_editing_range ~= false)
+  end
 
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
