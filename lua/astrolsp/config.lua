@@ -31,6 +31,7 @@
 ---@class AstroLSPFeatureOpts
 ---@field codelens boolean? enable/disable codelens refresh on start (boolean; default = true)
 ---@field inlay_hints boolean? enable/disable inlay hints on start (boolean; default = false)
+---@field linked_editing_range boolean? enable/disable linked editing range (boolean; default = false)
 ---@field semantic_tokens boolean? enable/disable semantic token highlighting (boolean; default = true)
 ---@field signature_help boolean? enable/disable automatic signature help (boolean; default = false)
 
@@ -289,6 +290,7 @@ local M = {
   features = {
     codelens = true,
     inlay_hints = false,
+    linked_editing_range = false,
     semantic_tokens = true,
     signature_help = false,
   },
