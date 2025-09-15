@@ -111,7 +111,7 @@ local opts = {
     },
   },
   defaults = {
-    hover = { border = "rounded", silent = true } -- customize lsp hover window
+    hover = { border = "rounded", silent = true }, -- customize lsp hover window
     signature_help = false, -- disable any default customizations
   },
   -- Configuration of LSP file operation functionality
@@ -212,7 +212,7 @@ local opts = {
         config = { cmd = { "nextflow-language-server" } }
       }
     }
-  }
+  },
   -- A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
   servers = { "dartls" },
   -- A custom `on_attach` function to be run after the default `on_attach` function, takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
