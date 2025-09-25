@@ -54,7 +54,7 @@ function M.progress(data)
   local id = ("%s.%s"):format(data.client_id, data.params.token)
   M.lsp_progress[id] = M.lsp_progress[id] and vim.tbl_deep_extend("force", M.lsp_progress[id], data.params.value)
     or data.params.value
-  if M.lsp_progress[id].kind == "end" then
+  if not M.lsp_progress[id] or M.lsp_progress[id].kind == "end" then
     vim.defer_fn(function()
       M.lsp_progress[id] = nil
       lsp_event "Progress"
