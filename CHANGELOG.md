@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.1](https://github.com/AstroNvim/astrolsp/compare/v3.2.0...v3.2.1) (2025-09-25)
+
+
+### Bug Fixes
+
+* fix case where LSP progress autocommand errors because the value of the status is `nil` ([b685d3a](https://github.com/AstroNvim/astrolsp/commit/b685d3aa3d13b0b9cf427aedf92826d5fba3ee0c)), closes [#38](https://github.com/AstroNvim/astrolsp/issues/38)
+
 ## [3.2.0](https://github.com/AstroNvim/astrolsp/compare/v3.1.0...v3.2.0) (2025-05-30)
 
 
