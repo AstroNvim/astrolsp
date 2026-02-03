@@ -76,7 +76,12 @@ end
 ---@param client vim.lsp.Client The LSP client details when attaching
 ---@param bufnr integer The buffer that the LSP client is attaching to
 function M.on_attach(client, bufnr)
-  if client:supports_method("textDocument/codeLens", bufnr) and M.config.features.codelens then
+  -- TODO: remove check when dropping support for Neovim v0.11
+  if
+    client:supports_method("textDocument/codeLens", bufnr)
+    and not vim.lsp.codelens.enable
+    and M.config.features.codelens
+  then
     vim.lsp.codelens.refresh { bufnr = bufnr }
   end
 
@@ -289,6 +294,8 @@ function M.setup(opts)
   if vim.lsp.linked_editing_range then
     vim.lsp.linked_editing_range.enable(M.config.features.linked_editing_range ~= false)
   end
+  -- TODO: remove check when dropping support for Neovim v0.11
+  if vim.lsp.codelens.enable then vim.lsp.codelens.enable(M.config.features.codelens ~= false) end
 
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
