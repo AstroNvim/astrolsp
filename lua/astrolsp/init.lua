@@ -221,6 +221,7 @@ end
 function M.setup(opts)
   normalize_mappings(M.config.mappings)
   normalize_mappings(opts.mappings)
+  -- TODO: remove when dropping support for Neoivm v0.11
   local extend_method = "force"
   if vim.fn.has "nvim-0.12" == 1 then
     extend_method = function(key, prev_value, value)
@@ -231,6 +232,7 @@ function M.setup(opts)
     end
   end
   M.config = vim.tbl_deep_extend(extend_method, M.config, opts)
+  if extend_method == "force" then M.config.servers = unique_list(M.config.servers) end
 
   -- enable necessary capabilities for enabled LSP file operations
   local fileOperations = vim.tbl_get(M.config, "file_operations", "operations")
