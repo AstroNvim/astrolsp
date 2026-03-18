@@ -52,7 +52,10 @@ local opts = {
   features = {
     codelens = true, -- enable/disable codelens refresh on start
     inlay_hints = false, -- enable/disable inlay hints on start
+    inline_completion = false, -- enable/disable inline completion capabilities (Neovim v0.12+ ONLY)
+    linked_editing_range = false, -- enable/disable linked editing range capabilities (Neovim v0.12+ ONLY)
     semantic_tokens = true, -- enable/disable semantic token highlighting
+    signature_help = false, -- enable/disable automatic signature help
   },
   -- Configure buffer local auto commands to add when attaching a language server
   autocmds = {

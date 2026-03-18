@@ -298,6 +298,8 @@ function M.setup(opts)
   end
   -- TODO: remove check when dropping support for Neovim v0.11
   if vim.lsp.codelens.enable then vim.lsp.codelens.enable(M.config.features.codelens ~= false) end
+  -- TODO: remove check when dropping support for Neovim v0.11
+  if vim.lsp.inline_completion then vim.lsp.inline_completion.enable(M.config.features.inline_completion ~= false) end
 
   -- Set up tracking of signature help trigger characters
   local augroup = vim.api.nvim_create_augroup("track_signature_help_triggers", { clear = true })
