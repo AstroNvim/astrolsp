@@ -1,4 +1,4 @@
-*astrolsp.txt*        For Neovim >= 0.9.0       Last change: 2025 September 25
+*astrolsp.txt*          For Neovim >= 0.9.0         Last change: 2026 March 30
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -14,9 +14,7 @@ Table of Contents                                 *astrolsp-table-of-contents*
 2. Lua API                                                  |astrolsp-lua-api|
   - astrolsp                                       |astrolsp-lua-api-astrolsp|
   - astrolsp.file_operations       |astrolsp-lua-api-astrolsp.file_operations|
-  - astrolsp.mason-lspconfig       |astrolsp-lua-api-astrolsp.mason-lspconfig|
   - astrolsp.toggles                       |astrolsp-lua-api-astrolsp.toggles|
-  - astrolsp.utils                           |astrolsp-lua-api-astrolsp.utils|
 
 ==============================================================================
 1. AstroLSP                                                *astrolsp-astrolsp*
@@ -38,7 +36,7 @@ FEATURES                                          *astrolsp-astrolsp-features*
 
 REQUIREMENTS                                  *astrolsp-astrolsp-requirements*
 
-- Neovim >= 0.10
+- Neovim >= 0.11
 
 
 INSTALLATION                                  *astrolsp-astrolsp-installation*
@@ -82,7 +80,10 @@ Here are descriptions of the options and some example usages:
       features = {
         codelens = true, -- enable/disable codelens refresh on start
         inlay_hints = false, -- enable/disable inlay hints on start
+        inline_completion = false, -- enable/disable inline completion capabilities (Neovim v0.12+ ONLY)
+        linked_editing_range = false, -- enable/disable linked editing range capabilities (Neovim v0.12+ ONLY)
         semantic_tokens = true, -- enable/disable semantic token highlighting
+        signature_help = false, -- enable/disable automatic signature help
       },
       -- Configure buffer local auto commands to add when attaching a language server
       autocmds = {
@@ -119,24 +120,19 @@ Here are descriptions of the options and some example usages:
           desc = "Format file with LSP",
         },
       },
-      -- Configure default capabilities for language servers (`:h vim.lsp.protocol.make_client.capabilities()`)
-      capabilities = {
-        textDocument = {
-          foldingRange = { dynamicRegistration = false },
-        },
-      },
-      -- Configure language servers for `lspconfig` (`:h lspconfig-setup`)
+      -- Configure language servers with `vim.lsp.config` (`:h vim.lsp.config`)
       config = {
-        lua_ls = {
-          settings = {
-            Lua = {
-              hint = { enable = true, arrayIndex = "Disable" },
+        -- Configure LSP defaults
+        ["*"] = {
+          -- Configure default capabilities
+          capabilities = {
+            textDocument = {
+              foldingRange = { dynamicRegistration = false },
             },
           },
-        },
-        clangd = {
-          capabilities = {
-            offsetEncoding = "utf-8",
+          -- Custom flags table to be passed to all language servers
+          flags = {
+            exit_timeout = 5000,
           },
         },
       },
@@ -157,10 +153,6 @@ Here are descriptions of the options and some example usages:
           willDelete = true,
           didDelete = true,
         },
-      },
-      -- A custom flags table to be passed to all language servers  (`:h lspconfig-setup`)
-      flags = {
-        exit_timeout = 5000,
       },
       -- Configuration options for controlling formatting with language servers
       formatting = {
@@ -188,10 +180,10 @@ Here are descriptions of the options and some example usages:
       },
       -- Configure how language servers get set up
       handlers = {
-        -- default handler, first entry with no key
-        function(server, opts) require("lspconfig")[server].setup(opts) end,
+        -- default handler uses key "*"
+        ["*"] = vim.lsp.enable,
         -- custom function handler for pyright
-        pyright = function(_, opts) require("lspconfig").pyright.setup(opts) end,
+        pyright = function() vim.lsp.enable "pyright" end,
         -- set to false to disable the setup of a language server
         rust_analyzer = false,
       },
@@ -228,25 +220,12 @@ Here are descriptions of the options and some example usages:
           },
         },
       },
-     -- Extra configuration for the `mason-lspconfig.nvim` plugin
-      mason_lspconfig = {
-        -- Allow registering more Mason packages as language servers for autodetection/setup
-        servers = {
-          -- The key is the lspconfig server name to register a package for
-          nextflow_ls = {
-            -- The Mason package name to register to the language server
-            package = "nextflow-language-server",
-            -- The filetypes that apply to the package and language server
-            filetypes = { "nextflow" },
-            -- (Optional) any default configuration changes that may need to happen (can be a table or a function that returns a table)
-            config = { cmd = { "nextflow-language-server" } }
-          }
-        }
-      },
       -- A list like table of servers that should be setup, useful for enabling language servers not installed with Mason.
       servers = { "dartls" },
       -- A custom `on_attach` function to be run after the default `on_attach` function, takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
-      on_attach = function(client, bufnr) client.server_capabilities.semanticTokensProvider = nil end,
+      on_attach = function(client, bufnr)
+        -- custom on_attach code to run on all servers
+      end,
     }
 <
 
@@ -265,13 +244,8 @@ NVIM-LSPCONFIG ~
 >lua
     {
       "neovim/nvim-lspconfig",
-      dependencies = {
-        { "AstroNvim/astrolsp", opts = {} },
-      },
-      config = function()
-        -- set up servers configured with AstroLSP
-        vim.tbl_map(require("astrolsp").lsp_setup, require("astrolsp").config.servers)
-      end,
+      dependencies = { "AstroNvim/astrolsp", opts = {} },
+      opts = {}
     }
 <
 
@@ -280,28 +254,12 @@ NVIM-LSPCONFIG + MASON.NVIM + MASON-LSPCONFIG.NVIM ~
 
 >lua
     {
-      "neovim/nvim-lspconfig",
+      "williamboman/mason-lspconfig.nvim",
       dependencies = {
-        { "AstroNvim/astrolsp", opts = {} },
-        {
-          "williamboman/mason-lspconfig.nvim", -- MUST be set up before `nvim-lspconfig`
-          dependencies = { "williamboman/mason.nvim" },
-          opts = {
-            -- use AstroLSP setup for mason-lspconfig
-            handlers = { function(server) require("astrolsp").lsp_setup(server) end },
-          },
-          config = function(_, opts)
-            -- Optionally tell AstroLSP to register new language servers before calling the `setup` function
-            -- this enables the `mason-lspconfig.servers` option in the AstroLSP configuration
-            require("astrolsp.mason-lspconfig").register_servers()
-            require("mason-lspconfig").setup(opts)
-          end
-        },
+        "williamboman/mason.nvim",
+        { "neovim/nvim-lspconfig", dependencies = { "AstroNvim/astrolsp", opts = {} } },
       },
-      config = function()
-        -- set up servers configured with AstroLSP
-        vim.tbl_map(require("astrolsp").lsp_setup, require("astrolsp").config.servers)
-      end,
+      opts = {}
     }
 <
 
@@ -314,7 +272,9 @@ NONE-LS.NVIM ~
       dependencies = {
         { "AstroNvim/astrolsp", opts = {} },
       },
-      opts = function() return { on_attach = require("astrolsp").on_attach } end,
+      opts = function(_, opts)
+        opts.on_attach = require("astrolsp").on_attach
+      end
     }
 <
 
@@ -373,7 +333,7 @@ NEO-TREE.NVIM
 used to set up the necessary handling before/after file operations. There is
 also a Lua API to do this outside of the plugin configuration (information on
 this can be found in their documentation). Here is an example for doing it
-within the setup of `neo-tree.nvim`
+within the setup of `neo-tree.nvim`:
 
 >lua
     local events = require "neo-tree.events"
@@ -426,7 +386,7 @@ within the setup of `neo-tree.nvim`
 
 NVIM-TREE.LUA
 
-`nvim-tree.lua`provides a Lua API to subscribe to file operation events which
+`nvim-tree.lua` provides a Lua API to subscribe to file operation events which
 can be easily accessed through an `autocommand` which runs after the plugin is
 setup.
 
@@ -528,6 +488,30 @@ astrolsp API documentation
 
 ASTROLSP                                           *astrolsp-lua-api-astrolsp*
 
+AstroNvim LSP Utilities
+
+Various utility functions to use within AstroNvim for the LSP engine
+
+This module can be loaded with `local astro = require "astrolsp"`
+
+copyright 2023 license GNU General Public License v3.0
+
+
+ADD_ON_ATTACH ~
+
+>lua
+    function astrolsp.add_on_attach(on_attach: fun(client: vim.lsp.Client, bufnr: integer), opts?: { client_name: string?, autocmd: (vim.api.keyset.create_autocmd)? })
+      -> autocmd_id: integer
+<
+
+Set up a given `on_attach` function to run when language servers are attached
+
+_param_ `on_attach` — the `on_attach` function to run
+
+_param_ `opts` — options for configuring the `on_attach`
+
+_return_ `autocmd_id` — The id for the created LspAttach autocommand
+
 
 ATTACHED_CLIENTS ~
 
@@ -555,36 +539,6 @@ FORMAT_OPTS ~
 
 Format options that are passed into the `vim.lsp.buf.format`
 (|vim.lsp.buf.format()|)
-
-
-LSP_CONFIG ~
-
->lua
-    function astrolsp.lsp_config(server_name: string)
-      -> vim.lsp.Config
-<
-
-Configure the language server using `vim.lsp.config`
-
-_param_ `server_name` — The name of the server
-
-_return_ — The resolved configuration
-
-
-LSP_OPTS ~
-
->lua
-    function astrolsp.lsp_opts(server_name: string)
-      -> table
-<
-
-Get the server configuration for a given language server to be provided to the
-server’s `setup()` call
-
-_param_ `server_name` — The name of the server
-
-_return_ — The table of LSP options used when setting up the given language
-server
 
 
 LSP_PROGRESS ~
@@ -642,6 +596,18 @@ _param_ `opts` — options passed by the user to configure AstroLSP
 
 
 ASTROLSP.FILE_OPERATIONS           *astrolsp-lua-api-astrolsp.file_operations*
+
+AstroNvim LSP File Operation Utilities
+
+Utilities for working with LSP based file operations
+
+This module is heavily inspired by nvim-lsp-file-operations
+https://github.com/antosha417/nvim-lsp-file-operations/tree/master
+
+This module can be loaded with `local astrolsp_fileops = require
+"astrolsp.file_operations"`
+
+copyright 2025 license GNU General Public License v3.0
 
 
 DIDCREATEFILES ~
@@ -710,32 +676,15 @@ Notify LSP clients that file(s) are going to be renamed
 _param_ `renames` — a table or list of tables of files that will be renamed
 
 
-ASTROLSP.MASON-LSPCONFIG           *astrolsp-lua-api-astrolsp.mason-lspconfig*
-
-
-REGISTER_SERVER ~
-
->lua
-    function astrolsp.mason-lspconfig.register_server(server: string, spec: AstroLSPMasonLspconfigServer)
-<
-
-Register a new language server with mason-lspconfig
-
-_param_ `server` — the server name in lspconfig
-
-_param_ `spec` — the details for registering the server
-
-
-REGISTER_SERVERS ~
-
->lua
-    function astrolsp.mason-lspconfig.register_servers(server_specs?: { [string]: AstroLSPMasonLspconfigServer })
-<
-
-Register multiple new language servers with mason-lspconfig
-
-
 ASTROLSP.TOGGLES                           *astrolsp-lua-api-astrolsp.toggles*
+
+AstroNvim LSP Toggles
+
+Utility functions for easy LSP toggles
+
+This module can be loaded with `local ui = require("astrolsp.toggles")`
+
+copyright 2023 license GNU General Public License v3.0
 
 
 AUTOFORMAT ~
@@ -759,6 +708,19 @@ Toggle buffer local auto format
 
 _param_ `bufnr` — The buffer to toggle the autoformatting of, default the
 current buffer
+
+_param_ `silent` — if true then don’t sent a notification
+
+
+BUFFER_CODELENS ~
+
+>lua
+    function astrolsp.toggles.buffer_codelens(bufnr?: integer, silent?: boolean)
+<
+
+Toggle buffer codelens
+
+_param_ `bufnr` — the buffer to toggle the clients on
 
 _param_ `silent` — if true then don’t sent a notification
 
@@ -810,7 +772,7 @@ CODELENS ~
     function astrolsp.toggles.codelens(silent?: boolean)
 <
 
-Toggle codelens
+Toggle global codelens
 
 _param_ `silent` — if true then don’t sent a notification
 
@@ -826,6 +788,18 @@ Toggle global LSP inlay hints
 _param_ `silent` — if true then don’t sent a notification
 
 
+SEMANTIC_TOKENS ~
+
+>lua
+    function astrolsp.toggles.semantic_tokens(silent?: boolean)
+<
+
+Toggle global semantic token highlighting for all language servers that support
+it
+
+_param_ `silent` — if true then don’t sent a notification
+
+
 SIGNATURE_HELP ~
 
 >lua
@@ -835,36 +809,6 @@ SIGNATURE_HELP ~
 Toggle automatic signature help
 
 _param_ `silent` — if true then don’t sent a notification
-
-
-ASTROLSP.UTILS                               *astrolsp-lua-api-astrolsp.utils*
-
-
-NOTIFY ~
-
->lua
-    function astrolsp.utils.notify(client: vim.lsp.Client, method: string, params?: table)
-<
-
-Helper function to support deprecated notify usage
-
-
-REQUEST_SYNC ~
-
->lua
-    function astrolsp.utils.request_sync(client: vim.lsp.Client, req: string, params: table, timeout?: integer, bufnr?: integer)
-<
-
-Helper function to support deprecated request_sync usage
-
-
-SUPPORTS_METHOD ~
-
->lua
-    function astrolsp.utils.supports_method(client: vim.lsp.Client, method: string, bufnr?: integer)
-<
-
-Helper function to support deprecated supports_method usage
 
 Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
 

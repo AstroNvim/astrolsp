@@ -4,6 +4,31 @@ astrolsp API documentation
 
 ## astrolsp
 
+AstroNvim LSP Utilities
+
+Various utility functions to use within AstroNvim for the LSP engine
+
+This module can be loaded with `local astro = require "astrolsp"`
+
+copyright 2023
+license GNU General Public License v3.0
+
+### add_on_attach
+
+
+```lua
+function astrolsp.add_on_attach(on_attach: fun(client: vim.lsp.Client, bufnr: integer), opts?: { client_name: string?, autocmd: (vim.api.keyset.create_autocmd)? })
+  -> autocmd_id: integer
+```
+
+ Set up a given `on_attach` function to run when language servers are attached
+
+*param* `on_attach` — the `on_attach` function to run
+
+*param* `opts` — options for configuring the `on_attach`
+
+*return* `autocmd_id` — The id for the created LspAttach autocommand
+
 ### attached_clients
 
 
@@ -30,34 +55,6 @@ unknown
 ```
 
  Format options that are passed into the `vim.lsp.buf.format` (`:h vim.lsp.buf.format()`)
-
-### lsp_config
-
-
-```lua
-function astrolsp.lsp_config(server_name: string)
-  -> vim.lsp.Config
-```
-
- Configure the language server using `vim.lsp.config`
-
-*param* `server_name` — The name of the server
-
-*return* — The resolved configuration
-
-### lsp_opts
-
-
-```lua
-function astrolsp.lsp_opts(server_name: string)
-  -> table
-```
-
- Get the server configuration for a given language server to be provided to the server's `setup()` call
-
-*param* `server_name` — The name of the server
-
-*return* — The table of LSP options used when setting up the given language server
 
 ### lsp_progress
 
@@ -114,6 +111,18 @@ function astrolsp.setup(opts: AstroLSPOpts)
 
 
 ## astrolsp.file_operations
+
+AstroNvim LSP File Operation Utilities
+
+Utilities for working with LSP based file operations
+
+This module is heavily inspired by nvim-lsp-file-operations
+https://github.com/antosha417/nvim-lsp-file-operations/tree/master
+
+This module can be loaded with `local astrolsp_fileops = require "astrolsp.file_operations"`
+
+copyright 2025
+license GNU General Public License v3.0
 
 ### didCreateFiles
 
@@ -182,32 +191,16 @@ function astrolsp.file_operations.willRenameFiles(renames: AstroLSPFileOperation
 *param* `renames` — a table or list of tables of files that will be renamed
 
 
-## astrolsp.mason-lspconfig
-
-### register_server
-
-
-```lua
-function astrolsp.mason-lspconfig.register_server(server: string, spec: AstroLSPMasonLspconfigServer)
-```
-
- Register a new language server with mason-lspconfig
-
-*param* `server` — the server name in lspconfig
-
-*param* `spec` — the details for registering the server
-
-### register_servers
-
-
-```lua
-function astrolsp.mason-lspconfig.register_servers(server_specs?: { [string]: AstroLSPMasonLspconfigServer })
-```
-
- Register multiple new language servers with mason-lspconfig
-
-
 ## astrolsp.toggles
+
+AstroNvim LSP Toggles
+
+Utility functions for easy LSP toggles
+
+This module can be loaded with `local ui = require("astrolsp.toggles")`
+
+copyright 2023
+license GNU General Public License v3.0
 
 ### autoformat
 
@@ -230,6 +223,19 @@ function astrolsp.toggles.buffer_autoformat(bufnr?: integer, silent?: boolean)
  Toggle buffer local auto format
 
 *param* `bufnr` — The buffer to toggle the autoformatting of, default the current buffer
+
+*param* `silent` — if true then don't sent a notification
+
+### buffer_codelens
+
+
+```lua
+function astrolsp.toggles.buffer_codelens(bufnr?: integer, silent?: boolean)
+```
+
+ Toggle buffer codelens
+
+*param* `bufnr` — the buffer to toggle the clients on
 
 *param* `silent` — if true then don't sent a notification
 
@@ -279,7 +285,7 @@ function astrolsp.toggles.buffer_signature_help(bufnr?: integer, silent?: boolea
 function astrolsp.toggles.codelens(silent?: boolean)
 ```
 
- Toggle codelens
+ Toggle global codelens
 
 *param* `silent` — if true then don't sent a notification
 
@@ -294,6 +300,17 @@ function astrolsp.toggles.inlay_hints(silent?: boolean)
 
 *param* `silent` — if true then don't sent a notification
 
+### semantic_tokens
+
+
+```lua
+function astrolsp.toggles.semantic_tokens(silent?: boolean)
+```
+
+ Toggle global semantic token highlighting for all language servers that support it
+
+*param* `silent` — if true then don't sent a notification
+
 ### signature_help
 
 
@@ -304,35 +321,5 @@ function astrolsp.toggles.signature_help(silent?: boolean)
  Toggle automatic signature help
 
 *param* `silent` — if true then don't sent a notification
-
-
-## astrolsp.utils
-
-### notify
-
-
-```lua
-function astrolsp.utils.notify(client: vim.lsp.Client, method: string, params?: table)
-```
-
- Helper function to support deprecated notify usage
-
-### request_sync
-
-
-```lua
-function astrolsp.utils.request_sync(client: vim.lsp.Client, req: string, params: table, timeout?: integer, bufnr?: integer)
-```
-
- Helper function to support deprecated request_sync usage
-
-### supports_method
-
-
-```lua
-function astrolsp.utils.supports_method(client: vim.lsp.Client, method: string, bufnr?: integer)
-```
-
- Helper function to support deprecated supports_method usage
 
 
