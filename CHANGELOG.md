@@ -1,5 +1,30 @@
 # Changelog
 
+## [4.0.0](https://github.com/AstroNvim/astrolsp/compare/v3.2.1...v4.0.0) (2026-03-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* move all `vim.lsp.config` to a `config` table for more general support
+* remove all code supporting Neovim v0.10
+* move entirely to built in `vim.lsp.config`
+
+### Features
+
+* add `add_on_attach` function for easily adding more `on_attach` functions ([ee300be](https://github.com/AstroNvim/astrolsp/commit/ee300beac46c8b0c85dc7801043390085d9d8e1a))
+* add support for `textDocument/linkedEditingRange` ([47587c1](https://github.com/AstroNvim/astrolsp/commit/47587c1ce326eaf7d3cfa517a47cbf80622dae12))
+* add toggling of `inline_completion` feature in Neovim ([4f81701](https://github.com/AstroNvim/astrolsp/commit/4f817011451d16e45cbb14d6d96c96819aaa4673))
+* move all `vim.lsp.config` to a `config` table for more general support ([f2f44b0](https://github.com/AstroNvim/astrolsp/commit/f2f44b003b670e5c832c64fcf58ef4fe113628da))
+* move entirely to built in `vim.lsp.config` ([e7915c6](https://github.com/AstroNvim/astrolsp/commit/e7915c6a2ea01f2dd1098f3354aa6b731439ebb7))
+* move to new `vim.lsp.semantic_tokens` API ([df90208](https://github.com/AstroNvim/astrolsp/commit/df902087b5388192f21edd65e87c295297762b34))
+* remove all code supporting Neovim v0.10 ([3194eb5](https://github.com/AstroNvim/astrolsp/commit/3194eb5a76823e6b0ff29c77fec3530e31ec966f))
+
+
+### Bug Fixes
+
+* enforce unique servers list in neovim 0.11 ([abdfb7a](https://github.com/AstroNvim/astrolsp/commit/abdfb7ae4dcc4c0604c62a2f79622c5139fbc652))
+* use new `vim.lsp.codelens` api in neovim v0.12 ([cbe3cfd](https://github.com/AstroNvim/astrolsp/commit/cbe3cfd8cd7ffc1c2e02f60c784e8cb177b98ca0))
+
 ## [3.2.1](https://github.com/AstroNvim/astrolsp/compare/v3.2.0...v3.2.1) (2025-09-25)
 
 
