@@ -9,9 +9,7 @@
 ---@class astrolsp.toggles
 local M = {}
 
-local config = require("astrolsp").config
-local features = config.features --[[@as AstroLSPFeatureOpts]]
-local format_on_save = config.formatting.format_on_save --[[@as AstroLSPFormatOnSaveOpts]]
+local function get_config() return require("astrolsp").config end
 
 local function ui_notify(silent, ...) return not silent and vim.notify(...) end
 local function bool2str(bool) return bool and "on" or "off" end
@@ -19,6 +17,7 @@ local function bool2str(bool) return bool and "on" or "off" end
 --- Toggle auto format
 ---@param silent? boolean if true then don't sent a notification
 function M.autoformat(silent)
+  local format_on_save = get_config().formatting.format_on_save --[[@as AstroLSPFormatOnSaveOpts]]
   format_on_save.enabled = not format_on_save.enabled
   ui_notify(silent, ("Global autoformatting %s"):format(bool2str(format_on_save.enabled)))
 end
@@ -116,6 +115,7 @@ function M.codelens(silent)
     vim.lsp.codelens.enable(not vim.lsp.codelens.is_enabled())
     ui_notify(silent, ("CodeLens %s"):format(bool2str(vim.lsp.codelens.is_enabled())))
   else
+    local features = get_config().features --[[@as AstroLSPFeatureOpts]]
     features.codelens = not features.codelens
     if not features.codelens then vim.lsp.codelens.clear() end
     ui_notify(silent, ("CodeLens %s"):format(bool2str(features.codelens)))
@@ -125,6 +125,7 @@ end
 --- Toggle automatic signature help
 ---@param silent? boolean if true then don't sent a notification
 function M.signature_help(silent)
+  local config = get_config()
   config.features.signature_help = not config.features.signature_help
   ui_notify(silent, ("Global signature help %s"):format(bool2str(config.features.signature_help)))
 end
@@ -134,6 +135,7 @@ end
 ---@param silent? boolean if true then don't sent a notification
 function M.buffer_signature_help(bufnr, silent)
   bufnr = bufnr or 0
+  local config = get_config()
   local old_val = vim.b[bufnr].signature_help
   if old_val == nil then old_val = config.features.signature_help end
   if not next(vim.b[bufnr].signature_help_triggerCharacters or {}) then
