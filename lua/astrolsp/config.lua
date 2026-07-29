@@ -48,11 +48,11 @@
 ---@field filter (fun(client):boolean)? a function for doing a custom formatting filter based on LSP client name
 
 ---@class AstroLSPFileOperationsOperationsOpts
----@field willCreate boolean? enable/disable pre-create file notifications
----@field willDelete boolean? enable/disable pre-create file notifications
----@field willRename boolean? enable/disable pre-rename file notifications
+---@field willCreate boolean? enable/disable pre-create file requests
+---@field willDelete boolean? enable/disable pre-delete file requests
+---@field willRename boolean? enable/disable pre-rename file requests
 ---@field didCreate boolean? enable/disable post-create file notifications
----@field didDelete boolean? enable/disable post-create file notifications
+---@field didDelete boolean? enable/disable post-delete file notifications
 ---@field didRename boolean? enable/disable post-rename file notifications
 
 ---@class AstroLSPFileOperationsOpts
@@ -166,12 +166,12 @@
 ---  timeout = 10000,
 ---  -- fully disable/enable file operation methods
 ---  operations = {
----   willRenameFiles = true,
----   didRenameFiles = true,
----   willCreateFiles = true,
----   didCreateFiles = true,
----   willDeleteFiles = true,
----   didDeleteFiles = true,
+---   willRename = true,
+---   didRename = true,
+---   willCreate = true,
+---   didCreate = true,
+---   willDelete = true,
+---   didDelete = true,
 ---  }
 --- }
 ---```

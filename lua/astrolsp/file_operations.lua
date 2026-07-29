@@ -124,7 +124,7 @@ local function getWorkspaceEdit(client, req, params, timeout)
   if resp and resp.result then return resp.result end
 end
 
---- Notify LSP clients that file(s) are going to be created
+--- Request workspace edits from LSP clients before file(s) are created
 ---@param fnames string|string[] a file or list of files that will be created
 function M.willCreateFiles(fnames)
   local config = get_config()
@@ -148,7 +148,7 @@ function M.willCreateFiles(fnames)
   end
 end
 
---- Notify LSP clients that file(s) are going to be deleted
+--- Request workspace edits from LSP clients before file(s) are deleted
 ---@param fnames string|string[] a file or list of files that will be deleted
 function M.willDeleteFiles(fnames)
   local config = get_config()
@@ -172,7 +172,7 @@ function M.willDeleteFiles(fnames)
   end
 end
 
---- Notify LSP clients that file(s) are going to be renamed
+--- Request workspace edits from LSP clients before file(s) are renamed
 ---@param renames AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[] a table or list of tables of files that will be renamed
 function M.willRenameFiles(renames)
   local config = get_config()
