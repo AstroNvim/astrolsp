@@ -134,14 +134,14 @@ function M.on_attach(client, bufnr)
             autocmd.group, autocmd.buffer = group, bufnr
             local callback_func = command and function(_, _, _) vim.cmd(command) end or callback
             autocmd.callback = function(args)
-              local invalid = true
-              for _, cb_client in ipairs(vim.lsp.get_clients { buffer = bufnr }) do
+              local callback_client
+              for _, cb_client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
                 if check_cond(cond, cb_client, bufnr) then
-                  invalid = false
+                  callback_client = cb_client
                   break
                 end
               end
-              return invalid or callback_func(args, client, bufnr)
+              if callback_client then return callback_func(args, callback_client, bufnr) end
             end
             vim.api.nvim_create_autocmd(event, autocmd)
             autocmd.callback, autocmd.command, autocmd.event = callback, command, event
