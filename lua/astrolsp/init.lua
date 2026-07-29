@@ -373,8 +373,12 @@ function M.setup(opts)
   local register_capability_handler = vim.lsp.handlers["client/registerCapability"]
   vim.lsp.handlers["client/registerCapability"] = function(err, res, ctx)
     local ret = register_capability_handler(err, res, ctx)
-    local attached_client = M.attached_clients[ctx.client_id]
-    if attached_client then M.on_attach(attached_client, vim.api.nvim_get_current_buf()) end
+    local client = vim.lsp.get_client_by_id(ctx.client_id)
+    if client then
+      for bufnr, _ in pairs(client.attached_buffers) do
+        M.on_attach(client, bufnr)
+      end
+    end
     return ret
   end
 
