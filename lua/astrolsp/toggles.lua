@@ -104,7 +104,7 @@ function M.buffer_codelens(bufnr, silent)
     ui_notify(silent, "Only available in Neovim v0.12+", vim.log.levels.WARN)
     return
   end
-  vim.lsp.codelens.enable(not vim.lsp.codelens.is_enabled { bufnr = bufnr })
+  vim.lsp.codelens.enable(not vim.lsp.codelens.is_enabled { bufnr = bufnr }, { bufnr = bufnr })
   ui_notify(silent, ("CodeLens %s"):format(bool2str(vim.lsp.codelens.is_enabled { bufnr = bufnr })))
 end
 
