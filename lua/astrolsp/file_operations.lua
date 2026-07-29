@@ -24,21 +24,25 @@ local match_filters = function(filters, name)
   for _, filter in pairs(filters) do
     if not filter_cache[filter] then filter_cache[filter] = {} end
     if filter_cache[filter][fname] == nil then
-      local matched = false
+      local scheme = filter.scheme
+      local cached = { scheme_matches = not scheme or scheme:lower() == "file", matched = false }
       local pattern = filter.pattern
       local match_type = pattern.matches
       local is_dir = string.sub(fname, #fname) == "/"
-      if not match_type or (match_type == "folder" and is_dir) or (match_type == "file" and not is_dir) then
+      if
+        cached.scheme_matches
+        and (not match_type or (match_type == "folder" and is_dir) or (match_type == "file" and not is_dir))
+      then
         local regex = vim.fn.glob2regpat(pattern.glob)
         if vim.tbl_get(pattern, "options", "ignoreCase") then regex = "\\c" .. regex end
         local previous_ignorecase = vim.o.ignorecase
         vim.o.ignorecase = false
-        matched = vim.fn.match(fname, regex) ~= -1
+        cached.matched = vim.fn.match(fname, regex) ~= -1
         vim.o.ignorecase = previous_ignorecase
       end
-      filter_cache[filter][fname] = matched
+      filter_cache[filter][fname] = cached
     end
-    if filter_cache[filter][fname] then return true end
+    if filter_cache[filter][fname].matched then return true end
   end
   return false
 end
