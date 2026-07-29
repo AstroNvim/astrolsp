@@ -43,10 +43,10 @@ require("astrolsp").setup {
 
 ## ⚙️ Configuration
 
-**AstroLSP** comes with the no defaults, but can be configured fully through the `opts` table in lazy or through calling `require("astrolsp").setup({})`. Here are descriptions of the options and some example usages:
+**AstroLSP** defaults to CodeLens refresh, semantic token highlighting, enabled format on save, and a 10-second file-operation timeout; file-operation methods are disabled until configured. Configure it through the `opts` table in lazy or by calling `require("astrolsp").setup({})`. Here are descriptions of the options and some example usages:
 
 ```lua
----@type AstroLSPConfig
+---@type AstroLSPOpts
 local opts = {
   -- Configuration table of features provided by AstroLSP
   features = {
