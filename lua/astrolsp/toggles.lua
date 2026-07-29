@@ -136,7 +136,7 @@ function M.buffer_signature_help(bufnr, silent)
   bufnr = bufnr or 0
   local old_val = vim.b[bufnr].signature_help
   if old_val == nil then old_val = config.features.signature_help end
-  if not next(vim.b[bufnr].signature_help_trigger) then
+  if not next(vim.b[bufnr].signature_help_triggerCharacters or {}) then
     ui_notify(silent, "No LSP attached with signature help triggers")
     return
   end
