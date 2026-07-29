@@ -345,6 +345,12 @@ function M.setup(opts)
     group = vim.api.nvim_create_augroup("astrolsp_detach", { clear = true }),
     desc = "Clear state when language server is detached like LSP progress messages",
     callback = function(args)
+      local client = vim.lsp.get_client_by_id(args.data.client_id)
+      if client then
+        for bufnr, _ in pairs(client.attached_buffers) do
+          if bufnr ~= args.buf then return end
+        end
+      end
       M.attached_clients[args.data.client_id] = nil
       local changed = false
       for id, _ in pairs(M.lsp_progress) do -- clear lingering progress messages
