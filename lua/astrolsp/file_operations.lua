@@ -12,7 +12,7 @@
 ---@class astrolsp.file_operations
 local M = {}
 
-local config = vim.tbl_get(require "astrolsp", "config", "file_operations") or {}
+local function get_config() return vim.tbl_get(require "astrolsp", "config", "file_operations") or {} end
 
 ---@class AstroLSPFileOperationsRename
 ---@field from string the original filename
@@ -50,6 +50,7 @@ end
 --- Notify LSP clients that file(s) were created
 ---@param fnames string|string[] a file or list of files that were created
 function M.didCreateFiles(fnames)
+  local config = get_config()
   if not vim.tbl_get(config, "operations", "didCreate") then return end
   for _, client in pairs(vim.lsp.get_clients()) do
     local did_create = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "didCreate")
@@ -70,6 +71,7 @@ end
 --- Notify LSP clients that file(s) were deleted
 ---@param fnames string|string[] a file or list of files that were deleted
 function M.didDeleteFiles(fnames)
+  local config = get_config()
   if not vim.tbl_get(config, "operations", "didDelete") then return end
   for _, client in pairs(vim.lsp.get_clients()) do
     local did_delete = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "didDelete")
@@ -90,6 +92,7 @@ end
 --- Notify LSP clients that file(s) were renamed
 ---@param renames AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[] a table or list of tables of files that were renamed
 function M.didRenameFiles(renames)
+  local config = get_config()
   if not vim.tbl_get(config, "operations", "didRename") then return end
   for _, client in pairs(vim.lsp.get_clients()) do
     local did_rename = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "didRename")
@@ -115,14 +118,16 @@ end
 ---@param client vim.lsp.Client
 ---@param req string
 ---@param params table
-local function getWorkspaceEdit(client, req, params)
-  local resp = client:request_sync(req, params, config.timeout)
+---@param timeout integer?
+local function getWorkspaceEdit(client, req, params, timeout)
+  local resp = client:request_sync(req, params, timeout)
   if resp and resp.result then return resp.result end
 end
 
 --- Notify LSP clients that file(s) are going to be created
 ---@param fnames string|string[] a file or list of files that will be created
 function M.willCreateFiles(fnames)
+  local config = get_config()
   if not vim.tbl_get(config, "operations", "willCreate") then return end
   for _, client in pairs(vim.lsp.get_clients()) do
     local will_create = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "willCreate")
@@ -134,7 +139,8 @@ function M.willCreateFiles(fnames)
         local edit = getWorkspaceEdit(
           client,
           "workspace/willCreateFiles",
-          { files = vim.tbl_map(function(fname) return { uri = vim.uri_from_fname(fname) } end, filtered) }
+          { files = vim.tbl_map(function(fname) return { uri = vim.uri_from_fname(fname) } end, filtered) },
+          config.timeout
         )
         if edit then vim.lsp.util.apply_workspace_edit(edit, client.offset_encoding) end
       end
@@ -145,6 +151,7 @@ end
 --- Notify LSP clients that file(s) are going to be deleted
 ---@param fnames string|string[] a file or list of files that will be deleted
 function M.willDeleteFiles(fnames)
+  local config = get_config()
   if not vim.tbl_get(config, "operations", "willDelete") then return end
   for _, client in pairs(vim.lsp.get_clients()) do
     local will_delete = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "willDelete")
@@ -156,7 +163,8 @@ function M.willDeleteFiles(fnames)
         local edit = getWorkspaceEdit(
           client,
           "workspace/willDeleteFiles",
-          { files = vim.tbl_map(function(fname) return { uri = vim.uri_from_fname(fname) } end, filtered) }
+          { files = vim.tbl_map(function(fname) return { uri = vim.uri_from_fname(fname) } end, filtered) },
+          config.timeout
         )
         if edit then vim.lsp.util.apply_workspace_edit(edit, client.offset_encoding) end
       end
@@ -167,6 +175,7 @@ end
 --- Notify LSP clients that file(s) are going to be renamed
 ---@param renames AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[] a table or list of tables of files that will be renamed
 function M.willRenameFiles(renames)
+  local config = get_config()
   if not vim.tbl_get(config, "operations", "willRename") then return end
   for _, client in pairs(vim.lsp.get_clients()) do
     local will_rename = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "willRename")
@@ -183,7 +192,7 @@ function M.willRenameFiles(renames)
             function(rename) return { oldUri = vim.uri_from_fname(rename.from), newUri = vim.uri_from_fname(rename.to) } end,
             filtered
           ),
-        })
+        }, config.timeout)
         if edit then vim.lsp.util.apply_workspace_edit(edit, client.offset_encoding) end
       end
     end
