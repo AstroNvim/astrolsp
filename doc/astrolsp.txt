@@ -1,4 +1,5 @@
-*astrolsp.txt*          For Neovim >= 0.9.0         Last change: 2026 March 30
+*astrolsp.txt*
+                              For Neovim >= 0.9.0    Last change: 2026 July 29
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
