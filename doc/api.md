@@ -164,7 +164,7 @@ function astrolsp.file_operations.didRenameFiles(renames: AstroLSPFileOperations
 function astrolsp.file_operations.willCreateFiles(fnames: string|string[])
 ```
 
- Notify LSP clients that file(s) are going to be created
+ Request workspace edits from LSP clients before file(s) are created
 
 *param* `fnames` — a file or list of files that will be created
 
@@ -175,7 +175,7 @@ function astrolsp.file_operations.willCreateFiles(fnames: string|string[])
 function astrolsp.file_operations.willDeleteFiles(fnames: string|string[])
 ```
 
- Notify LSP clients that file(s) are going to be deleted
+ Request workspace edits from LSP clients before file(s) are deleted
 
 *param* `fnames` — a file or list of files that will be deleted
 
@@ -186,7 +186,7 @@ function astrolsp.file_operations.willDeleteFiles(fnames: string|string[])
 function astrolsp.file_operations.willRenameFiles(renames: AstroLSPFileOperationsRename|AstroLSPFileOperationsRename[])
 ```
 
- Notify LSP clients that file(s) are going to be renamed
+ Request workspace edits from LSP clients before file(s) are renamed
 
 *param* `renames` — a table or list of tables of files that will be renamed
 
@@ -211,7 +211,7 @@ function astrolsp.toggles.autoformat(silent?: boolean)
 
  Toggle auto format
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 ### buffer_autoformat
 
@@ -224,7 +224,7 @@ function astrolsp.toggles.buffer_autoformat(bufnr?: integer, silent?: boolean)
 
 *param* `bufnr` — The buffer to toggle the autoformatting of, default the current buffer
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 ### buffer_codelens
 
@@ -237,7 +237,7 @@ function astrolsp.toggles.buffer_codelens(bufnr?: integer, silent?: boolean)
 
 *param* `bufnr` — the buffer to toggle the clients on
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 ### buffer_inlay_hints
 
@@ -250,7 +250,7 @@ function astrolsp.toggles.buffer_inlay_hints(bufnr?: integer, silent?: boolean)
 
 *param* `bufnr` — the buffer to toggle the clients on
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 ### buffer_semantic_tokens
 
@@ -263,7 +263,7 @@ function astrolsp.toggles.buffer_semantic_tokens(bufnr?: integer, silent?: boole
 
 *param* `bufnr` — the buffer to toggle the clients on
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 ### buffer_signature_help
 
@@ -276,7 +276,7 @@ function astrolsp.toggles.buffer_signature_help(bufnr?: integer, silent?: boolea
 
 *param* `bufnr` — The buffer to toggle the auto signature help of, default the current buffer
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 ### codelens
 
@@ -287,7 +287,7 @@ function astrolsp.toggles.codelens(silent?: boolean)
 
  Toggle global codelens
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 ### inlay_hints
 
@@ -298,7 +298,7 @@ function astrolsp.toggles.inlay_hints(silent?: boolean)
 
  Toggle global LSP inlay hints
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 ### semantic_tokens
 
@@ -309,7 +309,7 @@ function astrolsp.toggles.semantic_tokens(silent?: boolean)
 
  Toggle global semantic token highlighting for all language servers that support it
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 ### signature_help
 
@@ -320,6 +320,6 @@ function astrolsp.toggles.signature_help(silent?: boolean)
 
  Toggle automatic signature help
 
-*param* `silent` — if true then don't sent a notification
+*param* `silent` — if true then don't send a notification
 
 
