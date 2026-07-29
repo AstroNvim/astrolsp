@@ -129,7 +129,7 @@ function M.willCreateFiles(fnames)
       if next(filtered) then
         local edit = getWorkspaceEdit(
           client,
-          "workspace/didCreateFiles",
+          "workspace/willCreateFiles",
           { files = vim.tbl_map(function(fname) return { uri = vim.uri_from_fname(fname) } end, filtered) }
         )
         if edit then vim.lsp.util.apply_workspace_edit(edit, client.offset_encoding) end
