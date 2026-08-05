@@ -1,5 +1,26 @@
 # Changelog
 
+## [4.0.1](https://github.com/AstroNvim/astrolsp/compare/v4.0.0...v4.0.1) (2026-08-05)
+
+
+### Bug Fixes
+
+* **autocmds:** resolve the current matching client ([eba4a22](https://github.com/AstroNvim/astrolsp/commit/eba4a22a4abc3582247aafdde331c239b104d578))
+* **config:** align option contracts and examples ([7d3553d](https://github.com/AstroNvim/astrolsp/commit/7d3553db011c970c7c2739e621fb1d3d71c28450))
+* **file-operations:** preserve explicit path kinds ([bdda483](https://github.com/AstroNvim/astrolsp/commit/bdda483b31ca7009891f9048c754cc769eae34b7))
+* **file-operations:** resolve current configuration ([825165a](https://github.com/AstroNvim/astrolsp/commit/825165a63bfd1f53566e639bf80f4ba47d663dd4))
+* **file-operations:** respect URI schemes ([ef9c5ae](https://github.com/AstroNvim/astrolsp/commit/ef9c5ae98758300f14f89403c54d65b301f050ce))
+* **file-operations:** send will-create request ([2ef148a](https://github.com/AstroNvim/astrolsp/commit/2ef148a3855650406c13e3c5ea79d5e36d0898e2))
+* **lsp:** preserve configured runtime state ([2f8060e](https://github.com/AstroNvim/astrolsp/commit/2f8060ec63243c9a303f756a5358127665994df8))
+* **lsp:** refresh all registered buffers ([8c02a9b](https://github.com/AstroNvim/astrolsp/commit/8c02a9baa8f893062f4b1131f811ce8b8373a931))
+* **lsp:** refresh dynamic signature help triggers ([7548bf1](https://github.com/AstroNvim/astrolsp/commit/7548bf1090d039a5b79808d63c13176e45487f5f))
+* **lsp:** retain multi-buffer client state ([b426aca](https://github.com/AstroNvim/astrolsp/commit/b426acab52ff842ae4acf76c0b9edfc875068403))
+* **toggles:** honor formatting and semantic token policy ([95cec8c](https://github.com/AstroNvim/astrolsp/commit/95cec8c0c2a4578c9eeab5e3b79f09e9ff10b6ea))
+* **toggles:** require signature help triggers ([99e921d](https://github.com/AstroNvim/astrolsp/commit/99e921d0dc8be3bfe3ee660bb512d1d4e2344053))
+* **toggles:** resolve current configuration ([f6c973d](https://github.com/AstroNvim/astrolsp/commit/f6c973d71f6ab5d06d287d61ae863ad8e1e41bb3))
+* **toggles:** scope buffer codelens changes ([21b26d7](https://github.com/AstroNvim/astrolsp/commit/21b26d7fbf31b98e3ff626da0a508d31b623ad7a))
+* **types:** restore autocmd callback annotation ([492e503](https://github.com/AstroNvim/astrolsp/commit/492e503b64a2b2827c15daf136808adf7bc22c2a))
+
 ## [4.0.0](https://github.com/AstroNvim/astrolsp/compare/v3.2.1...v4.0.0) (2026-03-30)
 
 
