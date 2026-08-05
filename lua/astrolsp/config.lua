@@ -11,7 +11,9 @@
 
 ---@class AstroLSPMapping: vim.api.keyset.keymap
 ---@field [1] string|function? rhs of keymap
+---@field mode? string|string[] mode(s) for the mapping
 ---@field name string? optional which-key mapping name
+---@field group? string|fun():string optional which-key mapping group
 ---@field cond AstroLSPCondition? condition for whether or not to set the mapping during language server attachment
 
 ---@alias AstroLSPMappings table<string,table<string,(AstroLSPMapping|string|false)?>?>
@@ -22,7 +24,7 @@
 
 ---@class AstroLSPAutocmd: vim.api.keyset.create_autocmd
 ---@field event string|string[] Event(s) that will trigger the handler
----@field callback? string|(fun(args:vim.api.keyset.create_autocmd.callback_args,client:vim.lsp.Client,bufnr:integer): boolean?)
+---@field callback? fun(args:vim.api.keyset.create_autocmd.callback_args,client:vim.lsp.Client,bufnr:integer): boolean?
 
 ---@class AstroLSPAutocmds
 ---@field cond AstroLSPCondition? condition for whether or not to create the auto commands during language server attachment
@@ -33,7 +35,7 @@
 ---@field inlay_hints boolean? enable/disable inlay hints on start (boolean; default = false)
 ---@field inline_completion boolean? enable/disable inline completion (boolean; default = false)
 ---@field linked_editing_range boolean? enable/disable linked editing range (boolean; default = false)
----@field semantic_tokens boolean? enable/disable semantic token highlighting (boolean; default = true)
+---@field semantic_tokens boolean? enable/disable global semantic token highlighting at startup (boolean; default = true)
 ---@field signature_help boolean? enable/disable automatic signature help (boolean; default = false)
 
 ---@class AstroLSPFormatOnSaveOpts
@@ -68,14 +70,14 @@
 ---The key into the table is the group name for the auto commands (`:h augroup`) and the value
 ---is a list of autocmd tables where `event` key is the event(s) that trigger the auto command
 ---and the rest are auto command options (`:h nvim_create_autocmd`). A `cond` key can also be
----added to the list to control when an `augroup` should be added as well as deleted if it's never matching
+---added to control when an `augroup` is added and whether its callbacks run for the currently attached clients
 ---Example:
 ---
 ---```lua
 ---autocmds = {
 ---  -- first key is the `augroup` (:h augroup)
 ---  lsp_document_highlight = {
----    -- condition to create/delete auto command group
+---    -- condition to create the auto command group and run its callbacks
 ---    cond = "textDocument/documentHighlight",
 ---    -- list of auto commands to set
 ---    {
@@ -135,7 +137,8 @@
 ---        foldingRange = { dynamicRegistration = false }
 ---      }
 ---    },
----    flags = { exit_timeout = 5000 },
+---    exit_timeout = 5000, -- Neovim v0.12+
+---    flags = { exit_timeout = 5000 }, -- Neovim v0.11
 ---  },
 ---}
 ---```
@@ -200,7 +203,7 @@
 ---  },
 ---  -- default format timeout
 ---  timeout_ms = 1000,
----  -- fully override the default formatting function
+---  -- filter the language server clients used for formatting
 ---  filter = function(client)
 ---    return true
 ---  end
@@ -227,7 +230,7 @@
 ---Example:
 --
 ---```lua
----handlers = {
+---lsp_handlers = {
 ---  ["textDocument/publishDiagnostics"] = my_custom_diagnostics_handler,
 ---}
 ---```

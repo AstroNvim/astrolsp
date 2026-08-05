@@ -54,17 +54,17 @@ local opts = {
     inlay_hints = false, -- enable/disable inlay hints on start
     inline_completion = false, -- enable/disable inline completion capabilities (Neovim v0.12+ ONLY)
     linked_editing_range = false, -- enable/disable linked editing range capabilities (Neovim v0.12+ ONLY)
-    semantic_tokens = true, -- enable/disable semantic token highlighting
+    semantic_tokens = true, -- enable/disable global semantic token highlighting at startup
     signature_help = false, -- enable/disable automatic signature help
   },
   -- Configure buffer local auto commands to add when attaching a language server
   autocmds = {
     -- first key is the `augroup` (:h augroup)
     lsp_document_highlight = {
-      -- condition to create/delete auto command group
+      -- condition to create the auto command group and run its callbacks
       -- can either be a string of a client capability or a function of `fun(client, bufnr): boolean`
-      -- condition will be resolved for each client on each execution and if it ever fails for all clients,
-      -- the auto commands will be deleted for that buffer
+      -- condition will be resolved for each currently attached client on every execution; callbacks are skipped
+      -- while no client matches
       cond = "textDocument/documentHighlight",
       -- list of auto commands to set
       {
@@ -102,9 +102,10 @@ local opts = {
           foldingRange = { dynamicRegistration = false },
         },
       },
-      -- Custom flags table to be passed to all language servers
+      -- Configure the LSP client exit timeout for Neovim v0.11 and v0.12
+      exit_timeout = 5000, -- Neovim v0.12+
       flags = {
-        exit_timeout = 5000,
+        exit_timeout = 5000, -- Neovim v0.11
       },
     },
   },
@@ -147,7 +148,7 @@ local opts = {
     },
     -- default format timeout
     timeout_ms = 1000,
-    -- fully override the default formatting function
+    -- filter the language server clients used for formatting
     filter = function(client) return true end,
   },
   -- Configure how language servers get set up
