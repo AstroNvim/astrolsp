@@ -27,11 +27,13 @@ end
 ---@param silent? boolean if true then don't send a notification
 function M.buffer_autoformat(bufnr, silent)
   bufnr = bufnr or 0
+  local astrolsp = require "astrolsp"
   local old_val = vim.b[bufnr].autoformat
-  if old_val == nil then
+  if not astrolsp.autoformat_available(bufnr) then
     ui_notify(silent, "No LSP attached with auto formatting")
     return
   end
+  if old_val == nil then old_val = astrolsp.autoformat_enabled(bufnr) end
   vim.b[bufnr].autoformat = not old_val
   ui_notify(silent, ("Buffer autoformatting %s"):format(bool2str(vim.b[bufnr].autoformat)))
 end
@@ -61,6 +63,10 @@ end
 ---@param silent? boolean if true then don't send a notification
 function M.buffer_semantic_tokens(bufnr, silent)
   bufnr = bufnr or 0
+  if get_config().features.semantic_tokens == false then
+    ui_notify(silent, "Semantic token highlighting is disabled globally", vim.log.levels.WARN)
+    return
+  end
   if vim.lsp.semantic_tokens.enable then
     vim.lsp.semantic_tokens.enable(not vim.lsp.semantic_tokens.is_enabled { bufnr = bufnr }, { bufnr = bufnr })
     vim.lsp.semantic_tokens.force_refresh(bufnr)
@@ -90,6 +96,7 @@ function M.semantic_tokens(silent)
     return
   end
   vim.lsp.semantic_tokens.enable(not vim.lsp.semantic_tokens.is_enabled())
+  get_config().features.semantic_tokens = vim.lsp.semantic_tokens.is_enabled()
   vim.lsp.semantic_tokens.force_refresh()
   ui_notify(silent, ("Global lsp semantic highlighting %s"):format(bool2str(vim.lsp.semantic_tokens.is_enabled())))
 end
