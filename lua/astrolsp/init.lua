@@ -19,7 +19,9 @@ M.lsp_progress = {}
 --- A table of LSP clients that have been attached with AstroLSP
 M.attached_clients = {}
 
-local function lsp_event(name) vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false }) end
+local function lsp_event(name, data)
+  vim.api.nvim_exec_autocmds("User", { pattern = "AstroLsp" .. name, modeline = false, data = data })
+end
 
 ---@param cond? AstroLSPCondition
 ---@param client vim.lsp.Client
@@ -32,16 +34,65 @@ local function check_cond(cond, client, bufnr)
   return true
 end
 
+--- Check whether autoformatting is enabled for a buffer
+---@param bufnr? integer The buffer to check, default the current buffer
+---@return boolean enabled Whether autoformatting is enabled
+function M.autoformat_enabled(bufnr)
+  bufnr = bufnr or 0
+  local buffer_autoformat = vim.b[bufnr].autoformat
+  if buffer_autoformat ~= nil then return buffer_autoformat end
+
+  local autoformat = assert(M.config.formatting.format_on_save)
+  if type(autoformat) == "boolean" then return autoformat end
+  local filetype = vim.bo[bufnr].filetype
+  return autoformat.enabled == true
+    and (type(autoformat.filter) ~= "function" or autoformat.filter(bufnr))
+    and (tbl_isempty(autoformat.allow_filetypes or {}) or tbl_contains(autoformat.allow_filetypes, filetype))
+    and (tbl_isempty(autoformat.ignore_filetypes or {}) or not tbl_contains(autoformat.ignore_filetypes, filetype))
+end
+
+--- Check whether a buffer has an LSP client available for autoformatting
+---@param bufnr? integer The buffer to check, default the current buffer
+---@return boolean available Whether autoformatting can be toggled for the buffer
+function M.autoformat_available(bufnr)
+  bufnr = bufnr or 0
+  local formatting_disabled = M.config.formatting.disabled or {}
+  if formatting_disabled == true then return false end
+  for _, client in pairs(vim.lsp.get_clients { bufnr = bufnr }) do
+    if
+      client:supports_method("textDocument/formatting", bufnr) and not tbl_contains(formatting_disabled, client.name)
+    then
+      return true
+    end
+  end
+  return false
+end
+
 --- Add a new LSP progress message to the message queue
 ---@param data {client_id: integer, params: lsp.ProgressParams}
 function M.progress(data)
-  local id = ("%s.%s"):format(data.client_id, data.params.token)
-  M.lsp_progress[id] = M.lsp_progress[id] and vim.tbl_deep_extend("force", M.lsp_progress[id], data.params.value)
-    or data.params.value
-  if not M.lsp_progress[id] or M.lsp_progress[id].kind == "end" then
+  local id = ("%s.%s.%s"):format(data.client_id, type(data.params.token), data.params.token)
+  local value = data.params.value
+  if type(value) == "table" then
+    for key, val in pairs(value) do
+      if val == vim.NIL then value[key] = nil end
+    end
+  end
+  local progress
+  if not value or value.kind == "begin" then
+    progress = value
+  elseif M.lsp_progress[id] then
+    progress = vim.tbl_deep_extend("force", M.lsp_progress[id], value)
+  else
+    progress = value
+  end
+  M.lsp_progress[id] = progress
+  if not progress or progress.kind == "end" then
     vim.defer_fn(function()
-      M.lsp_progress[id] = nil
-      lsp_event "Progress"
+      if M.lsp_progress[id] == progress then
+        M.lsp_progress[id] = nil
+        lsp_event "Progress"
+      end
     end, 100)
   end
   lsp_event "Progress"
@@ -72,10 +123,7 @@ function M.add_on_attach(on_attach, opts)
   )
 end
 
---- The `on_attach` function used by AstroNvim
----@param client vim.lsp.Client The LSP client details when attaching
----@param bufnr integer The buffer that the LSP client is attaching to
-function M.on_attach(client, bufnr)
+local function configure_buffer(client, bufnr)
   -- TODO: remove check when dropping support for Neovim v0.11
   if
     client:supports_method("textDocument/codeLens", bufnr)
@@ -85,26 +133,20 @@ function M.on_attach(client, bufnr)
     vim.lsp.codelens.refresh { bufnr = bufnr }
   end
 
-  local formatting_disabled = vim.tbl_get(M.config, "formatting", "disabled")
-  if
-    client:supports_method("textDocument/formatting", bufnr)
-    and (formatting_disabled ~= true and not tbl_contains(formatting_disabled, client.name))
-  then
-    local autoformat = assert(M.config.formatting.format_on_save)
-    local filetype = vim.bo[bufnr].filetype
-    if vim.b[bufnr].autoformat == nil then
-      vim.b[bufnr].autoformat = autoformat.enabled
-        and (tbl_isempty(autoformat.allow_filetypes or {}) or tbl_contains(autoformat.allow_filetypes, filetype))
-        and (tbl_isempty(autoformat.ignore_filetypes or {}) or not tbl_contains(autoformat.ignore_filetypes, filetype))
-    end
-  end
-
   -- TODO: remove when dropping support for Neovim v0.11
   if client:supports_method("textDocument/semanticTokens/full", bufnr) and not vim.lsp.semantic_tokens.enable then
-    if M.config.features.semantic_tokens then
-      if vim.b[bufnr].semantic_tokens == nil then vim.b[bufnr].semantic_tokens = true end
-    else
+    if M.config.features.semantic_tokens == false then
       client.server_capabilities.semanticTokensProvider = nil
+    elseif vim.b[bufnr].semantic_tokens == nil then
+      vim.b[bufnr].semantic_tokens = true
+    elseif vim.b[bufnr].semantic_tokens == false then
+      vim.schedule(function()
+        vim.schedule(function()
+          if vim.api.nvim_buf_is_valid(bufnr) and vim.b[bufnr].semantic_tokens == false then
+            pcall(vim.lsp.semantic_tokens.stop, bufnr, client.id)
+          end
+        end)
+      end)
     end
   end
 
@@ -133,6 +175,7 @@ function M.on_attach(client, bufnr)
             autocmd.command, autocmd.event = nil, nil
             autocmd.group, autocmd.buffer = group, bufnr
             local callback_func = command and function(_, _, _) vim.cmd(command) end or callback
+            ---@cast callback_func function
             autocmd.callback = function(args)
               local callback_client
               for _, cb_client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
@@ -168,6 +211,7 @@ function M.on_attach(client, bufnr)
             map_opts = assert(vim.tbl_deep_extend("force", map_opts, { buffer = bufnr }))
             map_opts[1], map_opts.cond = nil, nil
           end
+          ---@cast map_opts AstroLSPMapping
           if rhs then
             vim.keymap.set(mode, lhs, rhs, map_opts --[[@as vim.keymap.set.Opts]])
           elseif wk_avail then
@@ -179,9 +223,14 @@ function M.on_attach(client, bufnr)
       end
     end
   end
+end
 
+--- The `on_attach` function used by AstroNvim
+---@param client vim.lsp.Client The LSP client details when attaching
+---@param bufnr integer The buffer that the LSP client is attaching to
+function M.on_attach(client, bufnr)
+  configure_buffer(client, bufnr)
   if type(M.config.on_attach) == "function" then M.config.on_attach(client, bufnr) end
-
   if not M.attached_clients[client.id] then M.attached_clients[client.id] = client end
 end
 
@@ -222,17 +271,18 @@ function M.setup(opts)
   normalize_mappings(M.config.mappings)
   normalize_mappings(opts.mappings)
   -- TODO: remove when dropping support for Neoivm v0.11
-  local extend_method = "force"
   if vim.fn.has "nvim-0.12" == 1 then
-    extend_method = function(key, prev_value, value)
+    ---@diagnostic disable-next-line: param-type-mismatch
+    M.config = vim.tbl_deep_extend(function(key, prev_value, value)
       if key == "servers" then
         if type(value) == "table" and type(prev_value) == "table" then return unique_list(prev_value, value) end
       end
       return value
-    end
+    end, M.config, opts)
+  else
+    M.config = vim.tbl_deep_extend("force", M.config, opts)
+    M.config.servers = unique_list(M.config.servers)
   end
-  M.config = vim.tbl_deep_extend(extend_method, M.config, opts)
-  if extend_method == "force" then M.config.servers = unique_list(M.config.servers) end
 
   -- enable necessary capabilities for enabled LSP file operations
   local fileOperations = vim.tbl_get(M.config, "file_operations", "operations")
@@ -272,10 +322,9 @@ function M.setup(opts)
     end,
   })
 
-  -- normalize format_on_save to table format
-  if vim.tbl_get(M.config, "formatting", "format_on_save") == false then
-    M.config.formatting.format_on_save = { enabled = false }
-  end
+  -- normalize boolean format_on_save values to table format
+  local format_on_save = vim.tbl_get(M.config, "formatting", "format_on_save")
+  if type(format_on_save) == "boolean" then M.config.formatting.format_on_save = { enabled = format_on_save } end
 
   --- Format options that are passed into the `vim.lsp.buf.format` (`:h vim.lsp.buf.format()`)
   ---@type AstroLSPFormatOpts
@@ -337,7 +386,7 @@ function M.setup(opts)
       if client.id ~= excluded_client_id and client:supports_method("textDocument/signatureHelp", bufnr) then
         add_options(client.server_capabilities.signatureHelpProvider)
         if client._get_registrations then
-          for _, registration in ipairs(client:_get_registrations("textDocument/signatureHelp", bufnr) or {}) do
+          for _, registration in ipairs(client:_get_registrations("signatureHelpProvider", bufnr) or {}) do
             add_options(registration.registerOptions)
           end
         else
@@ -405,8 +454,9 @@ function M.setup(opts)
     local client = vim.lsp.get_client_by_id(ctx.client_id)
     if client then
       for bufnr, _ in pairs(client.attached_buffers) do
-        M.on_attach(client, bufnr)
+        configure_buffer(client, bufnr)
         refresh_signature_help_triggers(bufnr)
+        lsp_event("Capability", { client_id = client.id, bufnr = bufnr })
       end
     end
     return ret
@@ -419,6 +469,7 @@ function M.setup(opts)
     if client then
       for bufnr, _ in pairs(client.attached_buffers) do
         refresh_signature_help_triggers(bufnr)
+        lsp_event("Capability", { client_id = client.id, bufnr = bufnr })
       end
     end
     return ret
