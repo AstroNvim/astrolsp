@@ -1,5 +1,5 @@
 *astrolsp.txt*
-                              For Neovim >= 0.9.0    Last change: 2026 July 29
+                            For Neovim >= 0.9.0    Last change: 2026 August 05
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -85,17 +85,17 @@ options and some example usages:
         inlay_hints = false, -- enable/disable inlay hints on start
         inline_completion = false, -- enable/disable inline completion capabilities (Neovim v0.12+ ONLY)
         linked_editing_range = false, -- enable/disable linked editing range capabilities (Neovim v0.12+ ONLY)
-        semantic_tokens = true, -- enable/disable semantic token highlighting
+        semantic_tokens = true, -- enable/disable global semantic token highlighting at startup
         signature_help = false, -- enable/disable automatic signature help
       },
       -- Configure buffer local auto commands to add when attaching a language server
       autocmds = {
         -- first key is the `augroup` (:h augroup)
         lsp_document_highlight = {
-          -- condition to create/delete auto command group
+          -- condition to create the auto command group and run its callbacks
           -- can either be a string of a client capability or a function of `fun(client, bufnr): boolean`
-          -- condition will be resolved for each client on each execution and if it ever fails for all clients,
-          -- the auto commands will be deleted for that buffer
+          -- condition will be resolved for each currently attached client on every execution; callbacks are skipped
+          -- while no client matches
           cond = "textDocument/documentHighlight",
           -- list of auto commands to set
           {
@@ -133,9 +133,10 @@ options and some example usages:
               foldingRange = { dynamicRegistration = false },
             },
           },
-          -- Custom flags table to be passed to all language servers
+          -- Configure the LSP client exit timeout for Neovim v0.11 and v0.12
+          exit_timeout = 5000, -- Neovim v0.12+
           flags = {
-            exit_timeout = 5000,
+            exit_timeout = 5000, -- Neovim v0.11
           },
         },
       },
@@ -178,7 +179,7 @@ options and some example usages:
         },
         -- default format timeout
         timeout_ms = 1000,
-        -- fully override the default formatting function
+        -- filter the language server clients used for formatting
         filter = function(client) return true end,
       },
       -- Configure how language servers get set up
@@ -525,6 +526,34 @@ ATTACHED_CLIENTS ~
 A table of LSP clients that have been attached with AstroLSP
 
 
+AUTOFORMAT_AVAILABLE ~
+
+>lua
+    function astrolsp.autoformat_available(bufnr?: integer)
+      -> available: boolean
+<
+
+Check whether a buffer has an LSP client available for autoformatting
+
+_param_ `bufnr` — The buffer to check, default the current buffer
+
+_return_ `available` — Whether autoformatting can be toggled for the buffer
+
+
+AUTOFORMAT_ENABLED ~
+
+>lua
+    function astrolsp.autoformat_enabled(bufnr?: integer)
+      -> enabled: boolean
+<
+
+Check whether autoformatting is enabled for a buffer
+
+_param_ `bufnr` — The buffer to check, default the current buffer
+
+_return_ `enabled` — Whether autoformatting is enabled
+
+
 CONFIG ~
 
 >lua
@@ -616,7 +645,7 @@ copyright 2025 license GNU General Public License v3.0
 DIDCREATEFILES ~
 
 >lua
-    function astrolsp.file_operations.didCreateFiles(fnames: string|string[])
+    function astrolsp.file_operations.didCreateFiles(fnames: string|(string|AstroLSPFileOperationPath)[]|AstroLSPFileOperationPath)
 <
 
 Notify LSP clients that file(s) were created
@@ -627,7 +656,7 @@ _param_ `fnames` — a file or list of files that were created
 DIDDELETEFILES ~
 
 >lua
-    function astrolsp.file_operations.didDeleteFiles(fnames: string|string[])
+    function astrolsp.file_operations.didDeleteFiles(fnames: string|(string|AstroLSPFileOperationPath)[]|AstroLSPFileOperationPath)
 <
 
 Notify LSP clients that file(s) were deleted
@@ -649,7 +678,7 @@ _param_ `renames` — a table or list of tables of files that were renamed
 WILLCREATEFILES ~
 
 >lua
-    function astrolsp.file_operations.willCreateFiles(fnames: string|string[])
+    function astrolsp.file_operations.willCreateFiles(fnames: string|(string|AstroLSPFileOperationPath)[]|AstroLSPFileOperationPath)
 <
 
 Request workspace edits from LSP clients before file(s) are created
@@ -660,7 +689,7 @@ _param_ `fnames` — a file or list of files that will be created
 WILLDELETEFILES ~
 
 >lua
-    function astrolsp.file_operations.willDeleteFiles(fnames: string|string[])
+    function astrolsp.file_operations.willDeleteFiles(fnames: string|(string|AstroLSPFileOperationPath)[]|AstroLSPFileOperationPath)
 <
 
 Request workspace edits from LSP clients before file(s) are deleted

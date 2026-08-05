@@ -38,6 +38,34 @@ table
 
  A table of LSP clients that have been attached with AstroLSP
 
+### autoformat_available
+
+
+```lua
+function astrolsp.autoformat_available(bufnr?: integer)
+  -> available: boolean
+```
+
+ Check whether a buffer has an LSP client available for autoformatting
+
+*param* `bufnr` — The buffer to check, default the current buffer
+
+*return* `available` — Whether autoformatting can be toggled for the buffer
+
+### autoformat_enabled
+
+
+```lua
+function astrolsp.autoformat_enabled(bufnr?: integer)
+  -> enabled: boolean
+```
+
+ Check whether autoformatting is enabled for a buffer
+
+*param* `bufnr` — The buffer to check, default the current buffer
+
+*return* `enabled` — Whether autoformatting is enabled
+
 ### config
 
 
@@ -128,7 +156,7 @@ license GNU General Public License v3.0
 
 
 ```lua
-function astrolsp.file_operations.didCreateFiles(fnames: string|string[])
+function astrolsp.file_operations.didCreateFiles(fnames: string|(string|AstroLSPFileOperationPath)[]|AstroLSPFileOperationPath)
 ```
 
  Notify LSP clients that file(s) were created
@@ -139,7 +167,7 @@ function astrolsp.file_operations.didCreateFiles(fnames: string|string[])
 
 
 ```lua
-function astrolsp.file_operations.didDeleteFiles(fnames: string|string[])
+function astrolsp.file_operations.didDeleteFiles(fnames: string|(string|AstroLSPFileOperationPath)[]|AstroLSPFileOperationPath)
 ```
 
  Notify LSP clients that file(s) were deleted
@@ -161,7 +189,7 @@ function astrolsp.file_operations.didRenameFiles(renames: AstroLSPFileOperations
 
 
 ```lua
-function astrolsp.file_operations.willCreateFiles(fnames: string|string[])
+function astrolsp.file_operations.willCreateFiles(fnames: string|(string|AstroLSPFileOperationPath)[]|AstroLSPFileOperationPath)
 ```
 
  Request workspace edits from LSP clients before file(s) are created
@@ -172,7 +200,7 @@ function astrolsp.file_operations.willCreateFiles(fnames: string|string[])
 
 
 ```lua
-function astrolsp.file_operations.willDeleteFiles(fnames: string|string[])
+function astrolsp.file_operations.willDeleteFiles(fnames: string|(string|AstroLSPFileOperationPath)[]|AstroLSPFileOperationPath)
 ```
 
  Request workspace edits from LSP clients before file(s) are deleted
