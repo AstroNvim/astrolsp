@@ -65,8 +65,10 @@ local match_filters = function(filters, file)
         if vim.tbl_get(pattern, "options", "ignoreCase") then regex = "\\c" .. regex end
         local previous_ignorecase = vim.o.ignorecase
         vim.o.ignorecase = false
-        matched = vim.fn.match(fname, regex) ~= -1
+        local ok, result = pcall(vim.fn.match, fname, regex)
         vim.o.ignorecase = previous_ignorecase
+        if not ok then error(result, 0) end
+        matched = result ~= -1
       end
       filter_cache[filter][cache_key] = matched
     end

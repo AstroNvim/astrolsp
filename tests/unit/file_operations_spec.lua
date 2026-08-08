@@ -644,6 +644,30 @@ T["FO-ERROR-001 [notification-callback] propagates exact notification callback e
   end)
 end
 
+T["FO-FILTER-002 [regression] restores ignorecase when matching errors"] = function()
+  local matcher_error = {}
+  local matcher_ran = false
+  local client = {
+    server_capabilities = {
+      workspace = { fileOperations = { didCreate = capability(operation_filter("**", nil, { ignoreCase = true })) } },
+    },
+    notify = function() error "Notification must not be sent after a matching error" end,
+  }
+  with_matcher({ operations = { didCreate = true } }, { client }, function()
+    matcher_ran = true
+    assert.equals(false, vim.o.ignorecase)
+    error(matcher_error)
+  end, function(file_operations)
+    with_ignorecase(true, function()
+      local ok, err = pcall(file_operations.didCreateFiles, "/tmp/error.lua")
+      assert(not ok, "The matcher error must propagate")
+      assert.is_true(matcher_ran)
+      assert.is_true(rawequal(matcher_error, err))
+      assert.equals(true, vim.o.ignorecase)
+    end)
+  end)
+end
+
 T["FO-MALFORMED-001 [characterization] rejects non-path list entries"] = function()
   local client = {
     server_capabilities = { workspace = { fileOperations = { didCreate = capability(operation_filter("**", nil)) } } },
