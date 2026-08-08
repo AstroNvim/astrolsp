@@ -1,0 +1,17 @@
+# Test Suite
+
+Prerequisites: GNU Make, Git, and Neovim 0.11.0 or newer. The stable test baseline is Neovim 0.12.4. Once `.tests/` is prepared, all test execution and reuse checks are offline. Network access is required only to create a missing environment through fresh preparation, explicitly update dependencies with `make test-update-deps`, or rebuild a CI cache.
+
+```sh
+make test
+```
+
+Every test target depends on `test-prepare`. A prepared tree is validated and reused offline. If `.tests/` is missing, that prerequisite performs fresh preparation: it creates an ignored `.tests/` tree in `.tests.bootstrap`, resolves Lazy.nvim plus only `mini.nvim`, `luassert`, and `say`, then validates the staged tree before atomically publishing it. The local AstroLSP checkout is the mutable system under test. It is never a managed Lazy dependency.
+
+Reuse is offline. A marked environment sets `LAZY_OFFLINE=1` and validates the schema, specification hash, exact managed structure, lifecycle file hashes, sizes, and mtimes, full repository commits, tracked cleanliness, empty evidence-based untracked allowlists, generated lock entries, and copied-library checksums. A partial, unsafe, modified, or incompatible tree never repairs itself during ordinary local preparation. Run `make test-clear` and retry a fresh preparation. `test-clear` accepts only the canonical repository `.tests/` path and rejects symbolic links and escapes. CI uses `make test-prepare-ci`, which enables recovery only inside that process and clears only recognized stale staging, partial cache, or incompatible cache states before rebuilding; unrelated preparation failures still propagate.
+
+Targets: `make test` runs all parent unit specs and all child-Neovim semantic specs. `make test-unit` runs every `tests/unit/*.lua` parent-process spec, including contracts. `make test-semantic` runs every `tests/semantic/*.lua` child-Neovim spec; this repository currently contains attach and lifecycle coverage. `make test-semantic-attach` runs the complete attach semantic file and `make test-semantic-lifecycle` runs the complete lifecycle semantic file. `make test-unit-environment`, `make test-unit-config`, `make test-unit-init`, `make test-unit-file-operations`, `make test-unit-toggles`, and `make test-unit-health` select focused parent layers. `make test-contracts` runs the repository contract checks. `make test-update-deps` clears the environment before a fresh resolution.
+
+Use `[candidate]` for a test that proposes desired behavior and is expected to fail until the implementation lands. Use `[characterization]` for a test that records existing supported behavior before a change. Remove either label when the test becomes a normal maintained contract. Labels describe test intent only; they do not change target selection or assertion strictness.
+
+`tests/helpers.lua` gives each child Neovim instance a temporary isolated XDG configuration, data, state, cache, and runtime tree. `tests/fixtures/init.lua` is the minimal child fixture. `tests/unit_helpers.lua` scopes module, package, Vim, notification, and deferred-callback replacement. Tests use stable IDs and assert supported observable behavior, not Lazy, Neovim, or language-server internals. The suite has a zero-golden policy: do not add visual snapshots or golden files unless a stable owned contract cannot be expressed semantically.
