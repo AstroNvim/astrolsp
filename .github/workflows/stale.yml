@@ -5,5 +5,7 @@ on:
 
 jobs:
   stale:
-    uses: AstroNvim/.github/.github/workflows/stale.yml@main
-    secrets: inherit
+    uses: AstroNvim/.github/.github/workflows/stale.yml@97cdc3810853afdcccf8e40f7262bd5ec397c8fa # v1
+    permissions:
+      issues: write
+      pull-requests: write
