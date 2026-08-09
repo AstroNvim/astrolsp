@@ -370,6 +370,147 @@ T["INIT-SIGNATURE-003 fully recomputes triggers for capability changes and detac
   assert.same({}, state.detached)
 end
 
+T["INIT-SIGNATURE-004 uses Neovim registrations for matching signature triggers"] = function()
+  child = helpers.start_child()
+  local state = child.lua_get [[(function()
+    local astrolsp = require "astrolsp"
+    local buffer = vim.api.nvim_get_current_buf()
+    local registration_calls = {}
+    local client = {
+      id = 507,
+      name = "signature-registrations",
+      attached_buffers = { [buffer] = true },
+      server_capabilities = { signatureHelpProvider = { triggerCharacters = { "(" }, retriggerCharacters = { "," } } },
+      _get_registrations = function(_, capability, bufnr)
+        table.insert(registration_calls, { capability, bufnr })
+        return {
+          { registerOptions = { triggerCharacters = { "[" }, retriggerCharacters = { ";" } } },
+          { registerOptions = { triggerCharacters = { "{" }, retriggerCharacters = { "}" } } },
+        }
+      end,
+      supports_method = function(_, method) return method == "textDocument/signatureHelp" end,
+    }
+    astrolsp.setup {}
+    vim.lsp.get_client_by_id = function(id) return id == client.id and client or nil end
+    vim.lsp.get_clients = function(options)
+      if options and options.bufnr and options.bufnr ~= buffer then return {} end
+      return { client }
+    end
+    vim.api.nvim_exec_autocmds("LspAttach", { buffer = buffer, data = { client_id = client.id } })
+    return {
+      calls = registration_calls,
+      triggers = vim.b[buffer].signature_help_triggerCharacters,
+      retriggers = vim.b[buffer].signature_help_retriggerCharacters,
+      buffer = buffer,
+    }
+  end)()]]
+  assert.same({ { "signatureHelpProvider", state.buffer } }, state.calls)
+  assert.same({ ["("] = true, ["["] = true, ["{"] = true }, state.triggers)
+  assert.same({ [","] = true, [";"] = true, ["}"] = true }, state.retriggers)
+end
+
+T["INIT-LSP-001 attaches and detaches AstroLSP from a stdio Neovim server"] = function()
+  child = helpers.start_child()
+  local state = child.lua_get [[(function()
+    local astrolsp = require "astrolsp"
+    local buffer = vim.api.nvim_get_current_buf()
+    local fixture = vim.fs.normalize(vim.fn.fnamemodify(vim.env.ASTROLSP_TEST_ROOT .. "/tests/fixtures/lsp_server.lua", ":p"))
+    local attach_events, detach_events = {}, {}
+    local client_id, client
+    local group = vim.api.nvim_create_augroup("astrolsp_lsp_integration", { clear = true })
+    vim.api.nvim_create_autocmd("LspAttach", {
+      group = group,
+      callback = function(args)
+        if args.data.client_id == client_id then table.insert(attach_events, { args.data.client_id, args.buf }) end
+      end,
+    })
+    vim.api.nvim_create_autocmd("LspDetach", {
+      group = group,
+      callback = function(args)
+        if args.data.client_id == client_id then table.insert(detach_events, { args.data.client_id, args.buf }) end
+      end,
+    })
+
+    local function wait_for(description, predicate)
+      assert(vim.wait(10000, predicate, 20), "Timed out waiting for " .. description)
+    end
+
+    local function find_client()
+      if not client_id then return end
+      local found, result = pcall(vim.lsp.get_client_by_id, client_id)
+      if found and result then return result end
+      found, result = pcall(vim.lsp.get_clients)
+      if found then
+        for _, candidate in ipairs(result) do
+          if candidate.id == client_id then return candidate end
+        end
+      end
+    end
+
+    local collected_ok, collected = xpcall(function()
+      astrolsp.setup {
+        commands = {
+          AstroLspIntegrationFormat = {
+            function() vim.b[buffer].astrolsp_lsp_integration_command = true end,
+            cond = "textDocument/formatting",
+          },
+        },
+      }
+      client_id = assert(vim.lsp.start {
+        name = "astrolsp-integration-server",
+        cmd = { vim.v.progpath, "-l", fixture },
+        root_dir = vim.fn.getcwd(),
+      })
+      client = assert(vim.lsp.get_client_by_id(client_id))
+      wait_for("LspAttach", function() return #attach_events == 1 end)
+      vim.cmd "AstroLspIntegrationFormat"
+      return {
+        attached = attach_events,
+        command_ran = vim.b[buffer].astrolsp_lsp_integration_command == true,
+        fixture_is_absolute = vim.fn.fnamemodify(fixture, ":p") == fixture,
+        tracked = astrolsp.attached_clients[client_id] == client,
+      }
+    end, debug.traceback)
+
+    local cleanup_ok, cleanup = xpcall(function()
+      local cleanup_client = find_client() or client
+      local stopped = false
+      if cleanup_client then
+        pcall(cleanup_client.stop, cleanup_client)
+        stopped = vim.wait(10000, function() return cleanup_client:is_stopped() end, 20)
+        if not stopped then
+          cleanup_client:stop(true)
+          wait_for("forced client shutdown", function() return cleanup_client:is_stopped() end)
+          stopped = true
+        end
+        if collected_ok then wait_for("LspDetach", function() return #detach_events == 1 end) end
+      end
+      return {
+        detached = detach_events,
+        stopped = stopped,
+        tracked = client_id and astrolsp.attached_clients[client_id] or nil,
+      }
+    end, debug.traceback)
+    vim.api.nvim_del_augroup_by_id(group)
+
+    if not collected_ok then error(collected, 0) end
+    if not cleanup_ok then error(cleanup, 0) end
+    collected.detached = cleanup.detached
+    collected.stopped = cleanup.stopped
+    collected.tracked_after_detach = cleanup.tracked
+    collected.client_id = client_id
+    collected.buffer = buffer
+    return collected
+  end)()]]
+  assert.is_true(state.fixture_is_absolute)
+  assert.is_true(state.command_ran)
+  assert.is_true(state.tracked)
+  assert.is_true(state.stopped)
+  assert.same({ { state.client_id, state.buffer } }, state.attached)
+  assert.same({ { state.client_id, state.buffer } }, state.detached)
+  assert.is_nil(state.tracked_after_detach)
+end
+
 T["INIT-DYNAMIC-001 propagates a prior capability handler error"] = function()
   child = helpers.start_child()
   local state = child.lua_get [[(function()

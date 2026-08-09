@@ -445,6 +445,63 @@ T["ENV-CLEAR-001 clears only the canonical tree and rejects symbolic links"] = f
   assert.equals("directory", removal_and_release_failure.lstat(paths.lock_root).type)
 end
 
+T["ENV-CLEAR-002 rejects a child swapped for a symbolic link before recursive removal"] = function()
+  local paths = environment.paths "/repo"
+  local child = paths.test_root .. "/managed"
+  local target = "/outside"
+  local target_file = target .. "/file"
+  local entries = {
+    ["/repo"] = { type = "directory" },
+    [paths.test_root] = { type = "directory" },
+    [child] = { type = "directory" },
+    [target] = { type = "directory" },
+    [target_file] = { type = "file" },
+  }
+  local fs = filesystem(entries)
+  local root_scans = 0
+  local target_scans, target_unlinks = {}, {}
+  local lstat = fs.lstat
+  local scandir = fs.scandir
+  local unlink = fs.unlink
+
+  fs.lstat = function(path)
+    if path == child and root_scans == 2 and entries[child].type == "directory" then
+      local entry = lstat(path)
+      entries[path] = { type = "link" }
+      return entry
+    end
+    if entries[child].type == "link" and path:sub(1, #child + 1) == child .. "/" then
+      return lstat(target .. path:sub(#child + 1))
+    end
+    return lstat(path)
+  end
+  fs.scandir = function(path)
+    if path == paths.test_root then root_scans = root_scans + 1 end
+    if path == child and entries[child].type == "link" then
+      table.insert(target_scans, target)
+      return scandir(target)
+    end
+    return scandir(path)
+  end
+  fs.unlink = function(path)
+    if entries[child].type == "link" and path:sub(1, #child + 1) == child .. "/" then
+      local resolved = target .. path:sub(#child + 1)
+      table.insert(target_unlinks, resolved)
+      return unlink(resolved)
+    end
+    return unlink(path)
+  end
+
+  local removed, remove_error = environment.remove_tree(fs, paths.test_root)
+  assert.is_false(removed)
+  assert.matches("refusing to remove a symbolic%-link path: " .. child, remove_error)
+  assert.same({}, target_scans)
+  assert.same({}, target_unlinks)
+  assert.equals("directory", entries[paths.test_root].type)
+  assert.equals("link", entries[child].type)
+  assert.equals("file", entries[target_file].type)
+end
+
 local function write_file(path, contents)
   local file = assert(io.open(path, "wb"))
   assert(file:write(contents))

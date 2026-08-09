@@ -206,15 +206,21 @@ function M.with_lifecycle_lock(filesystem, lock_path, callback, options)
 end
 
 function M.remove_tree(filesystem, path)
-  local function inspect(current)
+  local function scan_directory(current)
     local entry = filesystem.lstat(current)
-    if not entry then return true, false end
-    if entry_type(entry) == "link" then return false, "refusing to remove a symbolic-link path: " .. current end
+    if entry_type(entry) == "link" then return nil, "refusing to remove a symbolic-link path: " .. current end
     if entry_type(entry) ~= "directory" then
-      return false, "refusing to recursively remove a non-directory path: " .. current
+      return nil, "refusing to recursively remove a non-directory path: " .. current
     end
     local children, scan_error = filesystem.scandir(current)
-    if not children then return false, "failed to scan " .. current .. ": " .. tostring(scan_error) end
+    if not children then return nil, "failed to scan " .. current .. ": " .. tostring(scan_error) end
+    return children
+  end
+
+  local function inspect(current)
+    if not filesystem.lstat(current) then return true, false end
+    local children, scan_error = scan_directory(current)
+    if not children then return false, scan_error end
     for _, name in ipairs(children) do
       local child = current .. "/" .. name
       local child_entry = filesystem.lstat(child)
@@ -234,8 +240,8 @@ function M.remove_tree(filesystem, path)
   if not exists_or_error then return true end
 
   local function remove(current)
-    local children, scan_error = filesystem.scandir(current)
-    if not children then return false, "failed to scan " .. current .. ": " .. tostring(scan_error) end
+    local children, scan_error = scan_directory(current)
+    if not children then return false, scan_error end
     for _, name in ipairs(children) do
       local child = current .. "/" .. name
       local entry = filesystem.lstat(child)
