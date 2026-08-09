@@ -290,17 +290,59 @@ T["INIT-BUFFER-001 preserves command specs through creation and exact callback e
   })
 end
 
-T["INIT-BUFFER-004 [characterization] leaves command specs mutated after command API errors"] = function()
+T["INIT-BUFFER-004 preserves command specs after command API errors"] = function()
   local client = { id = 23, name = "client", supports_method = function() return false end }
+  local command_calls = 0
   fresh_astrolsp(function(astrolsp)
-    local command = { function() end, cond = true }
+    local action = function() end
+    local command = { action, cond = true, desc = "Broken command" }
     astrolsp.config.commands = { Broken = command }
+    astrolsp.on_attach(client, 3)
+    assert.same({ action, cond = true, desc = "Broken command" }, command)
     local ok, message = pcall(astrolsp.on_attach, client, 3)
     assert.is_false(ok)
     assert.matches("command API failure", message)
-    assert.is_nil(command[1])
-    assert.is_nil(command.cond)
-  end, { vim = { api = { nvim_buf_create_user_command = function() error "command API failure" end } } })
+    assert.same({ action, cond = true, desc = "Broken command" }, command)
+  end, {
+    vim = {
+      api = {
+        nvim_buf_create_user_command = function()
+          command_calls = command_calls + 1
+          if command_calls == 2 then error "command API failure" end
+        end,
+      },
+    },
+  })
+end
+
+T["INIT-BUFFER-005 preserves autocmd specs after autocmd API errors"] = function()
+  local client = { id = 23, name = "client", supports_method = function() return false end }
+  local autocmd_calls = 0
+  fresh_astrolsp(function(astrolsp)
+    local callback = function() end
+    local autocmd = { event = "BufEnter", pattern = "*.lua", callback = callback, desc = "Broken autocmd" }
+    local autocmds = { autocmd, cond = true }
+    astrolsp.config.autocmds = { Broken = autocmds }
+    astrolsp.on_attach(client, 3)
+    assert.same({ autocmd, cond = true }, autocmds)
+    assert.same({ event = "BufEnter", pattern = "*.lua", callback = callback, desc = "Broken autocmd" }, autocmd)
+    local ok, message = pcall(astrolsp.on_attach, client, 3)
+    assert.is_false(ok)
+    assert.matches("autocmd API failure", message)
+    assert.same({ autocmd, cond = true }, autocmds)
+    assert.same({ event = "BufEnter", pattern = "*.lua", callback = callback, desc = "Broken autocmd" }, autocmd)
+  end, {
+    vim = {
+      api = {
+        nvim_get_autocmds = function() return {} end,
+        nvim_create_augroup = function() return 1 end,
+        nvim_create_autocmd = function()
+          autocmd_calls = autocmd_calls + 1
+          if autocmd_calls == 2 then error "autocmd API failure" end
+        end,
+      },
+    },
+  })
 end
 
 T["INIT-BUFFER-003 records mappings and which-key groups without changing config"] = function()

@@ -383,12 +383,12 @@ T["INIT-DYNAMIC-001 propagates a prior capability handler error"] = function()
   assert.matches("prior capability failure", state.message)
 end
 
-T["INIT-SETUP-001 [characterization] stacks capability handlers across setup and module reload"] = function()
+T["INIT-SETUP-001 installs idempotent LSP wrappers across setup and module reload"] = function()
   child = helpers.start_child()
   local state = child.lua_get [[(function()
     local astrolsp = require "astrolsp"
     local buffer = vim.api.nvim_get_current_buf()
-    local prior_calls = 0
+    local prior_calls = { progress = 0, register = 0, unregister = 0, hover = 0, hover_options = {} }
     local events = 0
     local client = {
       id = 503,
@@ -396,22 +396,80 @@ T["INIT-SETUP-001 [characterization] stacks capability handlers across setup and
       attached_buffers = { [buffer] = true },
       supports_method = function() return false end,
     }
-    vim.lsp.handlers["client/registerCapability"] = function() prior_calls = prior_calls + 1 end
+    local returns = { progress = {}, register = {}, unregister = {}, hover = {} }
+    local original_create_autocmd = vim.api.nvim_create_autocmd
+    vim.api.nvim_create_autocmd = function(event, options)
+      if event == "LspProgress" then error "LspProgress unavailable" end
+      return original_create_autocmd(event, options)
+    end
+    vim.lsp.handlers["$/progress"] = function()
+      prior_calls.progress = prior_calls.progress + 1
+      return returns.progress
+    end
+    vim.lsp.handlers["client/registerCapability"] = function()
+      prior_calls.register = prior_calls.register + 1
+      return returns.register
+    end
+    vim.lsp.handlers["client/unregisterCapability"] = function()
+      prior_calls.unregister = prior_calls.unregister + 1
+      return returns.unregister
+    end
+    vim.lsp.buf.hover = function(options)
+      prior_calls.hover = prior_calls.hover + 1
+      table.insert(prior_calls.hover_options, options)
+      return returns.hover
+    end
     vim.api.nvim_create_autocmd("User", {
       pattern = "AstroLspCapability",
       callback = function() events = events + 1 end,
     })
-    astrolsp.setup {}
-    astrolsp.setup {}
+    astrolsp.setup { defaults = { hover = { border = "first" } } }
+    astrolsp.setup { defaults = { hover = { border = "second" } } }
     package.loaded.astrolsp = nil
+    package.loaded["astrolsp.config"] = nil
     astrolsp = require "astrolsp"
     astrolsp.setup {}
+    local restored_hover_return = vim.lsp.buf.hover { silent = "restored" }
+    astrolsp.setup { defaults = { hover = { border = "latest" } } }
+    vim.api.nvim_create_autocmd = original_create_autocmd
     vim.lsp.get_client_by_id = function(id) return id == client.id and client or nil end
-    vim.lsp.handlers["client/registerCapability"](nil, {}, { client_id = client.id })
-    return { prior_calls = prior_calls, events = events }
+    local progress_return = vim.lsp.handlers["$/progress"](nil, {
+      token = "setup",
+      value = { kind = "begin" },
+    }, { client_id = client.id })
+    local register_return = vim.lsp.handlers["client/registerCapability"](nil, {}, { client_id = client.id })
+    local register_events = events
+    events = 0
+    local unregister_return = vim.lsp.handlers["client/unregisterCapability"](nil, {}, { client_id = client.id })
+    local unregister_events = events
+    local hover_return = vim.lsp.buf.hover { silent = true }
+    return {
+      prior_calls = prior_calls,
+      register_events = register_events,
+      unregister_events = unregister_events,
+      progress_return = rawequal(progress_return, returns.progress),
+      register_return = rawequal(register_return, returns.register),
+      unregister_return = rawequal(unregister_return, returns.unregister),
+      restored_hover_return = rawequal(restored_hover_return, returns.hover),
+      hover_return = rawequal(hover_return, returns.hover),
+      latest_progress = astrolsp.lsp_progress["503.string.setup"],
+    }
   end)()]]
-  assert.equals(1, state.prior_calls)
-  assert.equals(3, state.events)
+  assert.same({
+    progress = 1,
+    register = 1,
+    unregister = 1,
+    hover = 2,
+    hover_options = { { silent = "restored" }, { border = "latest", silent = true } },
+  }, state.prior_calls)
+  assert.equals(1, state.register_events)
+  assert.equals(1, state.unregister_events)
+  assert.is_true(state.progress_return)
+  assert.is_true(state.register_return)
+  assert.is_true(state.unregister_return)
+  assert.is_true(state.restored_hover_return)
+  assert.is_true(state.hover_return)
+  assert.same({ kind = "begin" }, state.latest_progress)
 end
 
 return T

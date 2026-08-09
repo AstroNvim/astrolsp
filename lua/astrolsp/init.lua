@@ -11,6 +11,10 @@ local M = {}
 
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
+local runtime = require "astrolsp._runtime"
+local unpack = table.unpack or _G.unpack
+
+local function pack(...) return { n = select("#", ...), ... } end
 
 --- The configuration as set by the user through the `setup()` function
 M.config = require "astrolsp.config"
@@ -155,10 +159,10 @@ local function configure_buffer(client, bufnr)
     if spec then
       local cond = spec.cond
       if check_cond(cond, client, bufnr) then
-        local action = spec[1]
-        spec[1], spec.cond = nil, nil
-        vim.api.nvim_buf_create_user_command(bufnr, cmd, action, spec)
-        spec[1], spec.cond = action, cond
+        local command_opts = vim.tbl_extend("force", {}, spec)
+        local action = command_opts[1]
+        command_opts[1], command_opts.cond = nil, nil
+        vim.api.nvim_buf_create_user_command(bufnr, cmd, action, command_opts)
       end
     end
   end
@@ -171,12 +175,13 @@ local function configure_buffer(client, bufnr)
         if check_cond(cond, client, bufnr) then
           local group = vim.api.nvim_create_augroup(augroup, { clear = false })
           for _, autocmd in ipairs(autocmds) do
-            local callback, command, event = autocmd.callback, autocmd.command, autocmd.event
-            autocmd.command, autocmd.event = nil, nil
-            autocmd.group, autocmd.buffer = group, bufnr
+            local autocmd_opts = vim.tbl_extend("force", {}, autocmd)
+            local callback, command, event = autocmd_opts.callback, autocmd_opts.command, autocmd_opts.event
+            autocmd_opts.command, autocmd_opts.event = nil, nil
+            autocmd_opts.group, autocmd_opts.buffer = group, bufnr
             local callback_func = command and function(_, _, _) vim.cmd(command) end or callback
             ---@cast callback_func function
-            autocmd.callback = function(args)
+            autocmd_opts.callback = function(args)
               local callback_client
               for _, cb_client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
                 if check_cond(cond, cb_client, bufnr) then
@@ -186,9 +191,7 @@ local function configure_buffer(client, bufnr)
               end
               if callback_client then return callback_func(args, callback_client, bufnr) end
             end
-            vim.api.nvim_create_autocmd(event, autocmd)
-            autocmd.callback, autocmd.command, autocmd.event = callback, command, event
-            autocmd.group, autocmd.buffer = nil, nil
+            vim.api.nvim_create_autocmd(event, autocmd_opts)
           end
         end
       end
@@ -441,48 +444,55 @@ function M.setup(opts)
     callback = function(event) M.progress(event.data) end,
   })
   if not ok then
-    local progress_handler = vim.lsp.handlers["$/progress"]
-    vim.lsp.handlers["$/progress"] = function(err, res, ctx)
+    runtime.wrap_handler(vim.lsp.handlers, "$/progress", function(progress_handler, err, res, ctx)
       M.progress { client_id = ctx.client_id, params = res }
-      progress_handler(err, res, ctx)
-    end
+      return progress_handler(err, res, ctx)
+    end)
   end
 
-  local register_capability_handler = vim.lsp.handlers["client/registerCapability"]
-  vim.lsp.handlers["client/registerCapability"] = function(err, res, ctx)
-    local ret = register_capability_handler(err, res, ctx)
-    local client = vim.lsp.get_client_by_id(ctx.client_id)
-    if client then
-      for bufnr, _ in pairs(client.attached_buffers) do
-        configure_buffer(client, bufnr)
-        refresh_signature_help_triggers(bufnr)
-        lsp_event("Capability", { client_id = client.id, bufnr = bufnr })
-      end
-    end
-    return ret
-  end
-
-  local unregister_capability_handler = vim.lsp.handlers["client/unregisterCapability"]
-  vim.lsp.handlers["client/unregisterCapability"] = function(err, res, ctx)
-    local ret = unregister_capability_handler(err, res, ctx)
-    local client = vim.lsp.get_client_by_id(ctx.client_id)
-    if client then
-      for bufnr, _ in pairs(client.attached_buffers) do
-        refresh_signature_help_triggers(bufnr)
-        lsp_event("Capability", { client_id = client.id, bufnr = bufnr })
-      end
-    end
-    return ret
-  end
-
-  for method, default in pairs(M.config.defaults) do
-    if default then
-      local original_method = vim.lsp.buf[method]
-      if type(original_method) == "function" then
-        vim.lsp.buf[method] = function(user_opts)
-          return original_method(vim.tbl_deep_extend("force", default, user_opts or {}))
+  runtime.wrap_handler(
+    vim.lsp.handlers,
+    "client/registerCapability",
+    function(register_capability_handler, err, res, ctx)
+      local results = pack(register_capability_handler(err, res, ctx))
+      local client = vim.lsp.get_client_by_id(ctx.client_id)
+      if client then
+        for bufnr, _ in pairs(client.attached_buffers) do
+          configure_buffer(client, bufnr)
+          refresh_signature_help_triggers(bufnr)
+          lsp_event("Capability", { client_id = client.id, bufnr = bufnr })
         end
       end
+      return unpack(results, 1, results.n)
+    end
+  )
+
+  runtime.wrap_handler(
+    vim.lsp.handlers,
+    "client/unregisterCapability",
+    function(unregister_capability_handler, err, res, ctx)
+      local results = pack(unregister_capability_handler(err, res, ctx))
+      local client = vim.lsp.get_client_by_id(ctx.client_id)
+      if client then
+        for bufnr, _ in pairs(client.attached_buffers) do
+          refresh_signature_help_triggers(bufnr)
+          lsp_event("Capability", { client_id = client.id, bufnr = bufnr })
+        end
+      end
+      return unpack(results, 1, results.n)
+    end
+  )
+
+  runtime.restore_inactive_methods(vim.lsp.buf, M.config.defaults)
+  for method, default in pairs(M.config.defaults) do
+    if default and type(vim.lsp.buf[method]) == "function" then
+      runtime.wrap_method(vim.lsp.buf, method, function(original_method, user_opts)
+        local current_default = M.config.defaults[method]
+        if current_default then
+          return original_method(vim.tbl_deep_extend("force", {}, current_default, user_opts or {}))
+        end
+        return original_method(user_opts)
+      end)
     end
   end
 

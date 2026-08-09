@@ -133,13 +133,14 @@ T["INIT-BUFFER-002 resolves the current matching client when an autocmd executes
   assert.same({ { "BufEnter", "replacement", state.buffer } }, state.calls)
 end
 
-T["INIT-BUFFER-002 [characterization] leaves autocmd specs mutated after creation errors"] = function()
+T["INIT-BUFFER-002 preserves autocmd specs after creation errors"] = function()
   child = helpers.start_child()
   local state = child.lua_get [[(function()
     local astrolsp = require "astrolsp"
     local buffer = vim.api.nvim_get_current_buf()
     local callback = function() end
-    local spec = { event = "BufEnter", callback = callback }
+    local spec = { event = "BufEnter", pattern = "*.lua", callback = callback, desc = "Broken autocmd" }
+    local original = vim.deepcopy(spec)
     local client = {
       id = 908,
       name = "broken-autocmd",
@@ -161,16 +162,14 @@ T["INIT-BUFFER-002 [characterization] leaves autocmd specs mutated after creatio
     return {
       ok = ok,
       message = message,
-      callback_is_function = type(spec.callback) == "function",
-      event = spec.event,
-      command = spec.command,
+      unchanged = vim.deep_equal(spec, original),
+      callback_is_original = rawequal(spec.callback, callback),
     }
   end)()]]
   assert.is_false(state.ok)
   assert.matches("autocmd API failure", state.message)
-  assert.is_true(state.callback_is_function)
-  assert.is_nil(state.event)
-  assert.is_nil(state.command)
+  assert.is_true(state.unchanged)
+  assert.is_true(state.callback_is_original)
 end
 
 T["INIT-DETACH-001 retains multi-buffer state then clears final client progress"] = function()
