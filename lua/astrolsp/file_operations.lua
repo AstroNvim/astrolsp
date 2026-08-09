@@ -45,16 +45,29 @@ local function normalize_renames(renames)
   end, renames)
 end
 
-local filter_cache = {}
+local filter_cache = setmetatable({}, { __mode = "k" })
 local match_filters = function(filters, file)
   local fname = vim.fn.fnamemodify(file.path, ":p")
   local cache_key = fname .. "\0" .. (file.kind or "")
   for _, filter in pairs(filters) do
-    if not filter_cache[filter] then filter_cache[filter] = {} end
-    if filter_cache[filter][cache_key] == nil then
+    local pattern = filter.pattern
+    local signature = ("%s\0%s\0%s\0%s"):format(
+      filter.scheme or "",
+      pattern.glob,
+      pattern.matches or "",
+      vim.tbl_get(pattern, "options", "ignoreCase") and "true" or "false"
+    )
+    local cached_filter = filter_cache[filter]
+    if not cached_filter then
+      cached_filter = { signature = signature, filenames = {} }
+      filter_cache[filter] = cached_filter
+    elseif cached_filter.signature ~= signature then
+      cached_filter.signature = signature
+      cached_filter.filenames = {}
+    end
+    if cached_filter.filenames[cache_key] == nil then
       local scheme = filter.scheme
       local matched = false
-      local pattern = filter.pattern
       local match_type = pattern.matches
       local is_dir = file.kind == "folder" or (file.kind == nil and string.sub(fname, #fname) == "/")
       if
@@ -70,9 +83,9 @@ local match_filters = function(filters, file)
         if not ok then error(result, 0) end
         matched = result ~= -1
       end
-      filter_cache[filter][cache_key] = matched
+      cached_filter.filenames[cache_key] = matched
     end
-    if filter_cache[filter][cache_key] then return true end
+    if cached_filter.filenames[cache_key] then return true end
   end
   return false
 end

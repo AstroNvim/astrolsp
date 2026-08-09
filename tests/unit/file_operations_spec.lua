@@ -428,6 +428,35 @@ T["FO-CACHE-001 isolates paths, kinds, filter objects, and configurations"] = fu
   }, shared_calls)
 end
 
+T["FO-FILTER-003 invalidates a filter cache when its glob changes"] = function()
+  local notifications = {}
+  local filter = operation_filter("**/before.lua", "file")
+  local client = {
+    server_capabilities = {
+      workspace = { fileOperations = { didCreate = capability(filter) } },
+    },
+    notify = function(_, method, params) table.insert(notifications, { method = method, params = params }) end,
+  }
+  with_matcher(
+    { operations = { didCreate = true } },
+    { client },
+    function(path, regex) return path == "/tmp/cache.lua" and regex == "regex:**/after.lua" and 0 or -1 end,
+    function(file_operations, _, _, glob_calls, match_calls)
+      file_operations.didCreateFiles "/tmp/cache.lua"
+      filter.pattern.glob = "**/after.lua"
+      file_operations.didCreateFiles "/tmp/cache.lua"
+      assert.same({ "**/before.lua", "**/after.lua" }, glob_calls)
+      assert.same({
+        { path = "/tmp/cache.lua", regex = "regex:**/before.lua", ignorecase = false },
+        { path = "/tmp/cache.lua", regex = "regex:**/after.lua", ignorecase = false },
+      }, match_calls)
+    end
+  )
+  assert.same({
+    { method = "workspace/didCreateFiles", params = { files = { { uri = "uri:/tmp/cache.lua" } } } },
+  }, notifications)
+end
+
 T["FO-CLIENT-001 evaluates matching filters independently for each client"] = function()
   local rejected_calls, accepted_calls = {}, {}
   local clients = {
