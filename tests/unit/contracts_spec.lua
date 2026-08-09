@@ -9,11 +9,14 @@ local ACTIONS_SHA = {
   checkout = "11d5960a326750d5838078e36cf38b85af677262",
   semantic_pr = "48f256284bd46cdaab1048c3721360e808335d50",
   setup_vim = "febef33995d6649302e9d88dda81e071b68f16a7",
+  stale = "4391f3da665fdf50b6810c1a66712fb9ba21aa93",
 }
 
 local ARCHIVE_SHA256 = {
   actionlint = "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8",
   neovim = "012bf3fcac5ade43914df3f174668bf64d05e049a4f032a388c027b1ebd78628",
+  selene = "dac452422747999ec4919bbb8bb52992b66aae533b60022bf005669de8616671",
+  stylua = "bcb0d855e91f102f28a370e850f8566b3b44b79e6274d806ea5246837c0fd5ab",
 }
 
 local CACHE_SPECIFICATION_FILES = {
@@ -22,6 +25,7 @@ local CACHE_SPECIFICATION_FILES = {
   "tests/clear_test_environment.lua",
   "tests/config.lua",
   "tests/fixtures/init.lua",
+  "tests/fixtures/lsp_server.lua",
   "tests/helpers.lua",
   "tests/minit.lua",
   "tests/prepare_test_environment.lua",
@@ -136,6 +140,13 @@ end
 local function assert_exact_permissions(job, expected) assert.equals(expected, permission_block(job)) end
 
 local function assert_exact_uses(block, expected) assert.same(as_set(expected), extract_uses_set(block)) end
+
+local function concurrency_block(job)
+  local start = assert(job:find("\n    concurrency:\n", 1, true))
+  local body_start = start + #"\n    concurrency:\n"
+  local finish = job:find("\n    [%w-]+:", body_start)
+  return dedent(job:sub(body_start, finish and finish - 1 or #job), 6)
+end
 
 local function assert_pinned_checkout(job)
   assert.is_truthy(
@@ -306,6 +317,7 @@ jobs:
   assert.is_nil(source_ci:find("secrets:", 1, true))
 
   assert.equals("${{ github.event_name == 'push' }}", extract_guard(release))
+  assert.equals("group: astrolsp-release\ncancel-in-progress: false", concurrency_block(release))
   assert_exact_permissions(release, "      contents: write\n      pull-requests: write")
   assert_exact_uses(release, { reusable_plugin_ci })
   assert.equals("plugin_name: ${{ github.event.repository.name }}\nis_production: true", extract_with_block(release))
@@ -386,8 +398,26 @@ T["CI-CONTRACT-002 pins test jobs, cache pairs, and repository integrity steps"]
     table.concat({
       "shell: bash",
       "run: |",
-      "  cargo install stylua --version 2.5.2 --locked",
-      "  cargo install selene --version 0.31.0 --locked",
+      '  stylua_version="2.5.2"',
+      '  stylua_archive_sha256="' .. ARCHIVE_SHA256.stylua .. '"',
+      "  curl --fail --location --silent --show-error --retry 3 \\",
+      [[    "https://github.com/JohnnyMorganz/StyLua/releases/download/v${stylua_version}/stylua-linux-x86_64.zip" \]],
+      "    --output /tmp/stylua.zip",
+      '  echo "${stylua_archive_sha256}  /tmp/stylua.zip" | sha256sum --check --status',
+      "  mkdir --parents /tmp/stylua",
+      "  unzip -q /tmp/stylua.zip -d /tmp/stylua",
+      "  install /tmp/stylua/stylua /usr/local/bin/stylua",
+      '  test "$(stylua --version)" = "stylua ${stylua_version}"',
+      '  selene_version="0.31.0"',
+      '  selene_archive_sha256="' .. ARCHIVE_SHA256.selene .. '"',
+      "  curl --fail --location --silent --show-error --retry 3 \\",
+      [[    "https://github.com/Kampfkarren/selene/releases/download/${selene_version}/selene-${selene_version}-linux.zip" \]],
+      "    --output /tmp/selene.zip",
+      '  echo "${selene_archive_sha256}  /tmp/selene.zip" | sha256sum --check --status',
+      "  mkdir --parents /tmp/selene",
+      "  unzip -q /tmp/selene.zip -d /tmp/selene",
+      "  install /tmp/selene/selene /usr/local/bin/selene",
+      '  test "$(selene --version)" = "selene ${selene_version}"',
       '  actionlint_version="1.7.12"',
       '  actionlint_archive_sha256="' .. ARCHIVE_SHA256.actionlint .. '"',
       "  curl --fail --location --silent --show-error --retry 3 \\",
@@ -498,20 +528,36 @@ T["CI-CONTRACT-002 pins test jobs, cache pairs, and repository integrity steps"]
   assert_repository_integrity_steps(refresh, true)
 end
 
-T["CI-CONTRACT-003 declares the exact stale workflow trigger, job, and reusable call"] = function()
+T["CI-CONTRACT-003 declares the exact trusted stale workflow trigger, job, and policy"] = function()
   local workflow = read_file(config.root .. "/.github/workflows/stale.yml")
   local stale = workflow_job(workflow, "stale")
-  local reusable_stale = "AstroNvim/.github/.github/workflows/stale.yml@" .. ACTIONS_SHA.astro_workflows .. " # v1"
 
   assert.equals('"Close stale issues and PRs"', assert(workflow:match "name: ([^\n]+)"))
   assert.same(as_set { "stale" }, as_set(extract_two_space_job_names(workflow)))
   assert.equals('schedule:\n  - cron: "30 1 * * *" # run at 0130 UTC', extract_trigger_block(workflow))
   assert.is_nil(extract_guard(stale))
+  assert.is_truthy(stale:find("runs-on: ubuntu-latest", 1, true))
   assert_exact_permissions(stale, "      issues: write\n      pull-requests: write")
-  assert_exact_uses(stale, { reusable_stale })
+  assert_exact_uses(stale, { "actions/stale@" .. ACTIONS_SHA.stale .. " # v11" })
+  assert.equals(
+    table.concat({
+      "days-before-stale: 30",
+      "days-before-close: 5",
+      "days-before-pr-stale: -1",
+      "days-before-pr-close: -1",
+      "exempt-issue-labels: pinned,wip,security,notice",
+      "exempt-all-milestones: true",
+      "stale-issue-message: >",
+      "  This issue has been automatically marked as stale because it has not had",
+      "  recent activity. It will be closed in 5 days if no further activity occurs.",
+      "  Thank you for your contributions.",
+    }, "\n"),
+    extract_with_block(stale)
+  )
   assert.is_nil(stale:find("secrets:", 1, true))
   assert.is_nil(stale:find("actions/checkout", 1, true))
   assert.is_nil(stale:find("run:", 1, true))
+  assert.is_nil(stale:find("shell:", 1, true))
 end
 
 return T

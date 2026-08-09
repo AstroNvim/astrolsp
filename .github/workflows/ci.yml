@@ -26,6 +26,9 @@ jobs:
   Release:
     uses: AstroNvim/.github/.github/workflows/plugin_ci.yml@97cdc3810853afdcccf8e40f7262bd5ec397c8fa # v1
     if: ${{ github.event_name == 'push' }}
+    concurrency:
+      group: astrolsp-release
+      cancel-in-progress: false
     permissions:
       contents: write
       pull-requests: write
@@ -61,8 +64,26 @@ jobs:
       - name: Install pinned test linters
         shell: bash
         run: |
-          cargo install stylua --version 2.5.2 --locked
-          cargo install selene --version 0.31.0 --locked
+          stylua_version="2.5.2"
+          stylua_archive_sha256="bcb0d855e91f102f28a370e850f8566b3b44b79e6274d806ea5246837c0fd5ab"
+          curl --fail --location --silent --show-error --retry 3 \
+            "https://github.com/JohnnyMorganz/StyLua/releases/download/v${stylua_version}/stylua-linux-x86_64.zip" \
+            --output /tmp/stylua.zip
+          echo "${stylua_archive_sha256}  /tmp/stylua.zip" | sha256sum --check --status
+          mkdir --parents /tmp/stylua
+          unzip -q /tmp/stylua.zip -d /tmp/stylua
+          install /tmp/stylua/stylua /usr/local/bin/stylua
+          test "$(stylua --version)" = "stylua ${stylua_version}"
+          selene_version="0.31.0"
+          selene_archive_sha256="dac452422747999ec4919bbb8bb52992b66aae533b60022bf005669de8616671"
+          curl --fail --location --silent --show-error --retry 3 \
+            "https://github.com/Kampfkarren/selene/releases/download/${selene_version}/selene-${selene_version}-linux.zip" \
+            --output /tmp/selene.zip
+          echo "${selene_archive_sha256}  /tmp/selene.zip" | sha256sum --check --status
+          mkdir --parents /tmp/selene
+          unzip -q /tmp/selene.zip -d /tmp/selene
+          install /tmp/selene/selene /usr/local/bin/selene
+          test "$(selene --version)" = "selene ${selene_version}"
           actionlint_version="1.7.12"
           actionlint_archive_sha256="8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
           curl --fail --location --silent --show-error --retry 3 \
@@ -89,7 +110,7 @@ jobs:
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .tests
-          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
+          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
       - name: Prepare the test environment
         shell: bash
         run: make test-prepare-ci
@@ -98,7 +119,7 @@ jobs:
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .tests
-          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
+          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
       - name: Run the full suite twice
         shell: bash
         run: |
@@ -163,7 +184,7 @@ jobs:
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .tests
-          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
+          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
       - name: Prepare the test environment
         shell: bash
         run: nvim -l tests/prepare_test_environment.lua
@@ -172,7 +193,7 @@ jobs:
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .tests
-          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
+          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
       - name: Run semantic suite
         shell: bash
         run: nvim -l tests/minit.lua --minitest tests/semantic/*.lua
@@ -211,7 +232,7 @@ jobs:
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .tests
-          key: test-environment-nightly-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
+          key: test-environment-nightly-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
       - name: Prepare the test environment
         shell: bash
         run: make test-prepare-ci
@@ -220,7 +241,7 @@ jobs:
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .tests
-          key: test-environment-nightly-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
+          key: test-environment-nightly-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
       - name: Run semantic smoke suite
         shell: bash
         run: make test-semantic
