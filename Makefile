@@ -1,4 +1,4 @@
-.PHONY: test test-prepare test-prepare-ci test-clear test-update-deps test-unit test-semantic test-semantic-attach test-semantic-lifecycle test-unit-environment test-unit-config test-unit-init test-unit-file-operations test-unit-toggles test-unit-health test-contracts
+.PHONY: test test-prepare test-prepare-ci test-clear test-update-deps test-unit test-semantic test-semantic-attach test-semantic-lifecycle test-unit-environment test-unit-config test-unit-init test-unit-file-operations test-unit-toggles test-unit-health test-contracts test-fingerprint
 
 TEST_TARGETS := test test-unit test-semantic test-semantic-attach test-semantic-lifecycle test-unit-environment test-unit-config test-unit-init test-unit-file-operations test-unit-toggles test-unit-health test-contracts
 
@@ -52,3 +52,6 @@ test-clear:
 test-update-deps:
 	@$(MAKE) test-clear
 	@$(MAKE) test-prepare
+
+test-fingerprint:
+	@nvim -l tests/print_fingerprint.lua

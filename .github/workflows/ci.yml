@@ -10,24 +10,31 @@ on:
     - cron: "0 6 * * *"
     - cron: "0 8 * * 1"
 
-env:
-  TEST_ENVIRONMENT_SCHEMA: "3"
-  TEST_ENVIRONMENT_CACHE_ROTATION: "1"
-
 jobs:
   CI:
-    uses: AstroNvim/.github/.github/workflows/plugin_ci.yml@97cdc3810853afdcccf8e40f7262bd5ec397c8fa # v1
     if: ${{ github.event_name == 'pull_request' }}
+    uses: AstroNvim/.github/.github/workflows/plugin_ci.yml@main
     permissions:
       contents: read
     with:
       plugin_name: ${{ github.event.repository.name }}
       is_production: false
+  Tests:
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'schedule' }}
+    uses: AstroNvim/.github/.github/workflows/neovim_testing.yml@main
+    permissions:
+      contents: read
+    with:
+      minimum_neovim: "0.11.0"
+      stable_neovim: "0.12.4"
+      cache_rotation: "1"
+      timeout_minutes: 30
   Release:
-    uses: AstroNvim/.github/.github/workflows/plugin_ci.yml@97cdc3810853afdcccf8e40f7262bd5ec397c8fa # v1
     if: ${{ github.event_name == 'push' }}
+    needs: Tests
+    uses: AstroNvim/.github/.github/workflows/plugin_ci.yml@main
     concurrency:
-      group: astrolsp-release
+      group: ${{ github.event.repository.name }}-release
       cancel-in-progress: false
     permissions:
       contents: write
@@ -37,285 +44,11 @@ jobs:
     with:
       plugin_name: ${{ github.event.repository.name }}
       is_production: true
-  Tests:
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    env:
-      NVIM_VERSION: "0.12.4"
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - name: Install and verify Neovim
-        shell: bash
-        run: |
-          nvim_archive_sha256="012bf3fcac5ade43914df3f174668bf64d05e049a4f032a388c027b1ebd78628"
-          curl --fail --location --silent --show-error --retry 3 \
-            "https://github.com/neovim/neovim/releases/download/v${NVIM_VERSION}/nvim-linux-x86_64.tar.gz" \
-            --output /tmp/nvim.tar.gz
-          echo "${nvim_archive_sha256}  /tmp/nvim.tar.gz" | sha256sum --check --status
-          tar --extract --gzip --file /tmp/nvim.tar.gz --directory /tmp
-          echo "/tmp/nvim-linux-x86_64/bin" >> "$GITHUB_PATH"
-          export PATH="/tmp/nvim-linux-x86_64/bin:$PATH"
-          test "$(nvim --version | head -n 1)" = "NVIM v${NVIM_VERSION}"
-      - name: Install pinned test linters
-        shell: bash
-        run: |
-          stylua_version="2.5.2"
-          stylua_archive_sha256="bcb0d855e91f102f28a370e850f8566b3b44b79e6274d806ea5246837c0fd5ab"
-          curl --fail --location --silent --show-error --retry 3 \
-            "https://github.com/JohnnyMorganz/StyLua/releases/download/v${stylua_version}/stylua-linux-x86_64.zip" \
-            --output /tmp/stylua.zip
-          echo "${stylua_archive_sha256}  /tmp/stylua.zip" | sha256sum --check --status
-          mkdir --parents /tmp/stylua
-          unzip -q /tmp/stylua.zip -d /tmp/stylua
-          install /tmp/stylua/stylua /usr/local/bin/stylua
-          test "$(stylua --version)" = "stylua ${stylua_version}"
-          selene_version="0.31.0"
-          selene_archive_sha256="dac452422747999ec4919bbb8bb52992b66aae533b60022bf005669de8616671"
-          curl --fail --location --silent --show-error --retry 3 \
-            "https://github.com/Kampfkarren/selene/releases/download/${selene_version}/selene-${selene_version}-linux.zip" \
-            --output /tmp/selene.zip
-          echo "${selene_archive_sha256}  /tmp/selene.zip" | sha256sum --check --status
-          mkdir --parents /tmp/selene
-          unzip -q /tmp/selene.zip -d /tmp/selene
-          install /tmp/selene/selene /usr/local/bin/selene
-          test "$(selene --version)" = "selene ${selene_version}"
-          actionlint_version="1.7.12"
-          actionlint_archive_sha256="8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
-          curl --fail --location --silent --show-error --retry 3 \
-            "https://github.com/rhysd/actionlint/releases/download/v${actionlint_version}/actionlint_${actionlint_version}_linux_amd64.tar.gz" \
-            --output /tmp/actionlint.tar.gz
-          echo "${actionlint_archive_sha256}  /tmp/actionlint.tar.gz" | sha256sum --check --status
-          mkdir --parents /tmp/actionlint
-          tar --extract --gzip --file /tmp/actionlint.tar.gz --directory /tmp/actionlint actionlint
-          install /tmp/actionlint/actionlint /usr/local/bin/actionlint
-          test "$(actionlint -version)" = "$actionlint_version"
-      - name: Run static checks
-        shell: bash
-        run: |
-          stylua --check tests
-          selene tests
-          actionlint .github/workflows/*.yml
-      - name: Run repository preflight
-        shell: bash
-        run: |
-          git diff --check
-          git diff --exit-code
-      - name: Restore test environment cache
-        id: test-environment-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .tests
-          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
-      - name: Prepare the test environment
-        shell: bash
-        run: make test-prepare-ci
-      - name: Save test environment cache
-        if: steps.test-environment-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .tests
-          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
-      - name: Run the full suite twice
-        shell: bash
-        run: |
-          make test
-          make test
-      - name: Verify repository immutability
-        shell: bash
-        run: |
-          git diff --check
-          git diff --exit-code
-          test -z "$(git ls-files --others --exclude-standard)"
-  Semantic:
-    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
-    name: Semantic Tests (${{ matrix.name }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: minimum supported
-            os: ubuntu-latest
-            neovim: "0.11.0"
-          - name: latest supported stable
-            os: ubuntu-latest
-            neovim: "0.12.4"
-          - name: macOS smoke
-            os: macos-latest
-            neovim: "0.12.4"
-          - name: Windows smoke
-            os: windows-latest
-            neovim: "0.12.4"
-    env:
-      NVIM_VERSION: ${{ matrix.neovim }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - name: Install Neovim
-        uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7 # v1
-        with:
-          neovim: true
-          version: v${{ matrix.neovim }}
-      - name: Verify Neovim version
-        shell: bash
-        run: test "$(nvim --version | head -n 1)" = "NVIM v${NVIM_VERSION}"
-      - name: Verify Windows command prerequisites
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          command -v git
-          command -v env
-      - name: Run repository preflight
-        shell: bash
-        run: |
-          git diff --check
-          git diff --exit-code
-      - name: Restore test environment cache
-        id: test-environment-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .tests
-          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
-      - name: Prepare the test environment
-        shell: bash
-        run: nvim -l tests/prepare_test_environment.lua
-      - name: Save test environment cache
-        if: steps.test-environment-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .tests
-          key: test-environment-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
-      - name: Run semantic suite
-        shell: bash
-        run: nvim -l tests/minit.lua --minitest tests/semantic/*.lua
-      - name: Verify repository immutability
-        shell: bash
-        run: |
-          git diff --check
-          git diff --exit-code
-          test -z "$(git ls-files --others --exclude-standard)"
-  Nightly:
-    if: ${{ github.event_name == 'schedule' && github.event.schedule == '0 6 * * *' }}
-    name: Nightly Semantic Smoke
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    env:
-      NVIM_VERSION: nightly
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - name: Install Neovim nightly
-        uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7 # v1
-        with:
-          neovim: true
-          version: nightly
-      - name: Run repository preflight
-        shell: bash
-        run: |
-          git diff --check
-          git diff --exit-code
-      - name: Restore nightly test environment cache
-        id: test-environment-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .tests
-          key: test-environment-nightly-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
-      - name: Prepare the test environment
-        shell: bash
-        run: make test-prepare-ci
-      - name: Save nightly test environment cache
-        if: steps.test-environment-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .tests
-          key: test-environment-nightly-${{ runner.os }}-${{ runner.arch }}-nvim-${{ env.NVIM_VERSION }}-schema-${{ env.TEST_ENVIRONMENT_SCHEMA }}-rotation-${{ env.TEST_ENVIRONMENT_CACHE_ROTATION }}-spec-${{ hashFiles('Makefile', 'tests/bootstrap.lua', 'tests/clear_test_environment.lua', 'tests/config.lua', 'tests/fixtures/init.lua', 'tests/fixtures/lsp_server.lua', 'tests/helpers.lua', 'tests/minit.lua', 'tests/prepare_test_environment.lua', 'tests/test_environment.lua', 'tests/unit_helpers.lua', 'tests/semantic/attach_spec.lua', 'tests/semantic/init_spec.lua', 'tests/unit/config_spec.lua', 'tests/unit/contracts_spec.lua', 'tests/unit/file_operations_spec.lua', 'tests/unit/health_spec.lua', 'tests/unit/helpers_spec.lua', 'tests/unit/init_spec.lua', 'tests/unit/test_environment_spec.lua', 'tests/unit/toggles_spec.lua', 'tests/unit/unit_helpers_spec.lua') }}
-      - name: Run semantic smoke suite
-        shell: bash
-        run: make test-semantic
-      - name: Verify repository immutability
-        shell: bash
-        run: |
-          git diff --check
-          git diff --exit-code
-          test -z "$(git ls-files --others --exclude-standard)"
-  Dependency-Refresh:
-    if: ${{ github.event_name == 'schedule' && github.event.schedule == '0 8 * * 1' }}
-    name: Weekly Dependency Rebuild
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    env:
-      NVIM_VERSION: "0.12.4"
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - name: Install Neovim
-        uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7 # v1
-        with:
-          neovim: true
-          version: v${{ env.NVIM_VERSION }}
-      - name: Verify Neovim version
-        shell: bash
-        run: test "$(nvim --version | head -n 1)" = "NVIM v${NVIM_VERSION}"
-      - name: Run repository preflight
-        shell: bash
-        run: |
-          git diff --check
-          git diff --exit-code
-      - name: Clear and rebuild the test environment
-        shell: bash
-        run: |
-          make test-clear
-          make test-prepare
-      - name: Run semantic smoke suite
-        shell: bash
-        run: make test-semantic
-      - name: Verify repository immutability
-        if: ${{ always() }}
-        shell: bash
-        run: |
-          git diff --check
-          git diff --exit-code
-          test -z "$(git ls-files --others --exclude-standard)"
   PR:
     if: ${{ github.event_name == 'pull_request_target' }}
-    runs-on: ubuntu-latest
+    uses: AstroNvim/.github/.github/workflows/validate_pr.yml@main
     permissions:
       pull-requests: read
-    steps:
-      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          requireScope: false
-          types: |
-            build
-            chore
-            ci
-            docs
-            feat
-            fix
-            merge
-            perf
-            refactor
-            revert
-            style
-            test
-            wip
-          ignoreLabels: |
-            autorelease: pending
+    with:
+      conventional_title: true
+      require_scope: false
