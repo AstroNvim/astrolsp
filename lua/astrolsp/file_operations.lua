@@ -27,8 +27,11 @@ local function normalize_cached(value)
 end
 
 local function get_registrations(client, method)
-  -- TODO: remove the fallback when dropping support for Neovim v0.11
+  if vim.fn.has "nvim-0.13" == 1 then return client.dynamic_capabilities:get(method) or {} end
+
+  -- TODO: remove this compatibility block when dropping support for Neovim v0.12
   if client._get_registrations then return client:_get_registrations "workspace" or {} end
+  -- TODO: remove this fallback block when dropping support for Neovim v0.11
   return (client.registrations or {})[method] or {}
 end
 
