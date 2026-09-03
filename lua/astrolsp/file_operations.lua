@@ -13,18 +13,41 @@
 local M = {}
 
 local normalize_lsp = require("astrolsp.utils").normalize
-local normalized_operations = setmetatable({}, { __mode = "k" })
+local normalized_cache = setmetatable({}, { __mode = "k" })
+
+local function normalize_cached(value)
+  if type(value) ~= "table" then return normalize_lsp(value) end
+
+  local normalized = normalized_cache[value]
+  if normalized ~= nil then return normalized == true and value or normalized end
+
+  normalized = normalize_lsp(value)
+  normalized_cache[value] = normalized == value and true or normalized
+  return normalized
+end
+
+local function get_registrations(client, method)
+  if client._get_registrations then return client:_get_registrations "workspace" or {} end
+  return (client.registrations or {})[method] or {}
+end
+
+local function add_filters(filters, options)
+  options = normalize_cached(options)
+  if type(options) ~= "table" or type(options.filters) ~= "table" then return end
+  for _, filter in ipairs(options.filters) do
+    filters[#filters + 1] = filter
+  end
+end
 
 local function get_operation(client, operation)
-  local raw = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", operation)
-  if type(raw) ~= "table" then return normalize_lsp(raw) end
-
-  local normalized = normalized_operations[raw]
-  if normalized ~= nil then return normalized == true and raw or normalized end
-
-  normalized = normalize_lsp(raw)
-  normalized_operations[raw] = normalized == raw and true or normalized
-  return normalized
+  local method = "workspace/" .. operation .. "Files"
+  local filters = {}
+  add_filters(filters, vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", operation))
+  for _, registration in ipairs(get_registrations(client, method)) do
+    if registration.method == method then add_filters(filters, registration.registerOptions) end
+  end
+  if #filters == 0 then return end
+  return { filters = filters }
 end
 
 local function get_config() return vim.tbl_get(require "astrolsp", "config", "file_operations") or {} end
