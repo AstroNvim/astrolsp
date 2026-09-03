@@ -12,6 +12,21 @@
 ---@class astrolsp.file_operations
 local M = {}
 
+local normalize_lsp = require("astrolsp.utils").normalize
+local normalized_operations = setmetatable({}, { __mode = "k" })
+
+local function get_operation(client, operation)
+  local raw = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", operation)
+  if type(raw) ~= "table" then return normalize_lsp(raw) end
+
+  local normalized = normalized_operations[raw]
+  if normalized ~= nil then return normalized == true and raw or normalized end
+
+  normalized = normalize_lsp(raw)
+  normalized_operations[raw] = normalized == raw and true or normalized
+  return normalized
+end
+
 local function get_config() return vim.tbl_get(require "astrolsp", "config", "file_operations") or {} end
 
 ---@class AstroLSPFileOperationsRename
@@ -82,7 +97,7 @@ function M.didCreateFiles(fnames)
   if not vim.tbl_get(config, "operations", "didCreate") then return end
   local paths = normalize_paths(fnames)
   for _, client in pairs(vim.lsp.get_clients()) do
-    local did_create = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "didCreate")
+    local did_create = get_operation(client, "didCreate")
     if did_create then
       local filters = did_create.filters or {}
       local filtered = vim.tbl_filter(function(path) return match_filters(filters, path) end, paths)
@@ -103,7 +118,7 @@ function M.didDeleteFiles(fnames)
   if not vim.tbl_get(config, "operations", "didDelete") then return end
   local paths = normalize_paths(fnames)
   for _, client in pairs(vim.lsp.get_clients()) do
-    local did_delete = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "didDelete")
+    local did_delete = get_operation(client, "didDelete")
     if did_delete ~= nil then
       local filters = did_delete.filters or {}
       local filtered = vim.tbl_filter(function(path) return match_filters(filters, path) end, paths)
@@ -124,7 +139,7 @@ function M.didRenameFiles(renames)
   if not vim.tbl_get(config, "operations", "didRename") then return end
   local normalized_renames = normalize_renames(renames)
   for _, client in pairs(vim.lsp.get_clients()) do
-    local did_rename = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "didRename")
+    local did_rename = get_operation(client, "didRename")
     if did_rename ~= nil then
       local filters = did_rename.filters or {}
       local filtered = vim.tbl_filter(
@@ -161,7 +176,7 @@ function M.willCreateFiles(fnames)
   if not vim.tbl_get(config, "operations", "willCreate") then return end
   local paths = normalize_paths(fnames)
   for _, client in pairs(vim.lsp.get_clients()) do
-    local will_create = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "willCreate")
+    local will_create = get_operation(client, "willCreate")
     if will_create then
       local filters = will_create.filters or {}
       local filtered = vim.tbl_filter(function(path) return match_filters(filters, path) end, paths)
@@ -185,7 +200,7 @@ function M.willDeleteFiles(fnames)
   if not vim.tbl_get(config, "operations", "willDelete") then return end
   local paths = normalize_paths(fnames)
   for _, client in pairs(vim.lsp.get_clients()) do
-    local will_delete = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "willDelete")
+    local will_delete = get_operation(client, "willDelete")
     if will_delete then
       local filters = will_delete.filters or {}
       local filtered = vim.tbl_filter(function(path) return match_filters(filters, path) end, paths)
@@ -209,7 +224,7 @@ function M.willRenameFiles(renames)
   if not vim.tbl_get(config, "operations", "willRename") then return end
   local normalized_renames = normalize_renames(renames)
   for _, client in pairs(vim.lsp.get_clients()) do
-    local will_rename = vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", "willRename")
+    local will_rename = get_operation(client, "willRename")
     if will_rename then
       local filters = will_rename.filters or {}
       local filtered = vim.tbl_filter(

@@ -11,6 +11,7 @@ local M = {}
 
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
+local normalize_lsp = require("astrolsp.utils").normalize
 
 --- The configuration as set by the user through the `setup()` function
 M.config = require "astrolsp.config"
@@ -72,12 +73,7 @@ end
 ---@param data {client_id: integer, params: lsp.ProgressParams}
 function M.progress(data)
   local id = ("%s.%s.%s"):format(data.client_id, type(data.params.token), data.params.token)
-  local value = data.params.value
-  if type(value) == "table" then
-    for key, val in pairs(value) do
-      if val == vim.NIL then value[key] = nil end
-    end
-  end
+  local value = normalize_lsp(data.params.value)
   local progress
   if not value or value.kind == "begin" then
     progress = value
@@ -353,7 +349,7 @@ function M.setup(opts)
   -- Set up tracking of signature help trigger characters
   -- TODO: remove this helper and the `else` fallback below when dropping support for Neovim v0.11
   local function registration_applies(client, registration, bufnr)
-    local options = registration.registerOptions
+    local options = normalize_lsp(registration.registerOptions)
     if type(options) ~= "table" or type(options.documentSelector) ~= "table" then return true end
     local language = client._get_language_id and client:_get_language_id(bufnr) or vim.bo[bufnr].filetype
     local uri = vim.uri_from_bufnr(bufnr)
@@ -374,6 +370,7 @@ function M.setup(opts)
     if not vim.api.nvim_buf_is_valid(bufnr) then return end
     local triggers, retriggers = {}, {}
     local function add_options(options)
+      options = normalize_lsp(options)
       if type(options) ~= "table" then return end
       for _, trigger in ipairs(options.triggerCharacters or {}) do
         triggers[trigger] = true
