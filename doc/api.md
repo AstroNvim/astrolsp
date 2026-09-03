@@ -351,3 +351,25 @@ function astrolsp.toggles.signature_help(silent?: boolean)
 *param* `silent` — if true then don't send a notification
 
 
+## astrolsp.utils
+
+AstroNvim LSP Utilities
+
+Helpers for handling values decoded from LSP JSON messages.
+
+
+### normalize
+
+
+```lua
+function astrolsp.utils.normalize(value: any)
+  -> normalized: any
+```
+
+ LSP JSON payloads are acyclic, so avoid a traversal cache during normalization.
+
+*param* `value` — value received from an LSP client
+
+*return* `normalized` — value with vim.NIL converted to Lua nil
+
+
