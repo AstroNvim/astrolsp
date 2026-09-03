@@ -27,6 +27,7 @@ local function normalize_cached(value)
 end
 
 local function get_registrations(client, method)
+  -- TODO: remove the fallback when dropping support for Neovim v0.11
   if client._get_registrations then return client:_get_registrations "workspace" or {} end
   return (client.registrations or {})[method] or {}
 end
