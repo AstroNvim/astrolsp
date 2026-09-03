@@ -11,6 +11,9 @@ local M = {}
 
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
+-- TODO: remove these fallbacks when dropping support for Neovim v0.12
+local if_nil = vim.nonnil or vim.F.if_nil
+local buffer_key = vim.fn.has "nvim-0.13" == 1 and "buf" or "buffer"
 local normalize_lsp = require("astrolsp.utils").normalize
 
 --- The configuration as set by the user through the `setup()` function
@@ -97,7 +100,7 @@ end
 --- Helper function to set up a given server with the Neovim LSP client
 ---@param server string The name of the server to be setup
 function M.lsp_setup(server)
-  local handler = vim.F.if_nil(M.config.handlers[server], M.config.handlers["*"], vim.lsp.enable)
+  local handler = if_nil(M.config.handlers[server], M.config.handlers["*"], vim.lsp.enable)
   if handler then handler(server) end
 end
 
@@ -161,7 +164,7 @@ local function configure_buffer(client, bufnr)
 
   for augroup, autocmds in pairs(M.config.autocmds) do
     if autocmds then
-      local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buffer = bufnr })
+      local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, [buffer_key] = bufnr })
       if not cmds_found or vim.tbl_isempty(cmds) then
         local cond = autocmds.cond
         if check_cond(cond, client, bufnr) then
@@ -169,7 +172,9 @@ local function configure_buffer(client, bufnr)
           for _, autocmd in ipairs(autocmds) do
             local callback, command, event = autocmd.callback, autocmd.command, autocmd.event
             autocmd.command, autocmd.event = nil, nil
-            autocmd.group, autocmd.buffer = group, bufnr
+            autocmd.group = group
+            autocmd[buffer_key] = bufnr
+            autocmd[buffer_key == "buf" and "buffer" or "buf"] = nil
             local callback_func = command and function(_, _, _) vim.cmd(command) end or callback
             ---@cast callback_func function
             autocmd.callback = function(args)
@@ -184,7 +189,8 @@ local function configure_buffer(client, bufnr)
             end
             vim.api.nvim_create_autocmd(event, autocmd)
             autocmd.callback, autocmd.command, autocmd.event = callback, command, event
-            autocmd.group, autocmd.buffer = nil, nil
+            autocmd.group = nil
+            autocmd.buf, autocmd.buffer = nil, nil
           end
         end
       end
@@ -201,7 +207,7 @@ local function configure_buffer(client, bufnr)
           local rhs
           if type(map_opts) == "string" then
             rhs = map_opts
-            map_opts = { buffer = bufnr }
+            map_opts = { [buffer_key] = bufnr }
           else
             rhs = map_opts[1]
             map_opts = assert(vim.tbl_deep_extend("force", map_opts, { buffer = bufnr }))
@@ -209,6 +215,8 @@ local function configure_buffer(client, bufnr)
           end
           ---@cast map_opts AstroLSPMapping
           if rhs then
+            map_opts[buffer_key] = bufnr
+            map_opts[buffer_key == "buf" and "buffer" or "buf"] = nil
             vim.keymap.set(mode, lhs, rhs, map_opts --[[@as vim.keymap.set.Opts]])
           elseif wk_avail then
             map_opts[1], map_opts.mode = lhs, mode
@@ -347,25 +355,6 @@ function M.setup(opts)
   if vim.lsp.inline_completion then vim.lsp.inline_completion.enable(M.config.features.inline_completion ~= false) end
 
   -- Set up tracking of signature help trigger characters
-  -- TODO: remove this helper and the `else` fallback below when dropping support for Neovim v0.11
-  local function registration_applies(client, registration, bufnr)
-    local options = normalize_lsp(registration.registerOptions)
-    if type(options) ~= "table" or type(options.documentSelector) ~= "table" then return true end
-    local language = client._get_language_id and client:_get_language_id(bufnr) or vim.bo[bufnr].filetype
-    local uri = vim.uri_from_bufnr(bufnr)
-    local filename = vim.uri_to_fname(uri)
-    for _, filter in ipairs(options.documentSelector) do
-      if
-        not (filter.language and language ~= filter.language)
-        and not (filter.scheme and not vim.startswith(uri, filter.scheme .. ":"))
-        and not (type(filter.pattern) == "string" and not vim.glob.to_lpeg(filter.pattern):match(filename))
-      then
-        return true
-      end
-    end
-    return false
-  end
-
   local function refresh_signature_help_triggers(bufnr, excluded_client_id)
     if not vim.api.nvim_buf_is_valid(bufnr) then return end
     local triggers, retriggers = {}, {}
@@ -382,13 +371,41 @@ function M.setup(opts)
     for _, client in pairs(vim.lsp.get_clients { bufnr = bufnr }) do
       if client.id ~= excluded_client_id and client:supports_method("textDocument/signatureHelp", bufnr) then
         add_options(client.server_capabilities.signatureHelpProvider)
-        if client._get_registrations then
-          for _, registration in ipairs(client:_get_registrations("signatureHelpProvider", bufnr) or {}) do
+        if vim.fn.has "nvim-0.13" == 1 then
+          for _, registration in
+            ipairs(client.dynamic_capabilities:get("signatureHelpProvider", { bufnr = bufnr }) or {})
+          do
             add_options(registration.registerOptions)
           end
         else
-          for _, registration in ipairs(client.registrations["textDocument/signatureHelp"] or {}) do
-            if registration_applies(client, registration, bufnr) then add_options(registration.registerOptions) end
+          -- TODO: remove this compatibility block when dropping support for Neovim v0.12
+          if client._get_registrations then
+            for _, registration in ipairs(client:_get_registrations("signatureHelpProvider", bufnr) or {}) do
+              add_options(registration.registerOptions)
+            end
+          else
+            -- TODO: remove this compatibility block when dropping support for Neovim v0.11
+            local function registration_applies(_client, _registration, _bufnr)
+              local options = normalize_lsp(_registration.registerOptions)
+              if type(options) ~= "table" or type(options.documentSelector) ~= "table" then return true end
+              local language = _client._get_language_id and _client:_get_language_id(_bufnr) or vim.bo[_bufnr].filetype
+              local uri = vim.uri_from_bufnr(_bufnr)
+              local filename = vim.uri_to_fname(uri)
+              for _, filter in ipairs(options.documentSelector) do
+                if
+                  not (filter.language and language ~= filter.language)
+                  and not (filter.scheme and not vim.startswith(uri, filter.scheme .. ":"))
+                  and not (type(filter.pattern) == "string" and not vim.glob.to_lpeg(filter.pattern):match(filename))
+                then
+                  return true
+                end
+              end
+              return false
+            end
+
+            for _, registration in ipairs((client.registrations or {})["textDocument/signatureHelp"] or {}) do
+              if registration_applies(client, registration, bufnr) then add_options(registration.registerOptions) end
+            end
           end
         end
       end

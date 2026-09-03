@@ -134,7 +134,7 @@ options and some example usages:
               foldingRange = { dynamicRegistration = false },
             },
           },
-          -- Configure the LSP client exit timeout for Neovim v0.11 and v0.12
+          -- Configure the LSP client exit timeout for Neovim v0.11 and newer
           exit_timeout = 5000, -- Neovim v0.12+
           flags = {
             exit_timeout = 5000, -- Neovim v0.11

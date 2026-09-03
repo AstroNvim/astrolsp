@@ -26,8 +26,10 @@ local function normalize_cached(value)
   return normalized
 end
 
-local function get_registrations(client, method)
-  if vim.fn.has "nvim-0.13" == 1 then return client.dynamic_capabilities:get(method) or {} end
+local function get_registrations(client, operation, method)
+  if vim.fn.has "nvim-0.13" == 1 then
+    return client.dynamic_capabilities:get("workspace.fileOperations." .. operation) or {}
+  end
 
   -- TODO: remove this compatibility block when dropping support for Neovim v0.12
   if client._get_registrations then return client:_get_registrations "workspace" or {} end
@@ -47,7 +49,7 @@ local function get_operation(client, operation)
   local method = "workspace/" .. operation .. "Files"
   local filters = {}
   add_filters(filters, vim.tbl_get(client, "server_capabilities", "workspace", "fileOperations", operation))
-  for _, registration in ipairs(get_registrations(client, method)) do
+  for _, registration in ipairs(get_registrations(client, operation, method)) do
     if registration.method == method then add_filters(filters, registration.registerOptions) end
   end
   if #filters == 0 then return end
