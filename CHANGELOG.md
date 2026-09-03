@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.3](https://github.com/AstroNvim/astrolsp/compare/v4.0.2...v4.0.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* **lsp:** align compatibility with Neovim 0.13 ([093ffd8](https://github.com/AstroNvim/astrolsp/commit/093ffd8c995802b8952e03bedafc01696195f2f6))
+
 ## [4.0.2](https://github.com/AstroNvim/astrolsp/compare/v4.0.1...v4.0.2) (2026-09-03)
 
 
