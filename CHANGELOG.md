@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.0.2](https://github.com/AstroNvim/astrolsp/compare/v4.0.1...v4.0.2) (2026-09-03)
+
+
+### Bug Fixes
+
+* **lsp:** handle dynamic file operation registrations ([d643ffc](https://github.com/AstroNvim/astrolsp/commit/d643ffc8e5df7d1571a09bd552463fa9f98096d9))
+* **lsp:** normalize JSON null values at LSP boundaries ([6121375](https://github.com/AstroNvim/astrolsp/commit/6121375132981245698dd4b237e06e3baea464ec))
+* **lsp:** support Neovim 0.13 registrations ([b0e6d14](https://github.com/AstroNvim/astrolsp/commit/b0e6d1459327cce5ca21b0200d0d05a6b900ff33))
+
 ## [4.0.1](https://github.com/AstroNvim/astrolsp/compare/v4.0.0...v4.0.1) (2026-08-05)
 
 
