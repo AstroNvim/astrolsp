@@ -1,5 +1,5 @@
 *astrolsp.txt*
-                         For Neovim >= 0.9.0    Last change: 2026 September 04
+                           For Neovim >= 0.9.0    Last change: 2026 October 16
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -62,7 +62,7 @@ Install the plugin with your plugin manager of choice:
     use {
       "AstroNvim/astrolsp",
     }
-    
+
     require("astrolsp").setup {
       -- set configuration options  as described below
     }
