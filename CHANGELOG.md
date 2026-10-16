@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.0](https://github.com/AstroNvim/astrolsp/compare/v4.0.3...v4.1.0) (2026-10-16)
+
+
+### Features
+
+* allow users to enable dynamic registration of LSP file operations ([8151963](https://github.com/AstroNvim/astrolsp/commit/815196340b3e9faeda594a6efbb19f84f0c9d779))
+
+
+### Bug Fixes
+
+* **file_operations:** remove caching and improve glob support ([096cfce](https://github.com/AstroNvim/astrolsp/commit/096cfce64693d2ec19f55db900627ee5ea3a5f73))
+
 ## [4.0.3](https://github.com/AstroNvim/astrolsp/compare/v4.0.2...v4.0.3) (2026-09-03)
 
 
