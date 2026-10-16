@@ -138,8 +138,7 @@
 ---        foldingRange = { dynamicRegistration = false }
 ---      }
 ---    },
----    exit_timeout = 5000, -- Neovim v0.12+
----    flags = { exit_timeout = 5000 }, -- Neovim v0.11
+---    exit_timeout = 5000,
 ---  },
 ---}
 ---```

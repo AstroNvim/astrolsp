@@ -67,34 +67,17 @@ function M.buffer_semantic_tokens(bufnr, silent)
     ui_notify(silent, "Semantic token highlighting is disabled globally", vim.log.levels.WARN)
     return
   end
-  if vim.lsp.semantic_tokens.enable then
-    vim.lsp.semantic_tokens.enable(not vim.lsp.semantic_tokens.is_enabled { bufnr = bufnr }, { bufnr = bufnr })
-    vim.lsp.semantic_tokens.force_refresh(bufnr)
-    ui_notify(
-      silent,
-      ("Buffer lsp semantic highlighting %s"):format(bool2str(vim.lsp.semantic_tokens.is_enabled { bufnr = bufnr }))
-    )
-  else -- TODO: remove when dropping support for Neovim v0.11
-    vim.b[bufnr].semantic_tokens = not vim.b[bufnr].semantic_tokens
-    local toggled = false
-    for _, client in ipairs(vim.lsp.get_clients { bufnr = bufnr }) do
-      if client:supports_method("textDocument/semanticTokens/full", bufnr) then
-        vim.lsp.semantic_tokens[vim.b[bufnr].semantic_tokens and "start" or "stop"](bufnr, client.id)
-        toggled = true
-      end
-    end
-    if toggled then vim.lsp.semantic_tokens.force_refresh(bufnr) end
-    ui_notify(silent, ("Buffer lsp semantic highlighting %s"):format(bool2str(vim.b[bufnr].semantic_tokens)))
-  end
+  vim.lsp.semantic_tokens.enable(not vim.lsp.semantic_tokens.is_enabled { bufnr = bufnr }, { bufnr = bufnr })
+  vim.lsp.semantic_tokens.force_refresh(bufnr)
+  ui_notify(
+    silent,
+    ("Buffer lsp semantic highlighting %s"):format(bool2str(vim.lsp.semantic_tokens.is_enabled { bufnr = bufnr }))
+  )
 end
 
 --- Toggle global semantic token highlighting for all language servers that support it
 ---@param silent? boolean if true then don't send a notification
 function M.semantic_tokens(silent)
-  if not vim.lsp.semantic_tokens.enable then
-    ui_notify(silent, "Only available in Neovim v0.12+", vim.log.levels.WARN)
-    return
-  end
   vim.lsp.semantic_tokens.enable(not vim.lsp.semantic_tokens.is_enabled())
   get_config().features.semantic_tokens = vim.lsp.semantic_tokens.is_enabled()
   vim.lsp.semantic_tokens.force_refresh()
@@ -106,10 +89,6 @@ end
 ---@param silent? boolean if true then don't send a notification
 function M.buffer_codelens(bufnr, silent)
   bufnr = bufnr or 0
-  if not vim.lsp.codelens.enable then
-    ui_notify(silent, "Only available in Neovim v0.12+", vim.log.levels.WARN)
-    return
-  end
   vim.lsp.codelens.enable(not vim.lsp.codelens.is_enabled { bufnr = bufnr }, { bufnr = bufnr })
   ui_notify(silent, ("CodeLens %s"):format(bool2str(vim.lsp.codelens.is_enabled { bufnr = bufnr })))
 end
@@ -117,16 +96,8 @@ end
 --- Toggle global codelens
 ---@param silent? boolean if true then don't send a notification
 function M.codelens(silent)
-  -- TODO: remove check when dropping support for Neovim v0.11
-  if vim.lsp.codelens.enable then
-    vim.lsp.codelens.enable(not vim.lsp.codelens.is_enabled())
-    ui_notify(silent, ("CodeLens %s"):format(bool2str(vim.lsp.codelens.is_enabled())))
-  else
-    local features = get_config().features --[[@as AstroLSPFeatureOpts]]
-    features.codelens = not features.codelens
-    if not features.codelens then vim.lsp.codelens.clear() end
-    ui_notify(silent, ("CodeLens %s"):format(bool2str(features.codelens)))
-  end
+  vim.lsp.codelens.enable(not vim.lsp.codelens.is_enabled())
+  ui_notify(silent, ("CodeLens %s"):format(bool2str(vim.lsp.codelens.is_enabled())))
 end
 
 --- Toggle automatic signature help
