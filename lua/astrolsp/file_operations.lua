@@ -21,8 +21,7 @@ local function get_registrations(client, operation, method)
 
   -- TODO: remove this compatibility block when dropping support for Neovim v0.12
   if client._get_registrations then return client:_get_registrations "workspace" or {} end
-  -- TODO: remove this fallback block when dropping support for Neovim v0.11
-  return (client.registrations or {})[method] or {}
+  return client.registrations[method] or {}
 end
 
 local function add_filters(filters, options)

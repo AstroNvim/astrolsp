@@ -12,7 +12,7 @@ AstroLSP provides a simple API for configuring and setting up language servers i
 
 ## ⚡️ Requirements
 
-- Neovim >= 0.11
+- Neovim >= 0.12
 
 ## 📦 Installation
 
@@ -52,8 +52,8 @@ local opts = {
   features = {
     codelens = true, -- enable/disable codelens refresh on start
     inlay_hints = false, -- enable/disable inlay hints on start
-    inline_completion = false, -- enable/disable inline completion capabilities (Neovim v0.12+ ONLY)
-    linked_editing_range = false, -- enable/disable linked editing range capabilities (Neovim v0.12+ ONLY)
+    inline_completion = false, -- enable/disable inline completion capabilities
+    linked_editing_range = false, -- enable/disable linked editing range capabilities
     semantic_tokens = true, -- enable/disable global semantic token highlighting at startup
     signature_help = false, -- enable/disable automatic signature help
   },
@@ -102,11 +102,8 @@ local opts = {
           foldingRange = { dynamicRegistration = false },
         },
       },
-      -- Configure the LSP client exit timeout for Neovim v0.11 and newer
+      -- Configure the LSP client exit timeout
       exit_timeout = 5000, -- Neovim v0.12+
-      flags = {
-        exit_timeout = 5000, -- Neovim v0.11
-      },
     },
   },
   defaults = {
