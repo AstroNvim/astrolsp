@@ -13,18 +13,6 @@
 local M = {}
 
 local normalize_lsp = require("astrolsp.utils").normalize
-local normalized_cache = setmetatable({}, { __mode = "k" })
-
-local function normalize_cached(value)
-  if type(value) ~= "table" then return normalize_lsp(value) end
-
-  local normalized = normalized_cache[value]
-  if normalized ~= nil then return normalized == true and value or normalized end
-
-  normalized = normalize_lsp(value)
-  normalized_cache[value] = normalized == value and true or normalized
-  return normalized
-end
 
 local function get_registrations(client, operation, method)
   if vim.fn.has "nvim-0.13" == 1 then
@@ -38,7 +26,7 @@ local function get_registrations(client, operation, method)
 end
 
 local function add_filters(filters, options)
-  options = normalize_cached(options)
+  options = normalize_lsp(options)
   if type(options) ~= "table" or type(options.filters) ~= "table" then return end
   for _, filter in ipairs(options.filters) do
     filters[#filters + 1] = filter
@@ -89,34 +77,59 @@ local function normalize_renames(renames)
   end, renames)
 end
 
-local filter_cache = {}
-local match_filters = function(filters, file)
+local function get_match_path(file)
   local fname = vim.fn.fnamemodify(file.path, ":p")
-  local cache_key = fname .. "\0" .. (file.kind or "")
-  for _, filter in pairs(filters) do
-    if not filter_cache[filter] then filter_cache[filter] = {} end
-    if filter_cache[filter][cache_key] == nil then
-      local scheme = filter.scheme
-      local matched = false
-      local pattern = filter.pattern
-      local match_type = pattern.matches
-      local is_dir = file.kind == "folder" or (file.kind == nil and string.sub(fname, #fname) == "/")
-      if
-        (not scheme or scheme:lower() == "file")
-        and (not match_type or (match_type == "folder" and is_dir) or (match_type == "file" and not is_dir))
-      then
-        local regex = vim.fn.glob2regpat(pattern.glob)
-        if vim.tbl_get(pattern, "options", "ignoreCase") then regex = "\\c" .. regex end
-        local previous_ignorecase = vim.o.ignorecase
-        vim.o.ignorecase = false
-        matched = vim.fn.match(fname, regex) ~= -1
-        vim.o.ignorecase = previous_ignorecase
-      end
-      filter_cache[filter][cache_key] = matched
+  if vim.fn.has "win32" == 1 then fname = fname:gsub("\\", "/") end
+
+  local is_dir
+  if file.kind == "folder" then
+    is_dir = true
+  elseif file.kind == "file" then
+    is_dir = false
+  else
+    is_dir = vim.fn.isdirectory(file.path) == 1 or string.sub(fname, -1) == "/"
+  end
+
+  if is_dir and string.sub(fname, -1) ~= "/" then
+    fname = fname .. "/"
+  elseif not is_dir and string.sub(fname, -1) == "/" and #fname > 1 then
+    fname = string.sub(fname, 1, -2)
+  end
+  return fname, is_dir
+end
+
+local function matches_filter(filter, fname, is_dir)
+  if type(filter) ~= "table" or type(filter.pattern) ~= "table" then return false end
+
+  local scheme = filter.scheme
+  local pattern = filter.pattern
+  local match_type = pattern.matches
+  if
+    (not scheme or (type(scheme) == "string" and scheme:lower() == "file"))
+    and (not match_type or (match_type == "folder" and is_dir) or (match_type == "file" and not is_dir))
+    and type(pattern.glob) == "string"
+  then
+    local glob, path = pattern.glob, fname
+    if vim.tbl_get(pattern, "options", "ignoreCase") then
+      glob, path = glob:lower(), path:lower()
     end
-    if filter_cache[filter][cache_key] then return true end
+
+    local ok, matched = pcall(function() return vim.glob.to_lpeg(glob):match(path) ~= nil end)
+    return ok and matched or false
   end
   return false
+end
+
+local function match_filters(filters, file)
+  local fname, is_dir = get_match_path(file)
+  for _, filter in pairs(filters) do
+    if matches_filter(filter, fname, is_dir) then return true end
+  end
+  return false
+end
+
+local function notify_client(client, method, params)
+  pcall(function() client:notify(method, params) end)
 end
 
 --- Notify LSP clients that file(s) were created
@@ -131,7 +144,8 @@ function M.didCreateFiles(fnames)
       local filters = did_create.filters or {}
       local filtered = vim.tbl_filter(function(path) return match_filters(filters, path) end, paths)
       if next(filtered) then
-        client:notify(
+        notify_client(
+          client,
           "workspace/didCreateFiles",
           { files = vim.tbl_map(function(path) return { uri = vim.uri_from_fname(path.path) } end, filtered) }
         )
@@ -152,7 +166,8 @@ function M.didDeleteFiles(fnames)
       local filters = did_delete.filters or {}
       local filtered = vim.tbl_filter(function(path) return match_filters(filters, path) end, paths)
       if next(filtered) then
-        client:notify(
+        notify_client(
+          client,
           "workspace/didDeleteFiles",
           { files = vim.tbl_map(function(path) return { uri = vim.uri_from_fname(path.path) } end, filtered) }
         )
@@ -178,7 +193,7 @@ function M.didRenameFiles(renames)
         normalized_renames
       )
       if next(filtered) then
-        client:notify("workspace/didRenameFiles", {
+        notify_client(client, "workspace/didRenameFiles", {
           files = vim.tbl_map(
             function(rename) return { oldUri = vim.uri_from_fname(rename.from), newUri = vim.uri_from_fname(rename.to) } end,
             filtered
@@ -194,8 +209,8 @@ end
 ---@param params table
 ---@param timeout integer?
 local function getWorkspaceEdit(client, req, params, timeout)
-  local resp = client:request_sync(req, params, timeout)
-  if resp and resp.result then return resp.result end
+  local ok, resp = pcall(function() return client:request_sync(req, params, timeout) end)
+  if ok and resp and resp.result then return resp.result end
 end
 
 --- Request workspace edits from LSP clients before file(s) are created
