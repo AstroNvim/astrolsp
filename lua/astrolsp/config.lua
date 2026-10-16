@@ -50,6 +50,7 @@
 ---@field filter (fun(client):boolean)? a function for doing a custom formatting filter based on LSP client name
 
 ---@class AstroLSPFileOperationsOperationsOpts
+---@field dynamicRegistration boolean? enable/disable dynamic file operation registration
 ---@field willCreate boolean? enable/disable pre-create file requests
 ---@field willDelete boolean? enable/disable pre-delete file requests
 ---@field willRename boolean? enable/disable pre-rename file requests
@@ -167,8 +168,9 @@
 ---file_operations = {
 ---  -- the timeout when executing LSP client operations
 ---  timeout = 10000,
----  -- fully disable/enable file operation methods
+---  -- fully disable/enable file-operation methods and dynamic registration
 ---  operations = {
+---   dynamicRegistration = true,
 ---   willRename = true,
 ---   didRename = true,
 ---   willCreate = true,

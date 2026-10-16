@@ -117,8 +117,9 @@ local opts = {
   file_operations = {
     -- the timeout when executing LSP client operations
     timeout = 10000,
-    -- fully disable/enable file operation methods
+    -- fully disable/enable file-operation methods and dynamic registration
     operations = {
+      dynamicRegistration = true,
       willRename = true,
       didRename = true,
       willCreate = true,
