@@ -11,9 +11,8 @@ local M = {}
 
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
--- TODO: remove these fallbacks when dropping support for Neovim v0.12
+-- TODO: remove this compatibility alias when dropping support for Neovim v0.12
 local if_nil = vim.nonnil or vim.F.if_nil
-local buffer_key = vim.fn.has "nvim-0.13" == 1 and "buf" or "buffer"
 local normalize_lsp = require("astrolsp.utils").normalize
 
 --- The configuration as set by the user through the `setup()` function
@@ -123,32 +122,6 @@ function M.add_on_attach(on_attach, opts)
 end
 
 local function configure_buffer(client, bufnr)
-  -- TODO: remove check when dropping support for Neovim v0.11
-  if
-    client:supports_method("textDocument/codeLens", bufnr)
-    and not vim.lsp.codelens.enable
-    and M.config.features.codelens
-  then
-    vim.lsp.codelens.refresh { bufnr = bufnr }
-  end
-
-  -- TODO: remove when dropping support for Neovim v0.11
-  if client:supports_method("textDocument/semanticTokens/full", bufnr) and not vim.lsp.semantic_tokens.enable then
-    if M.config.features.semantic_tokens == false then
-      client.server_capabilities.semanticTokensProvider = nil
-    elseif vim.b[bufnr].semantic_tokens == nil then
-      vim.b[bufnr].semantic_tokens = true
-    elseif vim.b[bufnr].semantic_tokens == false then
-      vim.schedule(function()
-        vim.schedule(function()
-          if vim.api.nvim_buf_is_valid(bufnr) and vim.b[bufnr].semantic_tokens == false then
-            pcall(vim.lsp.semantic_tokens.stop, bufnr, client.id)
-          end
-        end)
-      end)
-    end
-  end
-
   -- user commands
   for cmd, spec in pairs(M.config.commands) do
     if spec then
@@ -164,7 +137,7 @@ local function configure_buffer(client, bufnr)
 
   for augroup, autocmds in pairs(M.config.autocmds) do
     if autocmds then
-      local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, [buffer_key] = bufnr })
+      local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buf = bufnr })
       if not cmds_found or vim.tbl_isempty(cmds) then
         local cond = autocmds.cond
         if check_cond(cond, client, bufnr) then
@@ -173,8 +146,9 @@ local function configure_buffer(client, bufnr)
             local callback, command, event = autocmd.callback, autocmd.command, autocmd.event
             autocmd.command, autocmd.event = nil, nil
             autocmd.group = group
-            autocmd[buffer_key] = bufnr
-            autocmd[buffer_key == "buf" and "buffer" or "buf"] = nil
+            autocmd.buf = bufnr
+            -- TODO: remove this when dropping support for Neovim v0.12
+            autocmd.buffer = nil
             local callback_func = command and function(_, _, _) vim.cmd(command) end or callback
             ---@cast callback_func function
             autocmd.callback = function(args)
@@ -190,6 +164,7 @@ local function configure_buffer(client, bufnr)
             vim.api.nvim_create_autocmd(event, autocmd)
             autocmd.callback, autocmd.command, autocmd.event = callback, command, event
             autocmd.group = nil
+            -- TODO: remove .buffer when dropping support for Neovim v0.12
             autocmd.buf, autocmd.buffer = nil, nil
           end
         end
@@ -207,7 +182,7 @@ local function configure_buffer(client, bufnr)
           local rhs
           if type(map_opts) == "string" then
             rhs = map_opts
-            map_opts = { [buffer_key] = bufnr }
+            map_opts = { buf = bufnr }
           else
             rhs = map_opts[1]
             map_opts = assert(vim.tbl_deep_extend("force", map_opts, { buffer = bufnr }))
@@ -215,8 +190,9 @@ local function configure_buffer(client, bufnr)
           end
           ---@cast map_opts AstroLSPMapping
           if rhs then
-            map_opts[buffer_key] = bufnr
-            map_opts[buffer_key == "buf" and "buffer" or "buf"] = nil
+            map_opts.buf = bufnr
+            -- TODO: remove this when dropping support for Neovim v0.12
+            map_opts.buffer = nil
             vim.keymap.set(mode, lhs, rhs, map_opts --[[@as vim.keymap.set.Opts]])
           elseif wk_avail then
             map_opts[1], map_opts.mode = lhs, mode
@@ -274,19 +250,13 @@ end
 function M.setup(opts)
   normalize_mappings(M.config.mappings)
   normalize_mappings(opts.mappings)
-  -- TODO: remove when dropping support for Neoivm v0.11
-  if vim.fn.has "nvim-0.12" == 1 then
-    ---@diagnostic disable-next-line: param-type-mismatch
-    M.config = vim.tbl_deep_extend(function(key, prev_value, value)
-      if key == "servers" then
-        if type(value) == "table" and type(prev_value) == "table" then return unique_list(prev_value, value) end
-      end
-      return value
-    end, M.config, opts)
-  else
-    M.config = vim.tbl_deep_extend("force", M.config, opts)
-    M.config.servers = unique_list(M.config.servers)
-  end
+  ---@diagnostic disable-next-line: param-type-mismatch
+  M.config = vim.tbl_deep_extend(function(key, prev_value, value)
+    if key == "servers" then
+      if type(value) == "table" and type(prev_value) == "table" then return unique_list(prev_value, value) end
+    end
+    return value
+  end, M.config, opts)
 
   -- enable necessary capabilities for enabled LSP file operations
   local fileOperations = vim.tbl_get(M.config, "file_operations", "operations")
@@ -344,15 +314,12 @@ function M.setup(opts)
   end
 
   vim.lsp.inlay_hint.enable(M.config.features.inlay_hints ~= false)
-  -- TODO: remove check when dropping support for Neovim v0.11
-  if vim.lsp.semantic_tokens.enable then vim.lsp.semantic_tokens.enable(M.config.features.semantic_tokens ~= false) end
+  vim.lsp.semantic_tokens.enable(M.config.features.semantic_tokens ~= false)
   if vim.lsp.linked_editing_range then
     vim.lsp.linked_editing_range.enable(M.config.features.linked_editing_range ~= false)
   end
-  -- TODO: remove check when dropping support for Neovim v0.11
-  if vim.lsp.codelens.enable then vim.lsp.codelens.enable(M.config.features.codelens ~= false) end
-  -- TODO: remove check when dropping support for Neovim v0.11
-  if vim.lsp.inline_completion then vim.lsp.inline_completion.enable(M.config.features.inline_completion ~= false) end
+  vim.lsp.codelens.enable(M.config.features.codelens ~= false)
+  vim.lsp.inline_completion.enable(M.config.features.inline_completion ~= false)
 
   -- Set up tracking of signature help trigger characters
   local function refresh_signature_help_triggers(bufnr, excluded_client_id)
@@ -379,33 +346,8 @@ function M.setup(opts)
           end
         else
           -- TODO: remove this compatibility block when dropping support for Neovim v0.12
-          if client._get_registrations then
-            for _, registration in ipairs(client:_get_registrations("signatureHelpProvider", bufnr) or {}) do
-              add_options(registration.registerOptions)
-            end
-          else
-            -- TODO: remove this compatibility block when dropping support for Neovim v0.11
-            local function registration_applies(_client, _registration, _bufnr)
-              local options = normalize_lsp(_registration.registerOptions)
-              if type(options) ~= "table" or type(options.documentSelector) ~= "table" then return true end
-              local language = _client._get_language_id and _client:_get_language_id(_bufnr) or vim.bo[_bufnr].filetype
-              local uri = vim.uri_from_bufnr(_bufnr)
-              local filename = vim.uri_to_fname(uri)
-              for _, filter in ipairs(options.documentSelector) do
-                if
-                  not (filter.language and language ~= filter.language)
-                  and not (filter.scheme and not vim.startswith(uri, filter.scheme .. ":"))
-                  and not (type(filter.pattern) == "string" and not vim.glob.to_lpeg(filter.pattern):match(filename))
-                then
-                  return true
-                end
-              end
-              return false
-            end
-
-            for _, registration in ipairs((client.registrations or {})["textDocument/signatureHelp"] or {}) do
-              if registration_applies(client, registration, bufnr) then add_options(registration.registerOptions) end
-            end
+          for _, registration in ipairs(client:_get_registrations("signatureHelpProvider", bufnr) or {}) do
+            add_options(registration.registerOptions)
           end
         end
       end
