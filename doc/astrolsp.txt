@@ -38,7 +38,7 @@ FEATURES                                          *astrolsp-astrolsp-features*
 
 REQUIREMENTS                                  *astrolsp-astrolsp-requirements*
 
-- Neovim >= 0.11
+- Neovim >= 0.12
 
 
 INSTALLATION                                  *astrolsp-astrolsp-installation*
@@ -134,11 +134,8 @@ options and some example usages:
               foldingRange = { dynamicRegistration = false },
             },
           },
-          -- Configure the LSP client exit timeout for Neovim v0.11 and newer
-          exit_timeout = 5000, -- Neovim v0.12+
-          flags = {
-            exit_timeout = 5000, -- Neovim v0.11
-          },
+          -- Configure the LSP client exit timeout
+          exit_timeout = 5000,
         },
       },
       defaults = {

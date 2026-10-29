@@ -9,12 +9,13 @@
 
 ---@alias AstroLSPCondition string|boolean|fun(client:vim.lsp.Client,bufnr:integer):boolean conditional for doing something when attaching a language server
 
----@class AstroLSPMapping: vim.api.keyset.keymap
+---@class AstroLSPMapping: vim.keymap.set.Opts
 ---@field [1] string|function? rhs of keymap
 ---@field mode? string|string[] mode(s) for the mapping
 ---@field name string? optional which-key mapping name
 ---@field group? string|fun():string optional which-key mapping group
 ---@field cond AstroLSPCondition? condition for whether or not to set the mapping during language server attachment
+---@field buffer? integer|boolean legacy buffer option preserved for which-key
 
 ---@alias AstroLSPMappings table<string,table<string,(AstroLSPMapping|string|false)?>?>
 
@@ -138,8 +139,7 @@
 ---        foldingRange = { dynamicRegistration = false }
 ---      }
 ---    },
----    exit_timeout = 5000, -- Neovim v0.12+
----    flags = { exit_timeout = 5000 }, -- Neovim v0.11
+---    exit_timeout = 5000,
 ---  },
 ---}
 ---```
