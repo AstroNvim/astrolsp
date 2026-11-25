@@ -1,5 +1,16 @@
 # Changelog
 
+## [5.0.0](https://github.com/AstroNvim/astrolsp/compare/v4.1.0...v5.0.0) (2026-11-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* drop support for Neovim v0.11
+
+### Code Refactoring
+
+* drop support for Neovim v0.11 ([6bd05f8](https://github.com/AstroNvim/astrolsp/commit/6bd05f86c331561438ce429eb483cb34298c5b96))
+
 ## [4.1.0](https://github.com/AstroNvim/astrolsp/compare/v4.0.3...v4.1.0) (2026-10-16)
 
 
