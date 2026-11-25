@@ -1,5 +1,5 @@
 *astrolsp.txt*
-                           For Neovim >= 0.9.0    Last change: 2026 October 16
+                          For Neovim >= 0.9.0    Last change: 2026 November 25
 
 ==============================================================================
 Table of Contents                                 *astrolsp-table-of-contents*
@@ -84,8 +84,8 @@ options and some example usages:
       features = {
         codelens = true, -- enable/disable codelens refresh on start
         inlay_hints = false, -- enable/disable inlay hints on start
-        inline_completion = false, -- enable/disable inline completion capabilities (Neovim v0.12+ ONLY)
-        linked_editing_range = false, -- enable/disable linked editing range capabilities (Neovim v0.12+ ONLY)
+        inline_completion = false, -- enable/disable inline completion capabilities
+        linked_editing_range = false, -- enable/disable linked editing range capabilities
         semantic_tokens = true, -- enable/disable global semantic token highlighting at startup
         signature_help = false, -- enable/disable automatic signature help
       },
@@ -135,7 +135,7 @@ options and some example usages:
             },
           },
           -- Configure the LSP client exit timeout
-          exit_timeout = 5000,
+          exit_timeout = 5000, -- Neovim v0.12+
         },
       },
       defaults = {
