@@ -11,8 +11,9 @@ local M = {}
 
 local tbl_contains = vim.tbl_contains
 local tbl_isempty = vim.tbl_isempty
--- TODO: remove this compatibility alias when dropping support for Neovim v0.12
+-- TODO: remove these compatibility aliases when dropping support for Neovim v0.12
 local if_nil = vim.nonnil or vim.F.if_nil
+local buffer_key = vim.fn.has "nvim-0.13" == 1 and "buf" or "buffer"
 local normalize_lsp = require("astrolsp.utils").normalize
 
 --- The configuration as set by the user through the `setup()` function
@@ -137,7 +138,7 @@ local function configure_buffer(client, bufnr)
 
   for augroup, autocmds in pairs(M.config.autocmds) do
     if autocmds then
-      local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, buf = bufnr })
+      local cmds_found, cmds = pcall(vim.api.nvim_get_autocmds, { group = augroup, [buffer_key] = bufnr })
       if not cmds_found or vim.tbl_isempty(cmds) then
         local cond = autocmds.cond
         if check_cond(cond, client, bufnr) then
@@ -146,9 +147,9 @@ local function configure_buffer(client, bufnr)
             local callback, command, event = autocmd.callback, autocmd.command, autocmd.event
             autocmd.command, autocmd.event = nil, nil
             autocmd.group = group
-            autocmd.buf = bufnr
+            autocmd[buffer_key] = bufnr
             -- TODO: remove this when dropping support for Neovim v0.12
-            autocmd.buffer = nil
+            autocmd[buffer_key == "buf" and "buffer" or "buf"] = nil
             local callback_func = command and function(_, _, _) vim.cmd(command) end or callback
             ---@cast callback_func function
             autocmd.callback = function(args)
@@ -164,7 +165,7 @@ local function configure_buffer(client, bufnr)
             vim.api.nvim_create_autocmd(event, autocmd)
             autocmd.callback, autocmd.command, autocmd.event = callback, command, event
             autocmd.group = nil
-            -- TODO: remove .buffer when dropping support for Neovim v0.12
+            -- TODO: remove this when dropping support for Neovim v0.12
             autocmd.buf, autocmd.buffer = nil, nil
           end
         end
