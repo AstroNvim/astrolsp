@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/AstroNvim/astrolsp/compare/v5.0.0...v5.0.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **compat:** support Neovim 0.12 autocmd buffers ([84455b5](https://github.com/AstroNvim/astrolsp/commit/84455b54585b52d78f19329e759f569e59bd9144))
+
 ## [5.0.0](https://github.com/AstroNvim/astrolsp/compare/v4.1.0...v5.0.0) (2026-11-25)
 
 
